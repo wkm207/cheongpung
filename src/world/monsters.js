@@ -1,5 +1,5 @@
 import { MONSTERS } from '../data/monsters.js';
-import { MONSTER_ATTACK_MS, LEASH_DISTANCE, MONSTER_HP_MULT, SPAWN_MULT, STRIKE_TELL_MS, MONSTER_STEP_MULT } from '../config.js';
+import { MONSTER_ATTACK_MS, LEASH_DISTANCE, HOME_LEASH, SOCIAL_RADIUS, MONSTER_HP_MULT, SPAWN_MULT, STRIKE_TELL_MS, MONSTER_STEP_MULT } from '../config.js';
 import { isRanged } from '../data/monsterSkills.js';
 import { tryMonsterSkill, resolveCast, cancelCast, monsterAtk } from './foes.js';
 import { DIRS, DIR_NAMES, dirTowards, manhattan, beginStep, advanceStep } from './dirs.js';
@@ -13,6 +13,19 @@ export const DEFAULT_WINDUP_MS = 750;
 // 쫓아올 때 한 칸 움직인 뒤 쉬는 시간
 const CHASE_PAUSE_MS = 280;
 const RETURN_TIMEOUT_MS = 10000;
+
+/** 몬스터가 플레이어에게 달려든다. 근처의 같은 종류도 함께 따라온다(몹몰이) */
+export function provoke(game, m) {
+  if (!m.aggro) m.emote = { text: '!', until: game.now + 900 };
+  m.aggro = true;
+  m.returningUntil = 0;
+  for (const o of game.monsters) {
+    if (o.aggro || o === m || o.type !== m.type || o.hp <= 0 || manhattan(o, m) > SOCIAL_RADIUS) continue;
+    o.aggro = true;
+    o.returningUntil = 0;
+    o.emote = { text: '!', until: game.now + 900 };
+  }
+}
 
 export function createMonster(game, type, x, y) {
   const d = MONSTERS[type];
@@ -177,12 +190,11 @@ export function updateMonsters(game, dt) {
     const returning = m.returningUntil > game.now;
     if (m.aggro && stealthed) m.aggro = false;
     if (!m.aggro && !returning && !stealthed && d.aggressive && !game.dead && !game.mapDef.safe && dist <= d.sight) {
-      m.aggro = true;
-      m.emote = { text: '!', until: game.now + 900 };
+      provoke(game, m);
     }
 
     if (m.aggro) {
-      const strayed = manhattan(m, { x: m.homeX, y: m.homeY }) > LEASH_DISTANCE;
+      const strayed = manhattan(m, { x: m.homeX, y: m.homeY }) > HOME_LEASH;
       if (game.dead || dist > LEASH_DISTANCE || strayed) {
         m.aggro = false;
         m.returningUntil = game.now + RETURN_TIMEOUT_MS;

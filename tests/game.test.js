@@ -204,7 +204,7 @@ test('추격을 포기한 몬스터는 집으로 돌아가고 굳지 않는다',
   game.monsters.push(m);
   game.isFree(m.x, m.y);
   m.aggro = true;
-  m.homeX += 15;
+  m.homeX += 80; // 자기 자리에서 너무 멀리 끌려옴
   tick(game, 100);
   assert.equal(m.aggro, false);
   assert.ok(m.returningUntil > game.now);

@@ -13,7 +13,7 @@ import { titleOf, nextAdvancement } from './data/tiers.js';
 import { QUEST_CHAINS, QUEST_GIVERS, questById, newQuestState, rewardItems } from './data/quests.js';
 import { SOLID } from './world/mapgen.js';
 import { DIRS, DIR_NAMES, dirTowards, manhattan, beginStep, advanceStep } from './world/dirs.js';
-import { spawnInitialMonsters, spawnMonster, updateMonsters, updateRespawns } from './world/monsters.js';
+import { spawnInitialMonsters, spawnMonster, updateMonsters, updateRespawns, provoke } from './world/monsters.js';
 import { castSkill, updateProjectiles } from './world/skills.js';
 import { computeStats, gainExp, withLevel, withDeathPenalty } from './core/stats.js';
 import { rollDamage, rollDrops, rollGold } from './core/combat.js';
@@ -437,8 +437,7 @@ export class Game {
     if (kind === 'dot') {
       this.addText(`${dmg}`, m.x + jitter, m.y, '#a8f58a', 9);
     } else {
-      if (!m.aggro) m.emote = { text: '!', until: this.now + 800 };
-      m.aggro = true;
+      provoke(this, m);
       this.addText(isCrit ? `${dmg}!` : `${dmg}`, m.x + jitter, m.y, isCrit ? '#ffcf3f' : '#ffffff', isCrit ? 13 : 10);
       this.addEffect({ type: 'hit', x: m.x, y: m.y, dur: isCrit ? 320 : 220, crit: isCrit });
       if (isCrit) this.shake(120);

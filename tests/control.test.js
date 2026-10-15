@@ -105,3 +105,19 @@ test('회복약은 연달아 마실 수 없다', () => {
   game.useQuick('hp');
   assert.equal(game.quickCount('hp'), before - 2);
 });
+
+test('몹몰이: 한 마리를 건드리면 근처 같은 종류도 따라오고, 멀리 끌고 가도 포기하지 않는다', async () => {
+  const { provoke } = await import('../src/world/monsters.js');
+  const { game, m } = arena('wolf', 3, 0);
+  const buddy = createMonster(game, 'wolf', m.x, m.y + 2);
+  const stranger = createMonster(game, 'wolf', m.x + 10, m.y);
+  game.monsters.push(buddy, stranger);
+  m.aggro = false;
+  provoke(game, m);
+  assert.ok(m.aggro && buddy.aggro, '근처 같은 종류도 따라온다');
+  assert.equal(stranger.aggro, false, '멀리 있는 놈은 그대로');
+  // 자기 자리에서 20칸 끌려와도 계속 쫓는다
+  m.homeX -= 20;
+  game.update(16);
+  assert.ok(m.aggro);
+});

@@ -11,7 +11,9 @@ export const DEATH_EXP_PENALTY = 0.1;
 export const DEATH_DELAY_MS = 2000;
 export const REGEN_INTERVAL_MS = 3000;
 export const MONSTER_ATTACK_MS = 1300;
-export const LEASH_DISTANCE = 14;
+export const LEASH_DISTANCE = 26;       // 플레이어가 이보다 멀어지면 몬스터가 추격을 포기한다(몹몰이가 되게 넉넉히)
+export const HOME_LEASH = 70;           // 자기 자리에서 이보다 멀리 끌려오면 돌아간다
+export const SOCIAL_RADIUS = 4;         // 한 마리가 달려들면 이 거리 안의 같은 종류도 함께 따라온다
 // 난이도
 export const MONSTER_HP_MULT = 1.15;
 export const MONSTER_ATK_MULT = 1.2;
