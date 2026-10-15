@@ -374,3 +374,11 @@ test('뱃사공: 레벨·뱃삯이 되면 먼 지역으로 가고, 지역 출구
   assert.equal(game.player.gold, 8000);
   assert.ok(game.monsters.some((m) => m.type === 'seaDragon'));
 });
+
+test('바닥에 떨어진 돈도 그릴 수 있다(그리기 오류로 캐릭터가 사라지지 않음)', async () => {
+  const { Renderer } = await import('../src/render/renderer.js');
+  const { GOLD_ID } = await import('../src/game.js');
+  const ctx = new Proxy({}, { get: (t, k) => (k in t ? t[k] : () => {}), set: (t, k, v) => { t[k] = v; return true; } });
+  const fake = { now: 0, groundItems: [{ id: GOLD_ID, qty: 10, x: 1, y: 1, spawnAt: 0, expiresAt: 60000 }, { id: 'herb', qty: 1, x: 2, y: 1, spawnAt: 0, expiresAt: 60000 }] };
+  assert.doesNotThrow(() => Renderer.prototype.drawGroundItems.call({}, ctx, fake));
+});

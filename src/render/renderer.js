@@ -10,6 +10,8 @@ import { MONSTERS } from '../data/monsters.js';
 import { ITEMS } from '../data/items.js';
 import { MAP_DEFS } from '../data/maps.js';
 
+const GOLD_ID = '__gold'; // game.js 의 바닥 돈 표시
+
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 // 하루 = 20분(게임 시간). 0~0.5 낮, 0.5~0.6 저녁, 0.6~0.9 밤, 0.9~1 새벽
@@ -276,7 +278,7 @@ export class Renderer {
       if (blink) continue;
       const age = game.now - (g.spawnAt ?? -1e9);
       const bounce = age < 450 ? -Math.sin((age / 450) * Math.PI) * 12 : Math.sin((game.now + g.x * 100) / 300);
-      ctx.fillText(ITEMS[g.id].icon, cx, cy - 1 + bounce);
+      ctx.fillText(g.id === GOLD_ID ? '💰' : ITEMS[g.id]?.icon ?? '❔', cx, cy - 1 + bounce);
     }
   }
 
