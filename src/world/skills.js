@@ -2,6 +2,7 @@ import { SKILLS } from '../data/skills.js';
 import { CLASSES } from '../data/classes.js';
 import { MONSTERS } from '../data/monsters.js';
 import { DIRS, dirTowards, chebyshev, manhattan } from './dirs.js';
+import { MULTI_HIT_GAP_MS } from '../config.js';
 
 const PROJECTILE_STEP_MS = 55;
 
@@ -18,6 +19,24 @@ function applyStatus(game, m, sk) {
     const per = Math.max(1, Math.round(game.stats()[sk.stat] * dot.power));
     const color = sk.poison ? '#8be36b' : '#ffa25e';
     m.dots = [...(m.dots ?? []).filter((d) => d.color !== color), { dmg: per, until: game.now + dot.duration, nextAt: game.now + 1000, color }];
+  }
+}
+
+const SLASH_DIRS = ['right', 'down', 'left', 'up'];
+
+/** 연타 기술: 타격을 MULTI_HIT_GAP_MS 간격으로 하나씩 넣어 칼바람이 눈에 보이게 한다 */
+function multiHit(game, sk, targets, onHit) {
+  const hits = sk.hits ?? 1;
+  for (let i = 0; i < hits; i++) {
+    const strikeOnce = () => {
+      for (const m of targets()) {
+        if (m.hp <= 0 || !game.monsters.includes(m)) continue;
+        onHit?.(m, i);
+        hit(game, m, sk);
+      }
+    };
+    if (i === 0) strikeOnce();
+    else game.schedule(i * MULTI_HIT_GAP_MS, strikeOnce);
   }
 }
 
@@ -112,7 +131,7 @@ const CASTERS = {
       return false;
     }
     game.addEffect({ type: 'slash', x: target.x, y: target.y, dir: game.pe.dir, dur: 220, big: true });
-    for (let i = 0; i < (sk.hits ?? 1); i++) hit(game, target, sk);
+    multiHit(game, sk, () => [target], (m, i) => i > 0 && game.addEffect({ type: 'slash', x: m.x, y: m.y, dir: SLASH_DIRS[i % 4], dur: 260, big: true }));
     return true;
   },
 
@@ -128,7 +147,10 @@ const CASTERS = {
   aoe(game, sk) {
     (AOE_VISUALS[sk.visual] ?? ((g) => g.addEffect({ type: 'ring', x: g.pe.x, y: g.pe.y, radius: sk.radius, color: sk.color, dur: 450 })))(game, sk);
     const victims = game.monsters.filter((x) => chebyshev(x, game.pe) <= sk.radius);
-    for (let i = 0; i < (sk.hits ?? 1); i++) for (const m of victims) hit(game, m, sk);
+    multiHit(game, sk, () => victims, (m, i) => {
+      game.addEffect({ type: 'slash', x: m.x, y: m.y, dir: SLASH_DIRS[(i + m.id) % 4], dur: 300, big: true, color: sk.color });
+      if (i > 0 && m === victims[0]) game.addEffect({ type: 'ring', x: game.pe.x, y: game.pe.y, radius: sk.radius, color: sk.color, dur: 380 });
+    });
     return true;
   },
 

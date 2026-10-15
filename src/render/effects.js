@@ -3,28 +3,143 @@ import { TILE } from '../config.js';
 const DIR_ANGLE = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 };
 const center = (v) => v * TILE + 16;
 
+// 몬스터 기술이 터질 때의 모양별 색
+const BLAST_COLORS = {
+  fire: ['#fff3b0', '#ff7b2e', '#c0392b'],
+  ice: ['#ffffff', '#bfe9ff', '#5dade2'],
+  water: ['#e8f8ff', '#4fb3ff', '#1f5f9f'],
+  dark: ['#f0d8ff', '#a066ff', '#3b1466'],
+  quake: ['#fff1c2', '#e0a060', '#6b4423'],
+  nova: ['#ffffff', '#ff9fd0', '#c2185b'],
+  slash: ['#ffffff', '#ff6b6b', '#8b1a1a'],
+  dash: ['#fff3b0', '#ffd166', '#a8743f'],
+  arrow: ['#ffffff', '#e8d6a8', '#8b5a2b'],
+  spear: ['#ffffff', '#d5dbdb', '#566573'],
+};
+
 const DRAW = {
+  /** 몬스터 기술 폭발: 번쩍임 + 퍼지는 고리 + 튀는 조각 */
+  blast(ctx, e, f, cx, cy) {
+    const [core, mid, dark] = BLAST_COLORS[e.look] ?? BLAST_COLORS.fire;
+    const r = 6 + f * 14;
+    ctx.globalAlpha = (1 - f) * 0.9;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, core);
+    g.addColorStop(0.5, mid);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = mid;
+    ctx.lineWidth = 2 * (1 - f);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.15, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = e.look === 'ice' ? '#ffffff' : dark;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + (e.x * 3 + e.y) % 1;
+      const d = 4 + f * 15;
+      const sz = 2.2 * (1 - f) + 0.5;
+      if (e.look === 'ice') {
+        ctx.save();
+        ctx.translate(cx + Math.cos(a) * d, cy + Math.sin(a) * d);
+        ctx.rotate(a);
+        ctx.fillRect(-sz, -sz / 3, sz * 2, sz / 1.5);
+        ctx.restore();
+      } else {
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d - (e.look === 'quake' ? f * 6 : 0), sz, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  },
+  /** 돌진: 지나간 길에 남는 바람 줄기 */
+  dash(ctx, e, f) {
+    const x0 = center(e.x);
+    const y0 = center(e.y);
+    const x1 = center(e.tx);
+    const y1 = center(e.ty);
+    ctx.globalAlpha = (1 - f) * 0.8;
+    ctx.lineCap = 'round';
+    for (const [off, w] of [[-5, 1.2], [0, 2.4], [5, 1.2]]) {
+      const nx = (y1 - y0) === 0 ? 0 : off;
+      const ny = (x1 - x0) === 0 ? 0 : off;
+      ctx.strokeStyle = e.color;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      ctx.moveTo(x0 + nx, y0 + ny);
+      ctx.lineTo(x0 + (x1 - x0) * (0.3 + f * 0.7) + nx, y0 + (y1 - y0) * (0.3 + f * 0.7) + ny);
+      ctx.stroke();
+    }
+  },
+  /** 몬스터 할퀴기: 세 줄 긁힌 자국 */
+  claw(ctx, e, f, cx, cy) {
+    ctx.globalAlpha = 1 - f;
+    ctx.strokeStyle = '#ff5252';
+    ctx.lineCap = 'round';
+    const grow = Math.min(1, f * 3);
+    for (let i = -1; i <= 1; i++) {
+      ctx.lineWidth = 2.2 - Math.abs(i) * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(cx - 8 + i * 5, cy - 9);
+      ctx.lineTo(cx - 8 + i * 5 + 14 * grow, cy - 9 + 16 * grow);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy - 9);
+    ctx.lineTo(cx - 8 + 14 * grow, cy - 9 + 16 * grow);
+    ctx.stroke();
+  },
+  /** 베기: 초승달 모양 칼빛 + 잔상 + 튀는 불티. big이면 더 크고 길게 */
   slash(ctx, e, f, cx, cy) {
     const a = DIR_ANGLE[e.dir] ?? 0;
-    const bx = cx - Math.cos(a) * 10;
-    const by = cy - Math.sin(a) * 10;
-    const sweep = -1.2 + f * 2.4;
-    ctx.globalAlpha = 1 - f;
+    const R = e.big ? 22 : 17;
+    const bx = cx - Math.cos(a) * (e.big ? 12 : 10);
+    const by = cy - Math.sin(a) * (e.big ? 12 : 10);
+    const grow = Math.min(1, f * 2.2);
+    const start = a - 1.3;
+    const end = start + 2.6 * grow;
+    const color = e.color ?? '#ffffff';
     ctx.lineCap = 'round';
-    ctx.strokeStyle = e.color ?? '#ffffff';
-    ctx.lineWidth = e.big ? 7 : 5;
+    // 바깥 번짐
+    ctx.globalAlpha = (1 - f) * 0.35;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = e.big ? 14 : 9;
     ctx.beginPath();
-    ctx.arc(bx, by, 17, a - 1.2, a + sweep);
+    ctx.arc(bx, by, R, start, end);
     ctx.stroke();
+    // 초승달 칼빛(가운데가 두껍다)
+    ctx.globalAlpha = 1 - f * 0.9;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(bx, by, R + (e.big ? 3 : 2), start, end);
+    ctx.arc(bx + Math.cos(a) * 4, by + Math.sin(a) * 4, R - 3, end, start, true);
+    ctx.closePath();
+    ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = e.big ? 3 : 2;
+    ctx.lineWidth = e.big ? 2.2 : 1.6;
     ctx.beginPath();
-    ctx.arc(bx, by, 14, a - 1.0, a + sweep);
+    ctx.arc(bx, by, R + 1, start + 0.15, end);
     ctx.stroke();
+    // 잔상
+    ctx.globalAlpha = (1 - f) * 0.45;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(bx, by, R - 6, start + 0.3, end - 0.2);
+    ctx.stroke();
+    // 불티
+    ctx.globalAlpha = 1 - f;
     ctx.fillStyle = '#fff6d0';
-    for (let i = 0; i < 3; i++) {
-      const t = a + sweep - i * 0.25;
-      ctx.fillRect(bx + Math.cos(t) * 19 - 1, by + Math.sin(t) * 19 - 1, 2, 2);
+    for (let i = 0; i < (e.big ? 6 : 3); i++) {
+      const t = end - i * 0.22;
+      const d = R + 3 + f * (8 + i * 2);
+      ctx.beginPath();
+      ctx.arc(bx + Math.cos(t) * d, by + Math.sin(t) * d, 1.3 * (1 - f) + 0.4, 0, Math.PI * 2);
+      ctx.fill();
     }
   },
   hit(ctx, e, f, cx, cy) {

@@ -1,6 +1,8 @@
 import {
   PLAYER_STEP_MS, GROUND_ITEM_TTL_MS, DEATH_DELAY_MS, REGEN_INTERVAL_MS, RESPAWN_POINT,
+  POTION_CD_MS, COMBAT_REGEN_PAUSE_MS, ROLL_CD_MS, ROLL_INVULN_MS, EFFECT_TIME_MULT,
 } from './config.js';
+import { updateFoes } from './world/foes.js';
 import { josa } from './core/josa.js';
 import { MAP_DEFS, getTiles } from './data/maps.js';
 import { CLASSES } from './data/classes.js';
@@ -81,6 +83,9 @@ export class Game {
     this.dead = false;
     this.reviveAt = 0;
     this.lastHitAt = -99999;
+    this.invulnUntil = 0;
+    this.rollReadyAt = 0;
+    this.potionReadyAt = 0;
     this.nextRegenAt = REGEN_INTERVAL_MS;
     this.bossTimers = {};
     this.queued = null;
@@ -100,7 +105,9 @@ export class Game {
   stats() { return computeStats(this.player, this.buffs, this.now); }
   setPlayer(patch) { this.player = { ...this.player, ...patch }; }
   setGm(patch) { this.setPlayer({ gm: { ...this.player.gm, ...patch } }); }
-  addEffect(e) { this.effects.push({ ...e, start: this.now + (e.delay ?? 0) }); }
+  addEffect(e) { this.effects.push({ ...e, dur: e.dur * EFFECT_TIME_MULT, start: this.now + (e.delay ?? 0) * EFFECT_TIME_MULT }); }
+  /** ms 뒤에 fn을 실행한다(맵을 옮기면 취소된다) */
+  schedule(ms, fn) { this.timers.push({ at: this.now + ms, fn }); }
   addText(text, x, y, color, size = 10) { this.texts.push({ text, x, y, color, size, start: this.now, dur: 900 }); }
   say(text) { this.speech = { text, until: this.now + 1100 }; }
   shake(ms) { this.shakeUntil = this.now + ms; }
@@ -130,6 +137,9 @@ export class Game {
     this.monsters = [];
     this.groundItems = [];
     this.projectiles = [];
+    this.enemyShots = [];
+    this.hazards = [];
+    this.timers = [];
     this.effects = [];
     this.texts = [];
     this.respawnQueue = [];
@@ -194,10 +204,20 @@ export class Game {
     this.updateNpcs(dt);
     updateMonsters(this, dt);
     updateProjectiles(this, dt);
+    updateFoes(this, dt);
+    this.runTimers();
     updateRespawns(this);
     this.updateHots();
     this.updateRegen();
     this.cleanup();
+  }
+
+  runTimers() {
+    if (!this.timers.length) return;
+    const due = this.timers.filter((t) => this.now >= t.at);
+    if (!due.length) return;
+    this.timers = this.timers.filter((t) => this.now < t.at);
+    for (const t of due) t.fn();
   }
 
   updatePlayer(dt) {
@@ -211,7 +231,8 @@ export class Game {
     if (!pe.moving && this.queued) {
       const action = this.queued;
       this.queued = null;
-      if (action.type === 'skill') castSkill(this, action.id);
+      if (action.type === 'roll') this.roll();
+      else if (action.type === 'skill') castSkill(this, action.id);
       else this.attack();
       if (this.dead || this.pe !== pe || pe.moving) return;
     }
@@ -277,6 +298,8 @@ export class Game {
     if (this.now < this.nextRegenAt) return;
     this.nextRegenAt = this.now + REGEN_INTERVAL_MS;
     if (this.dead) return;
+    // 싸우는 중(맞은 지 얼마 안 됨)에는 저절로 회복되지 않는다
+    if (this.now - this.lastHitAt < COMBAT_REGEN_PAUSE_MS && !this.mapDef.safe) return;
     const s = this.stats();
     const calm = this.now - this.lastHitAt > 8000 ? 2 : 1;
     const safe = this.mapDef.safe ? 3 : 1;
@@ -529,9 +552,41 @@ export class Game {
     return true;
   }
 
+  /** 구르는 중(무적) */
+  isDodging() { return this.now < this.invulnUntil; }
+
+  /** 구르기: 바라보는(누르는) 쪽으로 두 칸 재빨리 굴러 잠깐 무적이 된다 */
+  roll() {
+    if (this.dead || this.now < this.rollReadyAt) return false;
+    const pe = this.pe;
+    if (pe.moving) {
+      this.queued = { type: 'roll' };
+      return false;
+    }
+    const dir = this.inputDir ?? pe.dir;
+    const [dx, dy] = DIRS[dir];
+    let n = 0;
+    while (n < 2 && this.isFree(pe.x + dx * (n + 1), pe.y + dy * (n + 1)) && !this.portalAt(pe.x + dx * (n + 1), pe.y + dy * (n + 1))) n++;
+    pe.dir = dir;
+    this.rollReadyAt = this.now + ROLL_CD_MS;
+    this.invulnUntil = this.now + ROLL_INVULN_MS;
+    this.rollStart = this.now;
+    this.addEffect({ type: 'smoke', x: pe.x, y: pe.y, dur: 400 });
+    if (n > 0) {
+      beginStep(pe, pe.x + dx * n, pe.y + dy * n);
+      pe.stepMsOverride = 110 * n;
+    }
+    this.emit('sfx', 'skill');
+    return true;
+  }
+
   damagePlayer(dmg) {
     if (this.dead) return;
     const pe = this.pe;
+    if (this.isDodging()) {
+      this.addText('회피', pe.x, pe.y, '#bfe9ff', 10);
+      return;
+    }
     if (this.player.gm.god) {
       this.addText('무적', pe.x, pe.y, '#aab7b8');
       return;
@@ -667,6 +722,11 @@ export class Game {
       this.teleport(RESPAWN_POINT.mapId);
       return;
     }
+    if (this.now < this.potionReadyAt) {
+      if (this.now - (this.potionWarnAt ?? -9999) > 800) this.log('약 기운이 아직 돌고 있습니다. 잠시 뒤에 드세요.', '#bbb');
+      this.potionWarnAt = this.now;
+      return;
+    }
     const s = this.stats();
     const hpFull = !it.restore.hp || this.player.hp >= s.maxHp;
     const mpFull = !it.restore.mp || this.player.mp >= s.maxMp;
@@ -675,6 +735,7 @@ export class Game {
       return;
     }
     this.setPlayer({ inv: removeAt(this.player.inv, index) });
+    this.potionReadyAt = this.now + POTION_CD_MS;
     this.restore(it.restore);
     this.emit('sfx', 'drink');
     this.emit('inventory');

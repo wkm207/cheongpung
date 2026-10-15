@@ -127,8 +127,10 @@ const input = new Input({
   joyKnob: $('#joy-knob'),
   canvas: $('#game'),
   attackBtn: $('#btn-attack'),
+  rollBtn: $('#btn-roll'),
   actions: {
     attack: () => game?.attack(),
+    roll: () => game?.roll(),
     skill: (i) => game?.castSlot(i),
     quick: (kind) => game?.useQuick(kind),
     tap: (x, y) => {

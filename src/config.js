@@ -1,6 +1,6 @@
 export const TILE = 32;
 export const VIEW_TILES = 15;            // 화면의 짧은 변에 보이는 타일 수
-export const PLAYER_STEP_MS = 170;
+export const PLAYER_STEP_MS = 205;
 export const INVENTORY_SIZE = 24;
 export const STACK_MAX = 99;
 export const MAX_LEVEL = 99;
@@ -12,4 +12,17 @@ export const DEATH_DELAY_MS = 2000;
 export const REGEN_INTERVAL_MS = 3000;
 export const MONSTER_ATTACK_MS = 1300;
 export const LEASH_DISTANCE = 14;
+// 난이도
+export const MONSTER_HP_MULT = 1.15;
+export const MONSTER_ATK_MULT = 1.2;
+export const SPAWN_MULT = 1.3;          // 맵마다 보통 몬스터 수 배율(보스 제외)
+export const POTION_CD_MS = 1000;       // 회복약을 연달아 마실 수 없다
+export const COMBAT_REGEN_PAUSE_MS = 5000; // 맞은 뒤 이 시간 동안은 저절로 회복되지 않는다
+export const ROLL_CD_MS = 1200;         // 구르기 재사용 대기
+export const ROLL_INVULN_MS = 400;      // 구르는 동안 무적
+export const STRIKE_TELL_MS = 350;      // 몬스터가 때리기 직전 번쩍이는 시간
+// 빠르기: 몬스터 걸음은 이 배율만큼 느리게, 이펙트는 이 배율만큼 오래 보인다
+export const MONSTER_STEP_MULT = 1.2;
+export const EFFECT_TIME_MULT = 1.4;
+export const MULTI_HIT_GAP_MS = 200;     // 연타 기술의 타격 간격
 export const RESPAWN_POINT = { mapId: 'village', x: 19, y: 17 };

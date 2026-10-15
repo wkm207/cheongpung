@@ -5,8 +5,8 @@ import { drawEffect } from './effects.js';
 import { Ambient } from './ambient.js';
 import { treeSprite } from './trees.js';
 import { smoothMap } from './smooth.js';
+import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
-import { DEFAULT_WINDUP_MS } from '../world/monsters.js';
 import { MONSTERS } from '../data/monsters.js';
 import { ITEMS } from '../data/items.js';
 import { MAP_DEFS } from '../data/maps.js';
@@ -161,9 +161,11 @@ export class Renderer {
     this.drawMap(ctx, viewW, viewH, mapW, mapH);
     this.drawWater(ctx, game, viewW, viewH);
     this.drawPortals(ctx, game);
+    drawHazards(ctx, game);
     this.drawGroundItems(ctx, game);
     this.drawEntities(ctx, game);
     this.drawProjectiles(ctx, game);
+    drawEnemyShots(ctx, game);
     for (const e of game.effects) drawEffect(ctx, e, game.now);
     this.ambient.update(game.mapId, { x: this.camX, y: this.camY, w: viewW, h: viewH }, dt);
     this.ambient.draw(ctx, ts);
@@ -353,8 +355,21 @@ export class Renderer {
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
     const riding = game.riding;
     if (riding) this.drawHorse(ctx, x, y, pe.dir === 'right', pe.moving ? Math.floor(game.now / 120) % 2 : 0);
-    ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : 1;
-    drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge - (riding ? 10 : 0), pe.dir === 'right');
+    ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : game.isDodging() ? 0.75 : 1;
+    const rollT = (game.now - (game.rollStart ?? -1e9)) / 330;
+    if (rollT < 1) {
+      // 구르기: 몸을 한 바퀴 돌린다
+      const cx = x + 16;
+      const cy = y + 6;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate((pe.dir === 'left' ? -1 : 1) * rollT * Math.PI * 2);
+      ctx.scale(1, 0.85);
+      drawSprite(ctx, img, -16, -24, pe.dir === 'right');
+      ctx.restore();
+    } else {
+      drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge - (riding ? 10 : 0), pe.dir === 'right');
+    }
     ctx.globalAlpha = 1;
     if (game.buffs.length || game.guardianUntil > game.now) {
       ctx.strokeStyle = game.guardianUntil > game.now ? 'rgba(255, 246, 213, 0.8)' : `rgba(255, 209, 102, ${0.4 + 0.2 * Math.sin(game.now / 150)})`;
@@ -440,8 +455,7 @@ export class Renderer {
     const img = monsterSprite(m.type);
     const size = 32 * scale;
     const stunned = game.now < m.stunUntil;
-    const windup = m.engagedAt ? game.now - m.engagedAt : 0;
-    const telegraph = windup > (d.windup ?? DEFAULT_WINDUP_MS) - 350 && game.now >= m.attackReadyAt - 350;
+    const telegraph = m.strikeAt > game.now;
     let bob = 0;
     if (m.moving) bob = m.stepT < 0.5 ? -1 : 0;
     else if (!stunned) bob = Math.sin((game.now + m.id * 300) / 260) > 0.7 ? -1.5 : 0;
@@ -449,14 +463,12 @@ export class Renderer {
     const dx = x + 16 - size / 2 + jitter;
     const dy = y + 32 - size + bob;
     shadow(ctx, x + 16, y + 29, 9 * scale);
+    drawFoeCasting(ctx, game, m, x + 16, y + 28, scale);
+    if (telegraph) drawStrikeTell(ctx, x + 16, dy + size / 2, size, game.now);
     const flashing = game.now - m.hitAt < 120;
     ctx.globalAlpha = flashing ? 0.55 : 1;
     drawSprite(ctx, img, dx, dy, m.face === 'right');
     ctx.globalAlpha = 1;
-    if (telegraph) {
-      ctx.fillStyle = 'rgba(255, 60, 60, 0.25)';
-      ctx.fillRect(dx, dy, size, size);
-    }
     if (stunned) {
       ctx.fillStyle = 'rgba(133, 193, 233, 0.3)';
       ctx.fillRect(dx, dy, size, size);

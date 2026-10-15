@@ -1,6 +1,8 @@
 import { MONSTERS } from '../data/monsters.js';
-import { MONSTER_ATTACK_MS, LEASH_DISTANCE } from '../config.js';
-import { DIRS, DIR_NAMES, dirTowards, manhattan, chebyshev, beginStep, advanceStep } from './dirs.js';
+import { MONSTER_ATTACK_MS, LEASH_DISTANCE, MONSTER_HP_MULT, SPAWN_MULT, STRIKE_TELL_MS, MONSTER_STEP_MULT } from '../config.js';
+import { isRanged } from '../data/monsterSkills.js';
+import { tryMonsterSkill, resolveCast, cancelCast, monsterAtk } from './foes.js';
+import { DIRS, DIR_NAMES, dirTowards, manhattan, beginStep, advanceStep } from './dirs.js';
 import { monsterDamage } from '../core/combat.js';
 import { randInt } from '../core/rng.js';
 
@@ -9,7 +11,7 @@ const WANDER_RADIUS = 6;
 // 옆에 붙은 뒤 첫 공격까지 뜸 들이는 시간(그 사이 물러나면 공격이 취소된다)
 export const DEFAULT_WINDUP_MS = 750;
 // 쫓아올 때 한 칸 움직인 뒤 쉬는 시간
-const CHASE_PAUSE_MS = 220;
+const CHASE_PAUSE_MS = 280;
 const RETURN_TIMEOUT_MS = 10000;
 
 export function createMonster(game, type, x, y) {
@@ -22,11 +24,10 @@ export function createMonster(game, type, x, y) {
     dir: 'down',
     face: 'left',
     homeX: x, homeY: y,
-    hp: d.hp, maxHp: d.hp,
+    hp: Math.round(d.hp * MONSTER_HP_MULT), maxHp: Math.round(d.hp * MONSTER_HP_MULT),
     aggro: false,
     nextActAt: game.now + randInt(rng, 400, 2500),
     attackReadyAt: 0,
-    specialReadyAt: game.now + 3000,
     stunUntil: 0,
     curseUntil: 0,
     dots: [],
@@ -34,6 +35,8 @@ export function createMonster(game, type, x, y) {
     returningUntil: 0,
     hitAt: -99999,
     engagedAt: 0,
+    strikeAt: 0,
+    casting: null,
   };
 }
 
@@ -73,7 +76,8 @@ export function spawnInitialMonsters(game) {
   for (const [type, count] of game.mapDef.spawns) {
     // 잡은 보스는 맵을 나갔다 와도 리젠 시간이 지나야 다시 나온다
     const bossAt = game.bossTimers[type] ?? 0;
-    for (let i = 0; i < count; i++) {
+    const n = MONSTERS[type].boss ? count : Math.round(count * SPAWN_MULT);
+    for (let i = 0; i < n; i++) {
       if (bossAt > game.now) game.respawnQueue.push({ type, at: bossAt });
       else spawnMonster(game, type);
     }
@@ -114,18 +118,34 @@ function attackPlayer(game, m, d) {
   if (m.dir === 'left' || m.dir === 'right') m.face = m.dir;
   if (!m.engagedAt) m.engagedAt = game.now;
   if (game.now - m.engagedAt < (d.windup ?? DEFAULT_WINDUP_MS) || game.now < m.attackReadyAt) return;
+  // 바로 때리지 않고 잠깐 번쩍인다(그 사이 물러나거나 구르면 빗나간다)
   m.attackReadyAt = game.now + (d.attackMs ?? MONSTER_ATTACK_MS);
-  game.addEffect({ type: 'bite', x: game.pe.x, y: game.pe.y, dur: 250 });
-  game.damagePlayer(monsterDamage(d.atk, game.stats().def));
+  m.strikeAt = game.now + STRIKE_TELL_MS;
 }
 
-function bossSpecial(game, m, d) {
-  const sp = d.special;
-  if (!sp || game.now < m.specialReadyAt || chebyshev(m, game.pe) > sp.radius) return;
-  m.specialReadyAt = game.now + sp.cd;
-  game.addEffect({ type: 'ring', x: m.x, y: m.y, radius: sp.radius, color: sp.color, dur: 500 });
-  game.log(`${d.name}의 ${sp.name}!`, '#ff9fd0');
-  game.damagePlayer(monsterDamage(d.atk, game.stats().def, sp.power));
+/** 번쩍임이 끝나면 실제로 때린다: 아직 옆에 붙어 있어야 맞는다 */
+function resolveStrike(game, m) {
+  m.strikeAt = 0;
+  if (game.dead || manhattan(m, game.pe) !== 1) {
+    game.addText('빗나감', m.x, m.y, '#cfd8dc', 9);
+    return;
+  }
+  game.addEffect({ type: 'claw', x: game.pe.x, y: game.pe.y, dir: dirTowards(m.x, m.y, game.pe.x, game.pe.y), dur: 280 });
+  game.damagePlayer(monsterDamage(monsterAtk(m.type), game.stats().def));
+}
+
+/** 원거리 몬스터: 줄(가로·세로)을 맞추고, 너무 가까우면 물러난다 */
+function rangedStep(game, m) {
+  const p = game.pe;
+  const dx = p.x - m.x;
+  const dy = p.y - m.y;
+  if ((dx === 0 || dy === 0) && manhattan(m, p) < 3) {
+    const away = dirTowards(p.x, p.y, m.x, m.y);
+    if (tryStep(game, m, away)) return;
+  }
+  if (dx !== 0 && (Math.abs(dx) <= Math.abs(dy) || dy === 0) && tryStep(game, m, dx < 0 ? 'left' : 'right')) return;
+  if (dy !== 0 && tryStep(game, m, dy < 0 ? 'up' : 'down')) return;
+  stepToward(game, m, p.x, p.y);
 }
 
 /** 중독·화상: 1초마다 피해 */
@@ -145,8 +165,12 @@ export function updateMonsters(game, dt) {
     const d = MONSTERS[m.type];
     tickDots(game, m);
     if (m.hp <= 0) continue;
-    advanceStep(m, dt, d.stepMs);
-    if (game.now < m.stunUntil) m.engagedAt = 0;
+    advanceStep(m, dt, d.stepMs * MONSTER_STEP_MULT);
+    if (game.now < m.stunUntil) {
+      m.engagedAt = 0;
+      m.strikeAt = 0;
+      if (m.casting) cancelCast(game, m);
+    }
     if (m.moving || game.now < m.stunUntil) continue;
 
     const dist = manhattan(m, game.pe);
@@ -165,7 +189,15 @@ export function updateMonsters(game, dt) {
         m.emote = { text: '?', until: game.now + 900 };
         continue;
       }
-      bossSpecial(game, m, d);
+      if (m.casting) {
+        if (game.now >= m.casting.until) resolveCast(game, m);
+        continue;
+      }
+      if (m.strikeAt) {
+        if (game.now >= m.strikeAt) resolveStrike(game, m);
+        continue;
+      }
+      if (tryMonsterSkill(game, m)) continue;
       // 거리는 플레이어가 '도착할 칸' 기준: 옆으로 비켜도 여전히 붙어 있으면 공격 준비가 이어지고,
       // 실제로 한 칸 떨어져야만 공격을 피할 수 있다.
       if (dist === 1) {
@@ -173,7 +205,8 @@ export function updateMonsters(game, dt) {
       } else {
         m.engagedAt = 0;
         if (dist > 1 && game.now >= m.nextActAt) {
-          stepToward(game, m, game.pe.x, game.pe.y);
+          if (isRanged(m.type) && dist <= 6) rangedStep(game, m);
+          else stepToward(game, m, game.pe.x, game.pe.y);
           m.nextActAt = game.now + CHASE_PAUSE_MS;
         }
       }

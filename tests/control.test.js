@@ -1,0 +1,107 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { Game, createPlayer } from '../src/game.js';
+import { createMonster } from '../src/world/monsters.js';
+import { MONSTERS } from '../src/data/monsters.js';
+import { MONSTER_KITS, MONSTER_SKILLS, kitOf } from '../src/data/monsterSkills.js';
+
+const tick = (game, ms, step = 16) => {
+  for (let t = 0; t < ms; t += step) game.update(step);
+};
+
+/** 빈 들판 한가운데에 몬스터 하나를 세운다 */
+function arena(type, dx, dy) {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.gmSetLevel(60);
+  game.teleport('field1');
+  game.monsters = [];
+  // 주변이 비어 있는 칸 찾기
+  for (let y = 4; y < game.map.h - 4; y++) {
+    for (let x = 4; x < game.map.w - 4; x++) {
+      let ok = true;
+      for (let yy = -3; yy <= 3 && ok; yy++) for (let xx = -3; xx <= 3 && ok; xx++) if (game.isSolid(x + xx, y + yy) || game.portalAt(x + xx, y + yy)) ok = false;
+      if (!ok) continue;
+      game.pe.x = game.pe.fromX = x;
+      game.pe.y = game.pe.fromY = y;
+      const m = createMonster(game, type, x + dx, y + dy);
+      m.aggro = true;
+      m.nextSkillAt = game.now; // 바로 기술을 쓰게
+      game.monsters.push(m);
+      return { game, m };
+    }
+  }
+  throw new Error('빈 칸 없음');
+}
+
+test('몬스터 기술 목록은 모두 있는 몬스터·기술을 가리킨다', () => {
+  for (const [type, kit] of Object.entries(MONSTER_KITS)) {
+    assert.ok(MONSTERS[type], type);
+    for (const e of kit) {
+      if (typeof e === 'string') assert.ok(MONSTER_SKILLS[e], `${type}:${e}`);
+      else assert.ok(MONSTERS[e.summon], `${type} 졸개 ${e.summon}`);
+    }
+  }
+  for (const type of Object.keys(MONSTERS)) for (const sk of kitOf(type, MONSTERS[type].special)) assert.ok(sk.windup > 0, `${type}:${sk.id} 예고 없음`);
+});
+
+test('내려찍기 장판: 예고 범위 밖으로 나가면 안 맞고, 그대로 있으면 맞는다', () => {
+  for (const escape of [true, false]) {
+    const { game, m } = arena('goblin', 1, 0);
+    m.engagedAt = 0;
+    tick(game, 32);
+    assert.ok(m.casting, '예고를 시작한다');
+    assert.equal(game.hazards.length, 1);
+    const hp = game.player.hp;
+    if (escape) {
+      game.pe.x -= 2; // 예고 범위(둘레 1칸) 밖으로
+      game.pe.fromX = game.pe.x;
+    }
+    tick(game, 1000);
+    assert.equal(game.hazards.length, 0, '장판은 터지고 사라진다');
+    if (escape) assert.equal(game.player.hp, hp, '피했으면 안 맞는다');
+    else assert.ok(game.player.hp < hp, '안 피하면 맞는다');
+  }
+});
+
+test('날아오는 탄은 옆 칸으로 비키면 피한다', () => {
+  const { game, m } = arena('fireLizard', 4, 0);
+  tick(game, 32);
+  assert.equal(m.casting?.sk.kind, 'bolt');
+  tick(game, 600);
+  assert.equal(game.enemyShots.length, 1, '불덩이를 쏜다');
+  const hp = game.player.hp;
+  game.pe.y += 1;
+  game.pe.fromY = game.pe.y;
+  m.nextSkillAt = 1e12;
+  m.attackReadyAt = 1e12;
+  tick(game, 1200);
+  assert.equal(game.player.hp, hp);
+});
+
+test('구르기 중에는 무적이고, 재사용 대기 중엔 다시 못 구른다', () => {
+  const { game } = arena('rabbit', 5, 5);
+  game.monsters = [];
+  game.pe.dir = 'left';
+  assert.ok(game.roll());
+  assert.ok(game.isDodging());
+  const hp = game.player.hp;
+  game.damagePlayer(50);
+  assert.equal(game.player.hp, hp, '구르는 동안엔 안 맞는다');
+  tick(game, 300);
+  assert.equal(game.roll(), false, '재사용 대기');
+  tick(game, 1200);
+  game.damagePlayer(50);
+  assert.ok(game.player.hp < hp, '무적은 잠깐뿐');
+});
+
+test('회복약은 연달아 마실 수 없다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.setPlayer({ hp: 1 });
+  const before = game.quickCount('hp');
+  game.useQuick('hp');
+  game.useQuick('hp');
+  assert.equal(game.quickCount('hp'), before - 1);
+  tick(game, 1100);
+  game.useQuick('hp');
+  assert.equal(game.quickCount('hp'), before - 2);
+});

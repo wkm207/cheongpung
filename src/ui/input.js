@@ -18,7 +18,7 @@ function dirFromVector(dx, dy, deadzone) {
 
 /** 키보드·방향 버튼(D-패드)·조이스틱·공격 버튼 입력을 모아 매 프레임 게임에 전달한다. */
 export class Input {
-  constructor({ moveZone, dpad, joyBase, joyKnob, canvas, attackBtn, actions }) {
+  constructor({ moveZone, dpad, joyBase, joyKnob, canvas, attackBtn, rollBtn, actions }) {
     this.actions = actions;
     this.dpad = dpad;
     this.joyBase = joyBase;
@@ -39,6 +39,10 @@ export class Input {
       moveZone.addEventListener(type, (e) => this.onMoveEnd(e));
     }
 
+    rollBtn?.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      actions.roll();
+    });
     attackBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this.attackHeld = true;
@@ -89,6 +93,10 @@ export class Input {
     }
     if (e.code === 'KeyR' && !e.repeat && !this.actions.isPaused()) {
       this.actions.toggleRide();
+      return;
+    }
+    if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat && !this.actions.isPaused()) {
+      this.actions.roll();
       return;
     }
     if (e.code === 'KeyN' && !e.repeat) {

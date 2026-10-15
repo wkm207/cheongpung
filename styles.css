@@ -376,6 +376,25 @@ body.control-joystick #dpad { display: none; }
   touch-action: none;
 }
 
+/* 구르기 버튼: 공격 버튼 왼쪽 위 */
+.roll-btn {
+  position: fixed;
+  right: calc(var(--safe-r) + 106px);
+  bottom: calc(var(--console-h) + var(--safe-b) + 60px);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 12px;
+  font-weight: bold;
+  color: #e9f6ff;
+  background: radial-gradient(#3f7fbf, #1b3a5c);
+  border: 2px solid var(--gold);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  touch-action: none;
+}
+
 /* ── 창(패널) ───────────────────────── */
 #panel-layer {
   position: fixed;
@@ -589,6 +608,7 @@ summary { padding: 6px 0; cursor: pointer; color: var(--red); font-weight: 700; 
   #move-zone { height: 55vh; }
   #dpad { transform: scale(0.82); transform-origin: left bottom; bottom: 4px; }
   .attack-btn { width: 70px; height: 70px; font-size: 15px; }
+  .roll-btn { width: 48px; height: 48px; right: calc(var(--safe-r) + 92px); }
   #quest-tracker div { font-size: 10px; }
 }
 
@@ -637,6 +657,7 @@ summary { padding: 6px 0; cursor: pointer; color: var(--red); font-weight: 700; 
 body.docked #console { right: var(--side-w); }
 body.docked #topbar { right: calc(var(--side-w) + 6px); }
 body.docked .attack-btn { right: calc(var(--side-w) + 16px); }
+body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 .side-card {
   background: linear-gradient(#f1e6c8, #e1cf9f);
   border: 2px solid var(--wood);
