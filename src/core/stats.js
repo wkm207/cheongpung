@@ -1,0 +1,72 @@
+import { CLASSES } from '../data/classes.js';
+import { ITEMS } from '../data/items.js';
+import { MAX_LEVEL, DEATH_EXP_PENALTY } from '../config.js';
+import { TIER_MULT } from '../data/tiers.js';
+
+const STAT_KEYS = ['hp', 'mp', 'atk', 'def', 'mag'];
+
+export function expToNext(level) {
+  return Math.round(20 * Math.pow(level, 1.8));
+}
+
+/** 레벨과 승급 차수로 정해지는 기본 능력치 */
+export function baseStats(cls, level, tier = 0) {
+  const c = CLASSES[cls];
+  const mult = TIER_MULT[tier] ?? 1;
+  return Object.fromEntries(STAT_KEYS.map((k) => [k, Math.round((c.base[k] + c.growth[k] * (level - 1)) * mult)]));
+}
+
+export function equipBonus(equip) {
+  const keys = [...STAT_KEYS, 'crit'];
+  const bonus = Object.fromEntries(keys.map((k) => [k, 0]));
+  for (const id of Object.values(equip)) {
+    const it = id && ITEMS[id];
+    if (!it) continue;
+    for (const k of keys) bonus[k] += it[k] ?? 0;
+  }
+  return bonus;
+}
+
+/** 버프는 { stat, mult?, add?, until } 형태. 만료된 버프는 무시한다. */
+export function computeStats(player, buffs = [], now = 0) {
+  const base = baseStats(player.cls, player.level, player.tier ?? 0);
+  const bonus = equipBonus(player.equip);
+  const mult = { atk: 1, def: 1, mag: 1 };
+  let critAdd = 0;
+  for (const b of buffs) {
+    if (b.until <= now) continue;
+    if (b.stat === 'crit') critAdd += b.add;
+    else if (b.stat === 'all') for (const k of Object.keys(mult)) mult[k] *= b.mult;
+    else mult[b.stat] *= b.mult;
+  }
+  return {
+    maxHp: base.hp + bonus.hp,
+    maxMp: base.mp + bonus.mp,
+    atk: Math.round((base.atk + bonus.atk) * mult.atk),
+    def: Math.round((base.def + bonus.def) * mult.def),
+    mag: Math.round((base.mag + bonus.mag) * mult.mag),
+    crit: Math.min(0.9, CLASSES[player.cls].crit + bonus.crit + critAdd),
+  };
+}
+
+export function gainExp(player, amount) {
+  let { level, exp } = player;
+  exp += amount;
+  let levelsGained = 0;
+  while (level < MAX_LEVEL && exp >= expToNext(level)) {
+    exp -= expToNext(level);
+    level += 1;
+    levelsGained += 1;
+  }
+  if (level >= MAX_LEVEL) exp = 0;
+  return { player: { ...player, level, exp }, levelsGained };
+}
+
+export function withLevel(player, level) {
+  const clamped = Math.max(1, Math.min(MAX_LEVEL, Math.floor(level)));
+  return { ...player, level: clamped, exp: 0 };
+}
+
+export function withDeathPenalty(player) {
+  return { ...player, exp: Math.floor(player.exp * (1 - DEATH_EXP_PENALTY)) };
+}

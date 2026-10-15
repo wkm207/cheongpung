@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="청풍록">
+  <meta name="theme-color" content="#1c120b">
+  <title>청풍록</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- 위: 퀘스트 알림 · 지역 표시줄 · 미니맵 -->
+  <div id="topbar" hidden>
+    <div id="quest-tracker"></div>
+    <div class="zone-strip"><b id="hud-map"></b><span id="hud-coord"></span></div>
+    <div class="minimap-box">
+      <canvas id="minimap" width="150" height="112"></canvas>
+      <button id="minimap-toggle" class="tiny">지도<kbd>N</kbd></button>
+    </div>
+  </div>
+
+  <!-- 터치 전용: 이동(방향 버튼·조이스틱)과 공격 -->
+  <div id="controls" hidden>
+    <div id="move-zone">
+      <div id="dpad">
+        <span class="arrow up">▲</span><span class="arrow down">▼</span>
+        <span class="arrow left">◀</span><span class="arrow right">▶</span>
+      </div>
+      <div id="joy-base"><div id="joy-knob"></div></div>
+    </div>
+    <button id="btn-attack" class="attack-btn">공격</button>
+  </div>
+
+  <!-- 아래: 통합 조작판(상태 · 대화창 · 단축키 · 메뉴) -->
+  <div id="console" hidden>
+    <section class="status-panel">
+      <canvas id="portrait" width="32" height="32"></canvas>
+      <div class="status-lines">
+        <div class="who"><b id="hud-name"></b><span id="hud-level"></span></div>
+        <div class="stat-row"><span class="lbl">체력</span><div class="bar hp"><i></i></div><span class="num" id="hp-num"></span></div>
+        <div class="stat-row"><span class="lbl">마력</span><div class="bar mp"><i></i></div><span class="num" id="mp-num"></span></div>
+        <div class="stat-row"><span class="lbl">경험</span><div class="bar exp"><i></i></div><span class="num" id="exp-num"></span></div>
+        <div class="gold">금전 <b id="hud-gold"></b></div>
+      </div>
+    </section>
+
+    <section class="chat-panel">
+      <div id="log"></div>
+      <form id="chat-form" autocomplete="off">
+        <span class="chat-tag">대화</span>
+        <input id="chat-input" maxlength="60" placeholder="Enter로 말하기 · /도움 으로 운영자 명령" enterkeyhint="send">
+      </form>
+    </section>
+
+    <section class="right-panel">
+      <div class="hotbar">
+        <button class="slot skill" data-slot="0"></button>
+        <button class="slot skill" data-slot="1"></button>
+        <button class="slot skill" data-slot="2"></button>
+        <button class="slot skill" data-slot="3"></button>
+        <button class="slot skill" data-slot="4"></button>
+        <button class="slot skill" data-slot="5"></button>
+        <button class="slot skill" data-slot="6"></button>
+        <button class="slot skill" data-slot="7"></button>
+        <button class="slot skill" data-slot="8"></button>
+        <button class="slot skill" data-slot="9"></button>
+        <button class="slot quick" data-quick="hp"><span class="key">Q</span><span class="icon">🌿</span><small>0</small></button>
+        <button class="slot quick" data-quick="mp"><span class="key">E</span><span class="icon">💧</span><small>0</small></button>
+      </div>
+      <nav class="menu-grid">
+        <button data-open="inventory"><span class="ico">🎒</span><span>가방</span><kbd>I</kbd><i class="dot" id="badge-bag"></i></button>
+        <button data-open="skills"><span class="ico">📖</span><span>기술</span><kbd>K</kbd><i class="dot" id="badge-skill"></i></button>
+        <button data-open="character"><span class="ico">👤</span><span>정보</span><kbd>C</kbd></button>
+        <button data-open="quests"><span class="ico">📜</span><span>퀘스트</span><kbd>L</kbd></button>
+        <button data-open="menu"><span class="ico">⚙️</span><span>메뉴</span><kbd>M</kbd></button>
+        <button data-open="gm" class="gm"><span class="ico">👑</span><span>GM</span><kbd>G</kbd></button>
+      </nav>
+    </section>
+  </div>
+
+  <div id="panel-layer" hidden><div id="panel" class="panel"></div></div>
+  <div id="title" hidden></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

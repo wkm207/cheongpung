@@ -1,0 +1,15 @@
+export const TILE = 32;
+export const VIEW_TILES = 12;            // 화면의 짧은 변에 보이는 타일 수
+export const PLAYER_STEP_MS = 170;
+export const INVENTORY_SIZE = 24;
+export const STACK_MAX = 99;
+export const MAX_LEVEL = 99;
+export const SAVE_KEY = 'cheongpung-save-v1';
+export const AUTOSAVE_MS = 15000;
+export const GROUND_ITEM_TTL_MS = 90000;
+export const DEATH_EXP_PENALTY = 0.1;
+export const DEATH_DELAY_MS = 2000;
+export const REGEN_INTERVAL_MS = 3000;
+export const MONSTER_ATTACK_MS = 1300;
+export const LEASH_DISTANCE = 14;
+export const RESPAWN_POINT = { mapId: 'village', x: 19, y: 17 };
