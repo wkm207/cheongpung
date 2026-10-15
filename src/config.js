@@ -15,7 +15,8 @@ export const LEASH_DISTANCE = 14;
 // 난이도
 export const MONSTER_HP_MULT = 1.15;
 export const MONSTER_ATK_MULT = 1.2;
-export const SPAWN_MULT = 1.3;          // 맵마다 보통 몬스터 수 배율(보스 제외)
+export const SPAWN_MULT = 2.2;          // 맵마다 보통 몬스터 수 배율(보스 제외)
+export const RESPAWN_MULT = 0.6;        // 보통 몬스터가 다시 나오는 시간 배율(보스 제외)
 export const POTION_CD_MS = 1000;       // 회복약을 연달아 마실 수 없다
 export const COMBAT_REGEN_PAUSE_MS = 5000; // 맞은 뒤 이 시간 동안은 저절로 회복되지 않는다
 export const ROLL_CD_MS = 1200;         // 구르기 재사용 대기

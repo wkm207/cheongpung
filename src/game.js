@@ -1,6 +1,6 @@
 import {
   PLAYER_STEP_MS, GROUND_ITEM_TTL_MS, DEATH_DELAY_MS, REGEN_INTERVAL_MS, RESPAWN_POINT,
-  POTION_CD_MS, COMBAT_REGEN_PAUSE_MS, ROLL_CD_MS, ROLL_INVULN_MS, EFFECT_TIME_MULT,
+  POTION_CD_MS, COMBAT_REGEN_PAUSE_MS, ROLL_CD_MS, ROLL_INVULN_MS, EFFECT_TIME_MULT, RESPAWN_MULT,
 } from './config.js';
 import { updateFoes } from './world/foes.js';
 import { josa } from './core/josa.js';
@@ -452,7 +452,7 @@ export class Game {
     m.hp = 0;
     this.monsters = this.monsters.filter((x) => x !== m);
     if (!m.summoned) {
-      this.respawnQueue = [...this.respawnQueue, { type: m.type, at: this.now + d.respawnMs }];
+      this.respawnQueue = [...this.respawnQueue, { type: m.type, at: this.now + d.respawnMs * (d.boss ? 1 : RESPAWN_MULT) }];
       if (d.boss) this.bossTimers = { ...this.bossTimers, [m.type]: this.now + d.respawnMs };
     }
     const gold = rollGold(d.gold);
