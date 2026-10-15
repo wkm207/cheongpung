@@ -384,7 +384,7 @@ export class Renderer {
       ctx.ellipse(x + 16, y + 29, 12, 5, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-    const name = game.player.tier ? `${game.title()} ${game.player.name}` : game.player.name;
+    const name = `Lv${game.player.level} ${game.player.tier ? `${game.title()} ` : ''}${game.player.name}`;
     const top = y - (riding ? 22 : 18);
     this.drawVitals(ctx, game, x + 16, top - 1);
     label(ctx, name, x + 16, top - 6, game.player.gm.god ? '#ffd166' : '#ffffff');

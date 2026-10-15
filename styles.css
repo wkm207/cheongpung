@@ -775,3 +775,8 @@ body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 .sbar.hp i { background: linear-gradient(#ff7b6b, #b3261e); }
 .sbar.mp i { background: linear-gradient(#7fb8ff, #1f4fb3); }
 .sbar span { position: relative; display: block; text-align: center; font-size: 10px; line-height: 14px; color: #fff; text-shadow: 0 1px 1px #000; }
+.sbar.xp i { background: linear-gradient(#ffe08a, #b8860b); }
+.char-bars { margin: 6px 0 10px; }
+.char-bars .sbar { height: 17px; }
+.char-bars .sbar span { line-height: 17px; font-size: 11px; }
+.lv-badge { display: inline-block; padding: 1px 7px; border-radius: 9px; background: var(--red, #a8321a); color: #fff; font-size: 12px; font-weight: bold; }

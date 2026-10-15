@@ -238,7 +238,12 @@ export function characterView(game) {
   const used = Object.values(a).reduce((x, y) => x + y, 0);
   return `${header('정보', 'character')}
     <div class="body">
-      <div class="char-head"><b>${esc(p.name)}</b> · ${game.title()} · Lv.${p.level}</div>
+      <div class="char-head"><span class="lv-badge">Lv.${p.level}</span> <b>${esc(p.name)}</b> · ${game.title()}</div>
+      <div class="side-bars char-bars">
+        <div class="sbar hp"><i style="width:${Math.min(100, (p.hp / s.maxHp) * 100)}%"></i><span>체력 ${p.hp.toLocaleString()} / ${s.maxHp.toLocaleString()}</span></div>
+        <div class="sbar mp"><i style="width:${Math.min(100, (p.mp / s.maxMp) * 100)}%"></i><span>마력 ${p.mp.toLocaleString()} / ${s.maxMp.toLocaleString()}</span></div>
+        <div class="sbar xp"><i style="width:${p.level >= MAX_LEVEL ? 100 : Math.min(100, (p.exp / expToNext(p.level)) * 100)}%"></i><span>경험치 ${p.level >= MAX_LEVEL ? '최고 레벨' : `${((p.exp / expToNext(p.level)) * 100).toFixed(1)}%`}</span></div>
+      </div>
       <div class="stat-grid">${rows}</div>
       <h3>능력치 분배 <small class="muted">남은 점수 <b class="${pts ? 'warn' : ''}">${pts}</b> · 레벨업마다 3점</small></h3>
       ${statRow('str', '힘', '공격 +2')}
