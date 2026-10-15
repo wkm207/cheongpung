@@ -1,4 +1,5 @@
 import { esc, readFileText, formatPlayTime } from './dom.js';
+import { GAME_VERSION } from '../config.js';
 import { CLASSES } from '../data/classes.js';
 import { MAP_DEFS } from '../data/maps.js';
 import { titleOf } from '../data/tiers.js';
@@ -82,7 +83,8 @@ export class Title {
       <div class="slot-grid">${slots}</div>
       <div class="title-buttons"><button data-act="import">백업 불러오기</button></div>
       ${this.note ? `<p class="note-light">${esc(this.note)}</p>` : ''}
-      <p class="install-hint">아이패드·아이폰: Safari 공유 버튼 → <b>홈 화면에 추가</b>하면 비행기 모드에서도 실행됩니다.</p>`;
+      <p class="install-hint">아이패드·아이폰: Safari 공유 버튼 → <b>홈 화면에 추가</b>하면 비행기 모드에서도 실행됩니다.</p>
+      <p class="install-hint">게임 버전 <b>${GAME_VERSION}</b></p>`;
   }
 
   render_new() {

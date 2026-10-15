@@ -1,6 +1,6 @@
 // 오프라인 실행용 서비스 워커: 처음 접속할 때 모든 파일을 저장해 두고, 이후엔 저장본을 먼저 쓴다.
 // 게임 파일을 고치면 VERSION을 올려야 기기에 새 버전이 받아진다.
-const VERSION = 'cheongpung-v12';
+const VERSION = 'cheongpung-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -74,9 +74,9 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 저장본을 먼저 보여 주고(오프라인에서도 바로 실행), 인터넷이 되면 뒤에서 새 파일로 바꿔 둔다.
-// 그래서 게임을 고쳐 올리면 다음 실행부터 새 버전이 된다. 개발 중(localhost)에는 항상 새 파일을 먼저 쓴다.
-const DEV = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+// 인터넷이 되면 늘 새 파일을 먼저 받아 쓰고(고친 내용이 바로 보인다), 저장본도 새로 바꿔 둔다.
+// 인터넷이 없거나(비행기) 너무 느리면 저장본으로 바로 실행한다.
+const NETWORK_WAIT_MS = 3500;
 
 async function refresh(request) {
   const response = await fetch(new Request(request, { cache: 'no-cache' }));
@@ -94,11 +94,12 @@ async function refresh(request) {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const cached = caches.match(event.request, { ignoreSearch: true });
-  if (DEV) {
-    event.respondWith(refresh(event.request).catch(() => cached));
-    return;
-  }
-  const updating = refresh(event.request).catch(() => null);
-  event.waitUntil(updating);
-  event.respondWith(cached.then((hit) => hit ?? updating.then((r) => r ?? Response.error())));
+  const fresh = refresh(event.request).catch(() => null);
+  event.waitUntil(fresh);
+  const slow = new Promise((resolve) => { setTimeout(() => resolve(null), NETWORK_WAIT_MS); });
+  event.respondWith((async () => {
+    const first = await Promise.race([fresh, slow]);
+    if (first) return first;
+    return (await cached) ?? (await fresh) ?? Response.error();
+  })());
 });

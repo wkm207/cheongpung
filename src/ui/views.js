@@ -8,7 +8,7 @@ import { MONSTERS } from '../data/monsters.js';
 import { MAP_DEFS } from '../data/maps.js';
 import { QUEST_CHAINS, QUEST_GIVERS, rewardItems } from '../data/quests.js';
 import { TIER_TITLES } from '../data/tiers.js';
-import { MAX_LEVEL } from '../config.js';
+import { MAX_LEVEL, GAME_VERSION } from '../config.js';
 import { expToNext } from '../core/stats.js';
 import { canEquip, compareEquip, compareUnequip, isUpgrade, formatStat } from '../core/equip.js';
 import { enhanceInfo, MAX_ENHANCE, ENHANCE_STEP } from '../core/enhance.js';
@@ -442,6 +442,7 @@ export function menuView(game, state, settings) {
   const keys = KEY_HELP.map(([a, b]) => `<tr><td>${a}</td><td><b>${b}</b></td></tr>`).join('');
   return `${header('메뉴', 'menu')}
     <div class="body menu-list">
+      <p class="hint">게임 버전 <b>${GAME_VERSION}</b></p>
       <button class="primary" data-act="save">지금 저장하기</button>
       <h3>설정</h3>
       <div class="row">

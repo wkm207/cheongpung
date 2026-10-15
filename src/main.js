@@ -327,6 +327,14 @@ document.addEventListener('keydown', unlockAudio);
 navigator.storage?.persist?.().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+  // 새 버전이 설치되면(이미 실행 중인 게임이 있으면) 한 번 새로 고쳐 바로 바꾼다
+  let reloaded = false;
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded || game) return;
+    reloaded = true;
+    location.reload();
+  });
 }
 
 // 개발 확인용: 주소 끝에 ?debug 를 붙였을 때만 콘솔에서 게임 상태를 볼 수 있다
