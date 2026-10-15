@@ -64,8 +64,12 @@ export class Input {
       this.actions.closePanel();
       return;
     }
+    if ((e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter') && this.actions.panelAdvance()) {
+      e.preventDefault();
+      return;
+    }
     // 마법창이 열려 있으면 알파벳은 마법 순서 바꾸기에 쓴다
-    if (/^Key[A-N]$/.test(e.code) && this.actions.spellLetter(e.code.slice(3).toLowerCase())) {
+    if (/^Key[A-T]$/.test(e.code) && this.actions.spellLetter(e.code.slice(3).toLowerCase())) {
       e.preventDefault();
       return;
     }

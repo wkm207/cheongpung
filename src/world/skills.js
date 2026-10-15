@@ -188,6 +188,50 @@ const CASTERS = {
     return true;
   },
 
+  sacrifice(game, sk) {
+    const target = game.meleeTarget();
+    if (!target) {
+      game.log('앞에 대상이 없습니다.', '#bbb');
+      return false;
+    }
+    const paid = Math.floor(game.player.hp * sk.hpPct);
+    if (paid < 1 || game.player.hp - paid < 1) {
+      game.log('바칠 체력이 모자랍니다.', '#bbb');
+      return false;
+    }
+    game.setPlayer({ hp: game.player.hp - paid });
+    game.addText(`-${paid}`, game.pe.x, game.pe.y, '#ff6b6b');
+    game.addEffect({ type: 'pillar', x: target.x, y: target.y, color: '#ff3030', dur: 600 });
+    game.shake(400);
+    game.damageMonster(target, paid * sk.ratio, true);
+    return true;
+  },
+
+  leap(game, sk) {
+    const pe = game.pe;
+    const [dx, dy] = DIRS[pe.dir];
+    let tile = null;
+    for (let i = sk.range; i >= 1; i--) {
+      const t = { x: pe.x + dx * i, y: pe.y + dy * i };
+      if (game.isFree(t.x, t.y) && !game.portalAt(t.x, t.y)) {
+        tile = t;
+        break;
+      }
+    }
+    if (!tile) {
+      game.log('내려설 곳이 없습니다.', '#bbb');
+      return false;
+    }
+    game.addEffect({ type: 'line', x: pe.x, y: pe.y, x2: tile.x, y2: tile.y, color: '#d6f0ff', dur: 300 });
+    teleportPlayer(game, tile, null);
+    return true;
+  },
+
+  passive(game, sk) {
+    game.log(`${sk.name}은(는) 따로 쓰지 않아도 저절로 발동하는 기술입니다.`, '#bbb');
+    return false;
+  },
+
   guardian(game, sk) {
     game.guardianUntil = game.now + sk.duration;
     game.addEffect({ type: 'pillar', x: game.pe.x, y: game.pe.y, color: '#fff6d5', dur: 700 });
@@ -369,6 +413,8 @@ export function castSkill(game, id) {
   game.cooldowns = { ...game.cooldowns, [id]: game.now + sk.cd };
   game.setPlayer({ mp: game.player.mp - sk.mp });
   game.say(`${sk.name}!`);
+  if (sk.magic || ['heal', 'hot', 'buff', 'guardian', 'convert'].includes(sk.kind)) game.castPoseUntil = game.now + 420;
+  else game.attackPoseUntil = game.now + 200;
   game.emit('sfx', sk.magic || sk.kind === 'heal' || sk.kind === 'hot' ? 'magic' : 'skill');
   return true;
 }

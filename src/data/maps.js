@@ -56,7 +56,7 @@ export const MAP_DEFS = {
         {
           id: 'smith', name: '대장장이 무쇠', x: 6, y: 3, look: 'smith',
           lines: ['어서 오게! 쇠는 두드릴수록 단단해지는 법이지.', '좋은 무기가 있어야 사냥도 수월하다네. 하나 골라 보게.'],
-          shop: ['woodSword', 'ironSword', 'steelSword', 'dagger', 'ironDagger', 'steelDagger', 'woodStaff', 'jadeStaff', 'spiritStaff', 'paperFan', 'craneFan', 'cloudFan'],
+          shop: ['woodSword', 'ironSword', 'steelSword', 'dagger', 'ironDagger', 'nightBlade', 'steelDagger', 'blackCloudBlade', 'woodStaff', 'jadeStaff', 'spiritStaff', 'paperFan', 'craneFan', 'cloudFan'],
         },
     ],
     spawns: [],
@@ -71,7 +71,7 @@ export const MAP_DEFS = {
         {
           id: 'tailor', name: '포목점 비단', x: 6, y: 3, look: 'tailor',
           lines: ['곱게 지은 옷 한 벌이 목숨을 살리기도 한답니다.', '갑옷과 투구를 보고 가세요.'],
-          shop: ['cottonRobe', 'leatherArmor', 'chainArmor', 'ironArmor', 'strawHat', 'leatherCap', 'ironHelm'],
+          shop: ['cottonRobe', 'leatherArmor', 'blueRobe', 'pinkJeogori', 'chainArmor', 'blackPlate', 'silverPlate', 'ironArmor', 'dragonRobe', 'phoenixDress', 'strawHat', 'leatherCap', 'ironHelm'],
         },
     ],
     spawns: [],

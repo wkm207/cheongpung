@@ -118,13 +118,13 @@ export class Hud {
     this.badgeSkill.classList.toggle('show', game.learnableCount() > 0);
 
     const p = game.player;
-    const pk = `${p.cls}:${Object.values(p.equip).join(',')}`;
+    const pk = `${p.cls}:${p.gender}:${Object.values(p.equip).join(',')}`;
     if (pk !== this.portraitKey) {
       this.portraitKey = pk;
       const ctx = this.portrait.getContext('2d');
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0, 0, 32, 32);
-      ctx.drawImage(portraitSprite(p.cls, p.equip), 0, 0);
+      ctx.drawImage(portraitSprite(p.cls, p.equip, p.gender), 0, 0, 32, 32, 0, 0, 32, 32);
     }
   }
 

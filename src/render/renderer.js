@@ -230,11 +230,18 @@ export class Renderer {
 
   drawPlayer(ctx, game, pe, x, y) {
     shadow(ctx, x + 16, y + 30, 9);
-    const frame = pe.moving && pe.stepT < 0.6 ? 1 : 0;
-    const breathe = !pe.moving && Math.floor(game.now / 650) % 2 ? 1 : 0;
-    const img = playerSprite(game.player.cls, spriteDir(pe.dir), frame, game.player.equip, blinking(game.now, 1));
+    let pose = pe.moving && pe.stepT < 0.6 ? 'walk' : 'stand';
+    if (game.castPoseUntil > game.now) pose = 'cast';
+    else if (game.attackPoseUntil > game.now) pose = 'attack';
+    const breathe = pose === 'stand' && Math.floor(game.now / 650) % 2 ? 1 : 0;
+    const lunge = pose === 'attack' ? 3 : 0;
+    const [ldx, ldy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[pe.dir];
+    const img = playerSprite(game.player.cls, {
+      gender: game.player.gender, dir: spriteDir(pe.dir), pose, equip: game.player.equip, blink: blinking(game.now, 1),
+    });
+    if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
     ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : 1;
-    drawSprite(ctx, img, x, y - 2 + breathe, pe.dir === 'right');
+    drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge, pe.dir === 'right');
     ctx.globalAlpha = 1;
     if (game.buffs.length || game.guardianUntil > game.now) {
       ctx.strokeStyle = game.guardianUntil > game.now ? 'rgba(255, 246, 213, 0.8)' : `rgba(255, 209, 102, ${0.4 + 0.2 * Math.sin(game.now / 150)})`;
@@ -244,21 +251,43 @@ export class Renderer {
       ctx.stroke();
     }
     const name = game.player.tier ? `${game.title()} ${game.player.name}` : game.player.name;
-    label(ctx, name, x + 16, y - 2, game.player.gm.god ? '#ffd166' : '#ffffff');
-    if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, y - 10);
+    label(ctx, name, x + 16, y - 18, game.player.gm.god ? '#ffd166' : '#ffffff');
+    if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, y - 26);
+  }
+
+  /** 시전할 때 발밑에 도는 법진 */
+  drawCastCircle(ctx, cx, cy, now) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1, 0.45);
+    ctx.rotate(now / 300);
+    ctx.strokeStyle = 'rgba(255, 230, 140, 0.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i * 4 * Math.PI) / 5;
+      ctx.lineTo(Math.cos(a) * 16, Math.sin(a) * 16);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
   }
 
   drawNpc(ctx, game, n, x, y) {
     shadow(ctx, x + 16, y + 30, n.look === 'cat' ? 7 : 9);
     const img = npcSprite(n.look, spriteDir(n.dir), blinking(game.now, n.x * 3 + n.y));
     const flip = n.look === 'cat' ? n.face === 'right' : n.dir === 'right';
-    drawSprite(ctx, img, x, y - 2, flip);
-    label(ctx, n.name, x + 16, y - 2, '#ffe08a');
-    if (n.speech && n.speech.until > game.now) bubble(ctx, n.speech.text, x + 16, y - 10);
+    const top = img.height > 32 ? 18 : 2;
+    drawSprite(ctx, img, x, y - top, flip);
+    label(ctx, n.name, x + 16, y - top, '#ffe08a');
+    if (n.speech && n.speech.until > game.now) bubble(ctx, n.speech.text, x + 16, y - top - 8);
     const mark = this.npcMark(game, n);
     if (mark) {
       const hop = Math.abs(Math.sin(game.now / 250)) * 3;
-      label(ctx, mark.text, x + 16, y - 11 - hop, mark.color, 13);
+      label(ctx, mark.text, x + 16, y - (img.height > 32 ? 27 : 11) - hop, mark.color, 13);
     }
   }
 

@@ -12,7 +12,8 @@ import { ITEMS } from '../src/data/items.js';
 import { QUEST_CHAINS } from '../src/data/quests.js';
 import { ADVANCEMENTS } from '../src/data/tiers.js';
 import { MONSTERS } from '../src/data/monsters.js';
-import { MONSTER_ART, CHAR_DOWN, CHAR_UP, CHAR_SIDE, LEGS } from '../src/render/sprites.js';
+import { MONSTER_ART } from '../src/render/sprites.js';
+import { BODY, LEGS } from '../src/render/characters.js';
 
 const tick = (game, ms, step = 16) => {
   for (let t = 0; t < ms; t += step) game.update(step);
@@ -70,7 +71,7 @@ test('배우지 않은 기술은 쓸 수 없고 배운 기술만 슬롯에 넣�
   game.castSkillById('chain');
   assert.equal(game.player.mp, mp);
   const saved = validatePlayer({ ...game.toSave(), skillSlots: ['fire', 'chain', 'nope', null, null] });
-  assert.deepEqual(saved.skillSlots, ['fire', ...Array(13).fill(null)]);
+  assert.deepEqual(saved.skillSlots, ['fire', ...Array(19).fill(null)]);
 });
 
 test('승급: 조건을 채우면 차수가 오르고 능력치와 기념 무기를 받는다', () => {
@@ -158,7 +159,7 @@ test('예전 저장(퀘스트·기술 배우기 이전)도 안전하게 불러�
 
 test('데이터: 모든 기술·승급·퀘스트·몬스터·도트가 서로 맞물린다', () => {
   for (const c of Object.values(CLASSES)) {
-    assert.equal(c.skills.length, 14);
+    assert.ok(c.skills.length >= 14 && c.skills.length <= 20, `${c.name} 기술 ${c.skills.length}개`);
     for (const id of c.skills) assert.ok(SKILLS[id], id);
   }
   for (const a of ADVANCEMENTS) {
@@ -173,7 +174,7 @@ test('데이터: 모든 기술·승급·퀘스트·몬스터·도트가 서로 �
       for (const id of Object.values(q.reward.byClass ?? {})) assert.ok(ITEMS[id], id);
     }
   }
-  for (const rows of [CHAR_DOWN, CHAR_UP, CHAR_SIDE, ...LEGS, ...Object.values(MONSTER_ART)]) {
+  for (const rows of [...Object.values(BODY), ...LEGS.front, ...LEGS.side, ...Object.values(MONSTER_ART)]) {
     for (const r of rows) assert.equal(r.length, 16, r);
   }
 });

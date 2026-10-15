@@ -32,6 +32,7 @@ const ASSETS = [
   './src/game.js',
   './src/main.js',
   './src/render/ambient.js',
+  './src/render/characters.js',
   './src/render/effects.js',
   './src/render/renderer.js',
   './src/render/sprites.js',

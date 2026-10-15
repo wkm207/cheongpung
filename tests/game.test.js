@@ -55,6 +55,12 @@ test('몬스터를 때려서 잡으면 경험치·금전을 얻고 리스폰이 
   }
   assert.equal(game.monsters.includes(m), false);
   assert.ok(game.player.exp > 0);
+  // 금전은 땅에 떨어지고, 그 칸을 밟아야 들어온다
+  const coin = game.groundItems.find((g) => g.id === '__gold');
+  assert.ok(coin);
+  game.pe.x = coin.x;
+  game.pe.y = coin.y;
+  game.pickUp();
   assert.ok(game.player.gold > gold);
   assert.ok(game.respawnQueue.length === 0 || game.respawnQueue[0].type === 'squirrel');
 });

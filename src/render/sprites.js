@@ -2,62 +2,9 @@
 // 모든 그림은 이 프로젝트에서 새로 그린 오리지널이다.
 import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
+import { drawCharacter, CHAR_W, CHAR_H } from './characters.js';
 
 const PX = 2; // 도트 1칸 = 2픽셀 (타일 32px)
-
-// 2등신 캐릭터(머리가 크고 볼터치가 있는 모습)
-export const CHAR_DOWN = [
-  '.....kkkkkk.....',
-  '...kkhhhhhhkk...',
-  '..khhhhhhhhhhk..',
-  '.khhhhhhhhhhhhk.',
-  '.khhhhhhhhhhhhk.',
-  '.khhshhhhhhshhk.',
-  '.khsssssssssshk.',
-  '.ksssessssesssk.',
-  '.ksssessssesssk.',
-  '.kspsssmmssspsk.',
-  '...kssssssssk...',
-  '...kbbbwwbbbk...',
-  '..ksbbbwwbbbsk..',
-  '...kddddddddk...',
-];
-export const CHAR_UP = [
-  '.....kkkkkk.....',
-  '...kkhhhhhhkk...',
-  '..khhhhhhhhhhk..',
-  '.khhhhhhhhhhhhk.',
-  '.khhhhhhhhhhhhk.',
-  '.khhhhhhhhhhhhk.',
-  '.khhhhhhhhhhhhk.',
-  '.khhhhhhhhhhhhk.',
-  '.khhhhhhhhhhhhk.',
-  '..khhhhhhhhhhk..',
-  '...kssssssssk...',
-  '...kbbbbbbbbk...',
-  '..ksbbbbbbbbsk..',
-  '...kddddddddk...',
-];
-export const CHAR_SIDE = [
-  '.....kkkkkk.....',
-  '...kkhhhhhhkk...',
-  '..khhhhhhhhhhk..',
-  '.khhhhhhhhhhhhk.',
-  '.khhhhhhhhhhhhk.',
-  '.kshhhhhhhhhhhk.',
-  '.ksssshhhhhhhhk.',
-  '.ksesssshhhhhhk.',
-  '.ksesssshhhhhhk.',
-  '.kpsssssshhhhhk.',
-  '...ksssssssk....',
-  '....kbbbbbbk....',
-  '...ksbbbbbbbk...',
-  '....kddddddk....',
-];
-export const LEGS = [
-  ['....kllkkllk....', '....kffkkffk....'],
-  ['...kllk..kllk...', '...kffk..kffk...'],
-];
 
 export const MONSTER_ART = {
   squirrel: [
@@ -263,124 +210,22 @@ function cached(key, w, h, draw) {
   return cache.get(key);
 }
 
-/** 16칸 격자 위에 사각형을 칠하는 도구 */
-const grid = (ctx) => (x, y, w, h, color) => {
-  ctx.fillStyle = color;
-  ctx.fillRect(x * PX, y * PX, w * PX, h * PX);
-};
 
-function charPalette(look, trim) {
-  return {
-    k: '#1a1110', h: look.hair, s: look.skin ?? '#f5cba7', e: '#1a1110', m: '#c0715a', p: '#f4a3a3',
-    b: look.body, d: trim?.d ?? look.dark, w: trim?.w ?? '#ecf0f1', l: '#3e2723', f: '#1b1b1b',
-  };
+/** 사람 캐릭터(32×48): 성별·자세·장비가 반영된다. pose: stand | walk | cast | attack */
+function characterSprite(keyBase, look, { gender = 'm', dir = 'down', pose = 'stand', blink = false, equip = {} } = {}) {
+  const key = `${keyBase}:${gender}:${dir}:${pose}:${blink ? 1 : 0}:${equip.weapon}:${equip.helmet}:${equip.armor}:${equip.necklace}`;
+  return cached(key, CHAR_W, CHAR_H, (ctx) => drawCharacter(ctx, { look, gender, dir, pose, blink, equip, items: ITEMS }));
 }
 
-function blinkRows(rows) {
-  return rows.map((row, y) => {
-    if (y === 7) return row.replaceAll('e', 's');
-    if (y === 8) return row.replaceAll('e', 'k');
-    return row;
-  });
+export function playerSprite(cls, opts = {}) {
+  return characterSprite(`p-${cls}`, CLASSES[cls].look, opts);
 }
 
-const HATS = {
-  strawHat(r) {
-    r(6, 0, 4, 1, '#b8913f');
-    r(4, 1, 8, 1, '#d9b56a');
-    r(2, 2, 12, 1, '#e6c47a');
-    r(0, 3, 16, 1, '#b8913f');
-    r(1, 4, 14, 1, '#7a5a20');
-  },
-  leatherCap(r) {
-    r(3, 0, 10, 1, '#5b3a1e');
-    r(2, 1, 12, 2, '#8b5a2b');
-    r(2, 3, 12, 1, '#5b3a1e');
-    r(5, 1, 2, 1, '#a8743f');
-  },
-  ironHelm(r) {
-    r(6, 0, 4, 1, '#e74c3c');
-    r(3, 1, 10, 1, '#7f8c8d');
-    r(2, 2, 12, 2, '#aab7b8');
-    r(7, 1, 2, 3, '#d5dbdb');
-    r(2, 4, 12, 1, '#5d6d7e');
-  },
-  dragonHelm(r) {
-    r(3, 0, 2, 1, '#f4d03f');
-    r(11, 0, 2, 1, '#f4d03f');
-    r(3, 1, 10, 1, '#1e6b52');
-    r(2, 2, 12, 2, '#2e8b6b');
-    r(7, 2, 2, 1, '#f4d03f');
-    r(2, 4, 12, 1, '#124535');
-  },
-  // NPC 전용
-  gat(r) {
-    r(5, 0, 6, 2, '#1a1a1a');
-    r(1, 2, 14, 1, '#2b2b2b');
-    r(0, 3, 16, 1, '#1a1a1a');
-  },
-  guard(r) {
-    r(4, 0, 8, 1, '#1a1a1a');
-    r(3, 1, 10, 2, '#2b2b2b');
-    r(7, 0, 2, 1, '#c0392b');
-    r(1, 3, 14, 1, '#1a1a1a');
-  },
-};
-
-function drawWeapon(r, wtype, tint, dir) {
-  if (dir === 'up') return; // 등 뒤라 가려진다
-  const x = dir === 'down' ? 14 : 1;
-  if (wtype === 'sword') {
-    r(x, 4, 1, 8, tint);
-    r(x, 4, 1, 1, '#ffffff');
-    r(x - 1, 12, 3, 1, '#8b5a2b');
-    r(x, 13, 1, 2, '#5b3a1e');
-  } else if (wtype === 'dagger') {
-    r(x, 8, 1, 4, tint);
-    r(x - 1, 12, 3, 1, '#5b3a1e');
-    r(x, 13, 1, 1, '#3e2723');
-  } else if (wtype === 'staff') {
-    r(x, 4, 1, 12, '#8b5a2b');
-    r(x - 1, 1, 3, 3, tint);
-    r(x, 1, 1, 1, '#ffffff');
-  } else if (wtype === 'fan') {
-    r(x - 1, 9, 3, 1, tint);
-    r(x - 2, 10, 4, 2, tint);
-    r(x - 1, 10, 1, 2, '#c9b38a');
-    r(x, 12, 1, 2, '#5b3a1e');
-  }
-}
-
-/** 장비가 반영된 캐릭터 그림. dir: down|up|side(왼쪽), frame: 0·1 걷기, blink: 눈 감음 */
-function characterSprite(keyBase, look, dir, frame, equip = {}, blink = false) {
-  const weapon = equip.weapon && ITEMS[equip.weapon];
-  const armor = equip.armor && ITEMS[equip.armor];
-  const neck = equip.necklace && ITEMS[equip.necklace];
-  const key = `${keyBase}:${dir}:${frame}:${blink ? 1 : 0}:${equip.weapon}:${equip.helmet}:${equip.armor}:${equip.necklace}`;
-  return cached(key, 32, 32, (ctx) => {
-    const body = dir === 'up' ? CHAR_UP : dir === 'down' ? CHAR_DOWN : CHAR_SIDE;
-    const rows = blink && dir !== 'up' ? blinkRows(body) : body;
-    const r = grid(ctx);
-    drawPixelRows(ctx, [...rows, ...LEGS[frame]], charPalette(look, armor?.trim));
-    if (armor?.shoulder && dir !== 'side') {
-      r(2, 12, 2, 1, armor.shoulder);
-      r(12, 12, 2, 1, armor.shoulder);
-    }
-    if (neck && dir === 'down') r(7, 11, 2, 1, neck.gem);
-    if (neck && dir === 'side') r(5, 11, 1, 1, neck.gem);
-    const hat = equip.helmet ?? look.hat;
-    if (hat && HATS[hat]) HATS[hat](r);
-    if (weapon) drawWeapon(r, weapon.wtype, weapon.tint, dir);
-  });
-}
-
-export function playerSprite(cls, dir, frame, equip = {}, blink = false) {
-  return characterSprite(`p-${cls}`, CLASSES[cls].look, dir, frame, equip, blink);
-}
+const FEMALE_NPC = new Set(['tailor', 'herbalist', 'peddler', 'innkeeper']);
 
 export function npcSprite(look, dir, blink = false) {
   if (look === 'cat') return cached('n-cat', 32, 32, (ctx) => drawPixelRows(ctx, MONSTER_ART.cat, { k: '#3b2410', o: '#f0a24a', w: '#fff3e0', e: '#2b2b2b', n: '#f78fb3', p: '#ffb3c6' }));
-  return characterSprite(`n-${look}`, NPC_LOOK[look], dir, 0, {}, blink);
+  return characterSprite(`n-${look}`, NPC_LOOK[look], { gender: FEMALE_NPC.has(look) ? 'f' : 'm', dir, blink });
 }
 
 function drawTails(ctx, size, pal) {
@@ -417,7 +262,7 @@ export function monsterScale(type) {
   return MONSTER_LOOK[type].scale ?? 1;
 }
 
-/** 캐릭터 고르는 화면 등에서 쓰는 작은 그림 */
-export function portraitSprite(cls, equip = {}) {
-  return playerSprite(cls, 'down', 0, equip);
+/** 캐릭터 고르는 화면·초상화용 정면 그림 */
+export function portraitSprite(cls, equip = {}, gender = 'm') {
+  return playerSprite(cls, { gender, dir: 'down', equip });
 }

@@ -185,6 +185,15 @@ export class Panels {
     this.render();
   }
 
+  /** 대화창에서 Space·Enter: [다음]이 있으면 다음 장, 없으면 닫는다. 대화창이 아니면 false */
+  advanceKey() {
+    if (this.kind !== 'dialog') return false;
+    const next = this.panel.querySelector('[data-act="next"], [data-act="afterDone"]');
+    if (next) next.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    else this.close();
+    return true;
+  }
+
   /** 마법창: 첫 번째로 고른 칸을 두 번째로 고른 칸과 맞바꾼다. 처리했으면 true */
   spellLetter(index) {
     if (this.kind !== 'spells') return false;

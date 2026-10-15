@@ -41,13 +41,19 @@ export function computeStats(player, buffs = [], now = 0) {
     else if (b.stat === 'all') for (const k of Object.keys(mult)) mult[k] *= b.mult;
     else mult[b.stat] *= b.mult;
   }
+  // 능력치 분배: 힘 → 공격+2, 지력 → 술력+2·마력+4, 체력 → 체력+14·방어+0.5, 민첩 → 치명+0.4%·방어+1
+  const a = player.alloc ?? {};
+  const str = a.str ?? 0;
+  const int = a.int ?? 0;
+  const con = a.con ?? 0;
+  const dex = a.dex ?? 0;
   return {
-    maxHp: base.hp + bonus.hp,
-    maxMp: base.mp + bonus.mp,
-    atk: Math.round((base.atk + bonus.atk) * mult.atk),
-    def: Math.round((base.def + bonus.def) * mult.def),
-    mag: Math.round((base.mag + bonus.mag) * mult.mag),
-    crit: Math.min(0.9, CLASSES[player.cls].crit + bonus.crit + critAdd),
+    maxHp: base.hp + bonus.hp + con * 14 + (player.bonusHp ?? 0),
+    maxMp: base.mp + bonus.mp + int * 4 + (player.bonusMp ?? 0),
+    atk: Math.round((base.atk + bonus.atk + str * 2) * mult.atk),
+    def: Math.round((base.def + bonus.def + dex + con * 0.5) * mult.def),
+    mag: Math.round((base.mag + bonus.mag + int * 2) * mult.mag),
+    crit: Math.min(0.9, CLASSES[player.cls].crit + bonus.crit + critAdd + dex * 0.004),
   };
 }
 

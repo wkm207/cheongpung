@@ -23,6 +23,7 @@ export function canEquip(player, id) {
   const it = ITEMS[id];
   if (!it || !isEquipment(id)) return { ok: false, reason: '장비가 아닙니다.' };
   if (it.wtype && it.wtype !== CLASSES[player.cls].weapon) return { ok: false, reason: `${WEAPON_CLASS[it.wtype]} 전용 무기입니다.` };
+  if (it.gender && it.gender !== (player.gender ?? 'm')) return { ok: false, reason: `${it.gender === 'f' ? '여성' : '남성'} 전용 옷입니다.` };
   if ((it.tier ?? 0) > (player.tier ?? 0)) return { ok: false, reason: `${it.tier}차 승급 후 착용할 수 있습니다.` };
   if (player.level < it.level) return { ok: false, reason: `레벨 ${it.level}부터 착용할 수 있습니다.` };
   return { ok: true, reason: '' };

@@ -18,6 +18,7 @@ export class Title {
     this.view = 'main';
     this.slot = 0;
     this.cls = null;
+    this.gender = 'm';
     this.name = '';
     this.note = '';
     this.confirmDelete = null;
@@ -67,7 +68,7 @@ export class Title {
         : `<button data-act="askDelete" data-slot="${i}">삭제</button>`;
       return `<div class="save-slot">
         <span class="slot-no">${i + 1}번</span>
-        <canvas data-preview="${p.cls}" data-slot="${i}" width="32" height="32"></canvas>
+        <canvas data-preview="${p.cls}" data-slot="${i}" width="32" height="48"></canvas>
         <b>${esc(p.name)}</b>
         <small>Lv.${p.level} ${esc(titleOf(p.cls, p.tier))}</small>
         <small>${esc(MAP_DEFS[p.mapId]?.name ?? '')} · ${formatPlayTime(p.playMs)}</small>
@@ -87,13 +88,17 @@ export class Title {
   render_new() {
     const cards = Object.entries(CLASSES).map(([id, c]) => `
       <button class="class-card${this.cls === id ? ' sel' : ''}" data-act="pick" data-cls="${id}">
-        <canvas data-preview="${id}" width="32" height="32"></canvas>
+        <canvas data-preview="${id}" width="32" height="48"></canvas>
         <b>${c.name}</b><small>${esc(c.desc)}</small>
         <span class="mini-stats">체${c.base.hp} 마${c.base.mp} 공${c.base.atk} 방${c.base.def} 술${c.base.mag}</span>
       </button>`).join('');
     return `
       <h2>${this.slot + 1}번 슬롯 · 새 캐릭터</h2>
       <label class="name-field">이름 <input id="new-name" maxlength="${NAME_MAX}" value="${esc(this.name)}" placeholder="최대 ${NAME_MAX}자" autocomplete="off"></label>
+      <div class="row" style="justify-content:center">성별
+        <button class="${this.gender === 'm' ? 'primary' : ''}" data-act="gender" data-g="m">남자</button>
+        <button class="${this.gender === 'f' ? 'primary' : ''}" data-act="gender" data-g="f">여자</button>
+      </div>
       <div class="class-grid">${cards}</div>
       <div class="title-buttons row">
         <button data-act="back">뒤로</button>
@@ -123,8 +128,9 @@ export class Title {
     for (const canvas of this.root.querySelectorAll('[data-preview]')) {
       const ctx = canvas.getContext('2d');
       ctx.imageSmoothingEnabled = false;
-      const equip = canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)]?.equip : {};
-      ctx.drawImage(playerSprite(canvas.dataset.preview, 'down', 0, equip ?? {}), 0, 0);
+      const save = canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)] : null;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(playerSprite(canvas.dataset.preview, { gender: save?.gender ?? this.gender, equip: save?.equip ?? {} }), 0, 0);
     }
     this.updateStartButton();
   }
@@ -158,10 +164,11 @@ export class Title {
       case 'pickSlot': this.slot = slot; break;
       case 'back': this.view = 'main'; this.note = ''; break;
       case 'pick': this.cls = el.dataset.cls; break;
+      case 'gender': this.gender = el.dataset.g; break;
       case 'start': {
         const name = this.name.trim();
         if (!name || !this.cls) return;
-        this.onStart({ newName: name, cls: this.cls }, this.slot);
+        this.onStart({ newName: name, cls: this.cls, gender: this.gender }, this.slot);
         return;
       }
       case 'doImport': this.tryImport(this.root.querySelector('#title-import-text').value); return;

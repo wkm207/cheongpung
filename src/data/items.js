@@ -18,6 +18,8 @@ export const ITEMS = {
   tortoiseSword: { name: '현무천검', icon: '🐢', type: 'weapon', wtype: 'sword', atk: 72, hp: 150, level: 45, tier: 3, price: 200000, tint: '#7ee0c3' },
   dragonSword: { name: '청룡검', icon: '🐉', type: 'weapon', wtype: 'sword', atk: 32, hp: 50, level: 20, tier: 1, price: 20000, tint: '#5dd6c0' },
 
+  nightBlade: { name: '야행비검', icon: '🗡️', type: 'weapon', wtype: 'dagger', atk: 13, crit: 0.05, level: 12, price: 1500, tint: '#5d6d7e' },
+  blackCloudBlade: { name: '흑운도', icon: '🗡️', type: 'weapon', wtype: 'dagger', atk: 34, crit: 0.07, level: 26, tier: 1, price: 24000, tint: '#2c3e50' },
   dagger: { name: '단검', icon: '🔪', type: 'weapon', wtype: 'dagger', atk: 3, level: 1, price: 60, tint: '#d5dbdb' },
   ironDagger: { name: '비수', icon: '🔪', type: 'weapon', wtype: 'dagger', atk: 9, level: 8, price: 600, tint: '#e5e8e8' },
   steelDagger: { name: '쌍월도', icon: '🔪', type: 'weapon', wtype: 'dagger', atk: 16, level: 14, price: 2500, tint: '#aed6f1' },
@@ -46,6 +48,12 @@ export const ITEMS = {
 
   heavenRobe: { name: '천의무봉', icon: '👘', type: 'armor', def: 48, hp: 250, mp: 80, level: 45, tier: 3, price: 150000, trim: { d: '#f4f6ff', w: '#ffd166' }, shoulder: '#ffffff' },
   dragonArmor: { name: '용린갑', icon: '🐲', type: 'armor', def: 32, hp: 120, level: 30, tier: 2, price: 30000, trim: { d: '#1e6b52', w: '#f4d03f' }, shoulder: '#3fa37a' },
+  blueRobe: { name: '남색 도포', icon: '🥋', type: 'armor', gender: 'm', def: 8, hp: 20, level: 10, price: 900, trim: { d: '#1f3a6b', w: '#e8e2d0' } },
+  pinkJeogori: { name: '연분홍 저고리', icon: '👘', type: 'armor', gender: 'f', def: 7, mp: 25, level: 10, price: 900, trim: { d: '#e86f9a', w: '#fff0f5' } },
+  blackPlate: { name: '흑철 갑주', icon: '🛡️', type: 'armor', gender: 'm', def: 18, hp: 60, level: 25, price: 7000, trim: { d: '#1c1c1c', w: '#c0392b' }, shoulder: '#4a4a4a' },
+  silverPlate: { name: '은빛 갑주', icon: '🛡️', type: 'armor', gender: 'f', def: 17, hp: 50, mp: 30, level: 25, price: 7000, trim: { d: '#c0c7d1', w: '#5dade2' }, shoulder: '#e5e8ec' },
+  dragonRobe: { name: '용문 도포', icon: '🐉', type: 'armor', gender: 'm', def: 30, hp: 140, level: 40, tier: 2, price: 40000, trim: { d: '#14385c', w: '#f4d03f' }, shoulder: '#1f5f8b' },
+  phoenixDress: { name: '봉황 치마저고리', icon: '🦚', type: 'armor', gender: 'f', def: 28, hp: 120, mp: 60, level: 40, tier: 2, price: 40000, trim: { d: '#a8233a', w: '#f4d03f' }, shoulder: '#e86f9a' },
   strawHat: { name: '삿갓', icon: '👒', type: 'helmet', def: 1, level: 1, price: 30 },
   leatherCap: { name: '가죽모자', icon: '🧢', type: 'helmet', def: 3, level: 6, price: 250 },
   ironHelm: { name: '철투구', icon: '⛑️', type: 'helmet', def: 7, level: 14, price: 1500 },
@@ -131,7 +139,7 @@ export function itemStatText(id) {
   if (!it) return '';
   if (it.desc) return it.desc;
   const parts = Object.keys(STAT_LABELS).filter((k) => it[k]).map((k) => `${STAT_LABELS[k]} +${statValue(k, it[k])}`);
-  const who = it.wtype ? ` · ${WEAPON_CLASS[it.wtype]} 전용` : '';
+  const who = it.wtype ? ` · ${WEAPON_CLASS[it.wtype]} 전용` : it.gender ? ` · ${it.gender === 'f' ? '여성' : '남성'} 전용` : '';
   const tier = it.tier ? ` · ${it.tier}차` : '';
   return `${parts.join(' · ')} (Lv.${it.level}${tier}${who})`;
 }

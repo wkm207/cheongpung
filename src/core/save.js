@@ -61,10 +61,19 @@ export function validatePlayer(raw) {
     const v = raw.enhance?.[k];
     return [k, isInt(v) && v >= 0 && v <= MAX_ENHANCE ? v : 0];
   }));
-  const max = computeStats({ cls: raw.cls, level: raw.level, tier, equip, enhance });
+  const alloc = Object.fromEntries(['str', 'dex', 'int', 'con'].map((k) => [k, isInt(raw.alloc?.[k]) && raw.alloc[k] >= 0 ? raw.alloc[k] : 0]));
+  const spent = Object.values(alloc).reduce((x, y) => x + y, 0);
+  const budget = (raw.level - 1) * 3;
+  // 예전 저장(능력치 분배 이전)은 그동안 받았어야 할 점수를 한꺼번에 준다
+  const statPoints = isInt(raw.statPoints) && raw.statPoints >= 0 ? Math.min(raw.statPoints, Math.max(0, budget - spent)) : Math.max(0, budget - spent);
+  const fairAlloc = spent <= budget ? alloc : { str: 0, dex: 0, int: 0, con: 0 };
+  const bonusHp = isInt(raw.bonusHp) && raw.bonusHp >= 0 ? raw.bonusHp : 0;
+  const bonusMp = isInt(raw.bonusMp) && raw.bonusMp >= 0 ? raw.bonusMp : 0;
+  const max = computeStats({ cls: raw.cls, level: raw.level, tier, equip, enhance, alloc: fairAlloc, bonusHp, bonusMp });
   return {
     name,
     cls: raw.cls,
+    gender: raw.gender === 'f' ? 'f' : 'm',
     level: raw.level,
     exp: isNum(raw.exp) && raw.exp >= 0 ? Math.floor(raw.exp) : 0,
     gold: isNum(raw.gold) && raw.gold >= 0 ? Math.floor(raw.gold) : 0,
@@ -81,6 +90,10 @@ export function validatePlayer(raw) {
     quests: validateQuests(raw.quests),
     tier,
     enhance,
+    statPoints: spent <= budget ? statPoints : budget,
+    alloc: fairAlloc,
+    bonusHp,
+    bonusMp,
     learned,
     skillSlots: sanitizeSlots(raw.skillSlots, learned),
   };

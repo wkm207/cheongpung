@@ -21,16 +21,19 @@ import { defaultSlots, slotNewSkill, assignSlot, starterSkills } from './core/sk
 import { randInt } from './core/rng.js';
 import { enhanceInfo, emptyEnhance } from './core/enhance.js';
 
-const QUICK_ITEMS = { hp: ['herb', 'bigHerb', 'elixir'], mp: ['dew', 'bigDew', 'elixir'] };
+const QUICK_ITEMS = { hp: ['herb', 'tteok', 'bigHerb', 'gukbap', 'elixir'], mp: ['dew', 'makgeolli', 'bigDew', 'elixir'] };
+export const GOLD_ID = '__gold';
+export const STAT_POINTS_PER_LEVEL = 3;
 const NPC_STEP_MS = 480;
 const TURN_HOLD_MS = 110;
 
-export function createPlayer(name, cls) {
+export function createPlayer(name, cls, gender = 'm') {
   const c = CLASSES[cls];
   let inv = [];
   for (const [id, qty] of [['herb', 5], ['dew', 3], ['returnScroll', 1]]) inv = addItem(inv, id, qty).inv;
   const player = {
-    name, cls, level: 1, exp: 0, gold: 100, hp: 1, mp: 0, inv,
+    name, cls, gender, level: 1, exp: 0, gold: 100, hp: 1, mp: 0, inv,
+    statPoints: 0, alloc: { str: 0, dex: 0, int: 0, con: 0 },
     equip: { weapon: c.startWeapon, helmet: null, armor: 'cottonRobe', necklace: null, ring: null },
     mapId: RESPAWN_POINT.mapId, x: RESPAWN_POINT.x, y: RESPAWN_POINT.y, dir: 'down',
     playMs: 0, gm: { god: false, speed: 1 },
@@ -324,6 +327,7 @@ export class Game {
       return;
     }
     this.attackReadyAt = this.now + CLASSES[this.player.cls].attackMs;
+    this.attackPoseUntil = this.now + 160;
     const target = this.meleeTarget();
     const at = target ?? this.frontTile();
     this.addEffect({ type: 'slash', x: at.x, y: at.y, dir: this.pe.dir, dur: 180 });
@@ -415,12 +419,11 @@ export class Game {
       if (d.boss) this.bossTimers = { ...this.bossTimers, [m.type]: this.now + d.respawnMs };
     }
     const gold = rollGold(d.gold);
-    this.setPlayer({ gold: this.player.gold + gold });
+    this.groundItems = [...this.groundItems, { id: GOLD_ID, qty: gold, x: m.x, y: m.y, spawnAt: this.now, expiresAt: this.now + GROUND_ITEM_TTL_MS }];
     for (const id of rollDrops(d.drops)) {
       this.groundItems = [...this.groundItems, { id, qty: 1, x: m.x, y: m.y, spawnAt: this.now, expiresAt: this.now + GROUND_ITEM_TTL_MS }];
     }
     this.addEffect({ type: 'poof', x: m.x, y: m.y, dur: 400 });
-    this.addText(`+${gold}전`, m.x, m.y - 0.5, '#ffd966', 9);
     this.addText(`+${d.exp} 경험치`, m.x, m.y - 0.95, '#d7b8ff', 8);
     this.emit('sfx', 'kill');
     if (d.boss) this.log(`${josa(d.name, '을/를')} 쓰러뜨렸습니다!`, '#ff9fd0');
@@ -433,6 +436,7 @@ export class Game {
     const { player, levelsGained } = gainExp(this.player, amount);
     this.player = player;
     if (!levelsGained) return;
+    this.setPlayer({ statPoints: (this.player.statPoints ?? 0) + levelsGained * STAT_POINTS_PER_LEVEL });
     const s = this.stats();
     this.setPlayer({ hp: s.maxHp, mp: s.maxMp });
     this.addEffect({ type: 'levelup', x: this.pe.x, y: this.pe.y, dur: 1400 });
@@ -534,6 +538,13 @@ export class Game {
     this.addText(`${dmg}`, pe.x, pe.y, '#ff6b6b');
     this.emit('sfx', 'hurt');
     if (hp > 0) return;
+    if (this.player.learned.includes('revival') && this.now >= (this.cooldowns.revival ?? 0)) {
+      this.cooldowns = { ...this.cooldowns, revival: this.now + SKILLS.revival.cd };
+      this.setPlayer({ hp: Math.ceil(this.stats().maxHp * 0.3), mp: Math.floor(this.player.mp / 2) });
+      this.addEffect({ type: 'pillar', x: pe.x, y: pe.y, color: '#ffe9a8', dur: 900 });
+      this.log('회생술! 쓰러진 자리에서 다시 일어났습니다.', '#ffe9a8');
+      return;
+    }
     if (this.guardianUntil > this.now) {
       this.guardianUntil = 0;
       this.setPlayer({ hp: Math.ceil(this.stats().maxHp * 0.5) });
@@ -590,6 +601,14 @@ export class Game {
   }
 
   pickUp() {
+    const coins = this.groundItems.filter((g) => g.id === GOLD_ID && g.x === this.pe.x && g.y === this.pe.y);
+    if (coins.length) {
+      const total = coins.reduce((n, c) => n + c.qty, 0);
+      this.setPlayer({ gold: this.player.gold + total });
+      this.groundItems = this.groundItems.filter((g) => !coins.includes(g));
+      this.addText(`+${total.toLocaleString()}전`, this.pe.x, this.pe.y - 0.4, '#ffd966', 9);
+      this.emit('sfx', 'coin');
+    }
     const here = this.groundItems.filter((g) => g.x === this.pe.x && g.y === this.pe.y);
     if (!here.length) return;
     const questBefore = this.allQuests().map((q) => q.state);
@@ -751,6 +770,35 @@ export class Game {
     this.announceDiff(`강화 성공! ${name} +${info.next}`, statDiff(before, this.stats()));
     this.addEffect({ type: 'pillar', x: this.pe.x, y: this.pe.y, color: '#ffe066', dur: 700 });
     this.emit('sfx', 'levelup');
+    this.emit('inventory');
+    return true;
+  }
+
+  /** 능력치 점수 하나를 찍는다(str 힘·dex 민첩·int 지력·con 체력). */
+  allocate(stat, count = 1) {
+    const n = Math.min(count, this.player.statPoints ?? 0);
+    if (n <= 0 || !['str', 'dex', 'int', 'con'].includes(stat)) return false;
+    this.setPlayer({ statPoints: this.player.statPoints - n, alloc: { ...this.player.alloc, [stat]: (this.player.alloc?.[stat] ?? 0) + n } });
+    this.emit('inventory');
+    return true;
+  }
+
+  /** 능력치 초기화(금전 필요): 찍은 점수를 모두 돌려받는다. */
+  resetStatsCost() {
+    return this.player.level * 300;
+  }
+
+  resetStats() {
+    const cost = this.resetStatsCost();
+    const used = Object.values(this.player.alloc ?? {}).reduce((a, b) => a + b, 0);
+    if (!used) return false;
+    if (this.player.gold < cost) {
+      this.log(`금전이 부족합니다. (${cost.toLocaleString()}전 필요)`, '#ff9f80');
+      return false;
+    }
+    this.setPlayer({ gold: this.player.gold - cost, statPoints: (this.player.statPoints ?? 0) + used, alloc: { str: 0, dex: 0, int: 0, con: 0 } });
+    this.clampVitals();
+    this.log('능력치를 초기화했습니다.', '#9be7a1');
     this.emit('inventory');
     return true;
   }

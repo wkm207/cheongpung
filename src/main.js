@@ -105,7 +105,7 @@ const title = new Title($('#title'), {
   isCorrupt: (i) => isCorrupt(i),
   deleteSave: (i) => deleteSave(i),
   importText,
-  onStart: (data, i) => startGame(data.newName ? createPlayer(data.newName, data.cls) : data, i),
+  onStart: (data, i) => startGame(data.newName ? createPlayer(data.newName, data.cls, data.gender) : data, i),
 });
 
 const input = new Input({
@@ -130,6 +130,7 @@ const input = new Input({
       else panels.open(kind);
     },
     closePanel: () => panels.close(),
+    panelAdvance: () => panels.advanceKey(),
     isPaused: () => !game || panels.isOpen,
     keyboardUsed: () => document.body.classList.add('has-keyboard'),
     focusChat: () => {
@@ -137,7 +138,7 @@ const input = new Input({
       chatInput.focus();
     },
     toggleMinimap,
-    spellLetter: (letter) => panels.kind === 'spells' && panels.spellLetter('abcdefghijklmn'.indexOf(letter)),
+    spellLetter: (letter) => panels.kind === 'spells' && panels.spellLetter('abcdefghijklmnopqrst'.indexOf(letter)),
   },
 });
 
