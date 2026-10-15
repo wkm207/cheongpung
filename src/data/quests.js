@@ -162,8 +162,46 @@ const PEDDLER = [
   },
 ];
 
-export const QUEST_CHAINS = { chief: CHIEF, herbalist: HERBALIST, smith: SMITH, tailor: TAILOR, peddler: PEDDLER };
-export const QUEST_GIVERS = { chief: '촌장', herbalist: '약방 할멈', smith: '대장장이 무쇠', tailor: '포목점 비단', peddler: '방물장수 꽃분이' };
+const LORD = [
+  {
+    id: 'l1', title: '도깨비 굴 소탕령', where: '도깨비 굴',
+    goal: { type: 'kill', target: 'goblin', count: 20 },
+    offer: '성으로 가는 길목에 도깨비들이 들끓는다. 도깨비 20마리를 소탕해 오게.',
+    done: '훌륭하다. 상을 내리겠다.',
+    reward: { gold: 3000, exp: 5000, items: [['elixir', 3]] },
+  },
+  {
+    id: 'l2', title: '장산범 가죽 진상', where: '깊은 산',
+    goal: { type: 'collect', target: 'whiteFur', count: 10 },
+    offer: '이웃 고을에 보낼 진상품으로 장산범의 흰 털 10장이 필요하다.',
+    done: '이 정도면 이웃 고을도 놀라겠군. 용주 목걸이를 받게.',
+    reward: { gold: 8000, exp: 15000, items: [['dragonPearl', 1]] },
+  },
+  {
+    id: 'l3', title: '설원의 두억시니', where: '설원 고개',
+    goal: { type: 'kill', target: 'dueok', count: 15 },
+    offer: '설원 고개의 두억시니들이 사람을 해친다는 장계가 올라왔다. 15마리를 물리치게.',
+    done: '백성들이 그대를 칭송하는구나. 청룡 가락지를 내리겠다.',
+    reward: { gold: 20000, exp: 40000, items: [['blueDragonRing', 1]] },
+  },
+  {
+    id: 'l4', title: '쇠를 먹는 괴물', where: '흑룡 동굴',
+    goal: { type: 'collect', target: 'ironScale', count: 10 },
+    offer: '흑룡 동굴의 불가사리가 성의 무기를 노린다. 놈들의 쇳조각 10개를 가져와 증거를 보이게.',
+    done: '과연 소문대로구나. 산호 노리개를 받게.',
+    reward: { gold: 50000, exp: 100000, items: [['highNeck55', 1]] },
+  },
+  {
+    id: 'l5', title: '흑룡 토벌 어명', where: '흑룡 동굴',
+    goal: { type: 'kill', target: 'blackDragon', count: 1 },
+    offer: '성주의 이름으로 명한다. 흑룡을 토벌하라.',
+    done: '이 성의 은인이여. 비취 가락지와 함께 그대의 이름을 성벽에 새기겠다.',
+    reward: { gold: 100000, exp: 200000, items: [['highRing65', 1]] },
+  },
+];
+
+export const QUEST_CHAINS = { chief: CHIEF, herbalist: HERBALIST, smith: SMITH, tailor: TAILOR, peddler: PEDDLER, lord: LORD };
+export const QUEST_GIVERS = { chief: '촌장', herbalist: '약방 할멈', smith: '대장장이 무쇠', tailor: '포목점 비단', peddler: '방물장수 꽃분이', lord: '성주 윤휘' };
 
 export const questById = (chain, id) => QUEST_CHAINS[chain]?.find((q) => q.id === id) ?? null;
 

@@ -290,11 +290,12 @@ export function advancePage(game, npc, state) {
     <div class="row end" style="margin:8px -10px -10px"><button class="primary" data-act="advance" ${info.ok ? '' : 'disabled'}>승급하기</button><button data-act="close">닫기</button></div>`;
 }
 
-export function talkPage(npc, line) {
+export function talkPage(npc, line, game) {
   const last = line >= npc.lines.length - 1;
+  const rest = npc.inn && game ? `<button class="green" data-act="rest">쉬어 가기 (${game.restCost().toLocaleString()}전)</button>` : '';
   const actions = last
-    ? `${npc.shop ? '<button class="primary" data-act="openShop">물건 보기</button>' : ''}<button data-act="close">닫기</button>`
-    : '<button class="primary" data-act="next">다음 ▶</button>';
+    ? `${rest}${npc.shop ? '<button class="primary" data-act="openShop">물건 보기</button>' : ''}<button data-act="close">닫기</button>`
+    : `${rest}<button class="primary" data-act="next">다음 ▶</button>`;
   return `<p class="dialog-text">${esc(npc.lines[line])}</p><div class="row end" style="margin:8px -10px -10px">${actions}</div>`;
 }
 

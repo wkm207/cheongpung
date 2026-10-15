@@ -17,7 +17,7 @@ test('새 캐릭터는 마을에서 체력·마력이 가득 찬 채로 시작�
   assert.equal(game.player.hp, s.maxHp);
   assert.equal(game.player.mp, s.maxMp);
   assert.equal(game.monsters.length, 0);
-  assert.equal(game.npcs.length, 9);
+  assert.equal(game.npcs.length, 5);
 });
 
 test('방향을 누르고 있으면 한 칸씩 걷는다', () => {

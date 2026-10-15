@@ -755,6 +755,31 @@ export class Game {
     return true;
   }
 
+  /** 주막에서 쉬기: 금전을 내고 체력·마력을 모두 채운다. */
+  restCost() {
+    return 20 + this.player.level * 6;
+  }
+
+  rest() {
+    const cost = this.restCost();
+    if (this.player.gold < cost) {
+      this.log(`금전이 부족합니다. (${cost.toLocaleString()}전 필요)`, '#ff9f80');
+      return false;
+    }
+    this.setPlayer({ gold: this.player.gold - cost });
+    this.healFull();
+    this.addEffect({ type: 'heal', x: this.pe.x, y: this.pe.y, dur: 900 });
+    this.log(`푹 쉬었더니 몸이 개운합니다. (-${cost.toLocaleString()}전)`, '#9be7a1');
+    this.emit('sfx', 'drink');
+    this.emit('inventory');
+    return true;
+  }
+
+  npcSay(npc, text) {
+    const live = this.npcs.find((n) => n.id === npc.id);
+    if (live) live.speech = { text, until: this.now + 1800 };
+  }
+
   upgradeCount() {
     return upgradeCount(this.player);
   }

@@ -1,4 +1,4 @@
-import { buildVillage, buildField, buildCave } from '../world/mapgen.js';
+import { buildVillage, buildField, buildCave, buildRoom, buildCastle } from '../world/mapgen.js';
 
 // 포탈: (x, y, w, h) 영역에 들어서면 to 맵의 (tx, ty)로 이동
 export const MAP_DEFS = {
@@ -10,32 +10,14 @@ export const MAP_DEFS = {
     portals: [
       { x: 39, y: 14, w: 1, h: 2, to: 'field1', tx: 2, ty: 14 },
       { x: 19, y: 0, w: 2, h: 1, to: 'forest', tx: 19, ty: 37 },
+      { x: 0, y: 14, w: 1, h: 2, to: 'castle', tx: 36, ty: 14 },
+      { x: 7, y: 8, w: 1, h: 1, to: 'smithy', tx: 5, ty: 6, door: true },
+      { x: 29, y: 8, w: 1, h: 1, to: 'tailorShop', tx: 5, ty: 6, door: true },
+      { x: 7, y: 24, w: 1, h: 1, to: 'pharmacy', tx: 5, ty: 6, door: true },
+      { x: 29, y: 24, w: 1, h: 1, to: 'chiefHouse', tx: 5, ty: 6, door: true },
+      { x: 15, y: 24, w: 1, h: 1, to: 'tavern', tx: 6, ty: 7, door: true },
     ],
     npcs: [
-      {
-        id: 'smith', name: '대장장이 무쇠', x: 7, y: 9, look: 'smith',
-        lines: ['어서 오게! 쇠는 두드릴수록 단단해지는 법이지.', '좋은 무기가 있어야 사냥도 수월하다네. 하나 골라 보게.'],
-        shop: ['woodSword', 'ironSword', 'steelSword', 'dagger', 'ironDagger', 'steelDagger', 'woodStaff', 'jadeStaff', 'spiritStaff', 'paperFan', 'craneFan', 'cloudFan'],
-      },
-      {
-        id: 'tailor', name: '포목점 비단', x: 29, y: 9, look: 'tailor',
-        lines: ['곱게 지은 옷 한 벌이 목숨을 살리기도 한답니다.', '갑옷과 투구를 보고 가세요.'],
-        shop: ['cottonRobe', 'leatherArmor', 'chainArmor', 'ironArmor', 'strawHat', 'leatherCap', 'ironHelm'],
-      },
-      {
-        id: 'herbalist', name: '약방 할멈', x: 7, y: 25, look: 'herbalist',
-        lines: ['아이고, 또 다쳐서 왔누?', '사냥 나가기 전에 약초랑 이슬은 넉넉히 챙기게나.'],
-        shop: ['herb', 'bigHerb', 'dew', 'bigDew', 'returnScroll'],
-      },
-      {
-        id: 'chief', name: '촌장', x: 29, y: 25, look: 'chief', quests: true,
-        lines: [
-          '청풍촌에 온 것을 환영하네, 젊은이.',
-          '동쪽 토끼 들판에서 다람쥐와 토끼를 잡으며 실력을 쌓게. 그 너머엔 늑대 언덕이 있지.',
-          '북쪽 여우 숲의 여우는 사람을 보면 먼저 덤벼드니 조심하게.',
-          '숲 깊은 곳 도깨비 굴 너머에는... 구미호가 산다는 소문이 있다네.',
-        ],
-      },
       {
         id: 'peddler', name: '방물장수 꽃분이', x: 23, y: 12, look: 'peddler',
         lines: ['어머, 손님! 고운 장신구 구경하고 가세요~', '목걸이 하나, 가락지 하나면 몸도 마음도 든든하답니다.'],
@@ -61,6 +43,120 @@ export const MAP_DEFS = {
         id: 'cat', name: '나비', x: 17, y: 16, look: 'cat', wander: true,
         lines: ['야옹~', '(꼬리를 살랑살랑 흔든다)', '(발라당 누워 배를 보여 준다)'],
       },
+    ],
+    spawns: [],
+  },
+  smithy: {
+    name: '대장간',
+    w: 12, h: 9, indoor: true, safe: true,
+    build: buildRoom,
+    furniture: [['V', 1, 2, 10, 1], ['U', 3, 3, 2, 1], ['U', 7, 3, 2, 1], ['K', 9, 5]],
+    portals: [{ x: 5, y: 8, w: 2, h: 1, to: 'village', tx: 7, ty: 9 }],
+    npcs: [
+        {
+          id: 'smith', name: '대장장이 무쇠', x: 6, y: 3, look: 'smith',
+          lines: ['어서 오게! 쇠는 두드릴수록 단단해지는 법이지.', '좋은 무기가 있어야 사냥도 수월하다네. 하나 골라 보게.'],
+          shop: ['woodSword', 'ironSword', 'steelSword', 'dagger', 'ironDagger', 'steelDagger', 'woodStaff', 'jadeStaff', 'spiritStaff', 'paperFan', 'craneFan', 'cloudFan'],
+        },
+    ],
+    spawns: [],
+  },
+  tailorShop: {
+    name: '포목점',
+    w: 12, h: 9, indoor: true, safe: true,
+    build: buildRoom,
+    furniture: [['V', 1, 2, 10, 1], ['U', 3, 3, 2, 1], ['U', 7, 3, 2, 1], ['U', 1, 5, 1, 2]],
+    portals: [{ x: 5, y: 8, w: 2, h: 1, to: 'village', tx: 29, ty: 9 }],
+    npcs: [
+        {
+          id: 'tailor', name: '포목점 비단', x: 6, y: 3, look: 'tailor',
+          lines: ['곱게 지은 옷 한 벌이 목숨을 살리기도 한답니다.', '갑옷과 투구를 보고 가세요.'],
+          shop: ['cottonRobe', 'leatherArmor', 'chainArmor', 'ironArmor', 'strawHat', 'leatherCap', 'ironHelm'],
+        },
+    ],
+    spawns: [],
+  },
+  pharmacy: {
+    name: '약방',
+    w: 12, h: 9, indoor: true, safe: true,
+    build: buildRoom,
+    furniture: [['V', 1, 2, 10, 1], ['U', 3, 3, 2, 1], ['U', 7, 3, 2, 1], ['K', 1, 6], ['K', 10, 6]],
+    portals: [{ x: 5, y: 8, w: 2, h: 1, to: 'village', tx: 7, ty: 25 }],
+    npcs: [
+        {
+          id: 'herbalist', name: '약방 할멈', x: 6, y: 3, look: 'herbalist',
+          lines: ['아이고, 또 다쳐서 왔누?', '사냥 나가기 전에 약초랑 이슬은 넉넉히 챙기게나.'],
+          shop: ['herb', 'bigHerb', 'dew', 'bigDew', 'returnScroll'],
+        },
+    ],
+    spawns: [],
+  },
+  chiefHouse: {
+    name: '촌장 댁',
+    w: 12, h: 9, indoor: true, safe: true,
+    build: buildRoom,
+    furniture: [['V', 1, 2, 3, 1], ['V', 8, 2, 3, 1], ['U', 4, 4, 1, 1], ['U', 7, 4, 1, 1]],
+    portals: [{ x: 5, y: 8, w: 2, h: 1, to: 'village', tx: 29, ty: 25 }],
+    npcs: [
+        {
+          id: 'chief', name: '촌장', x: 6, y: 3, look: 'chief', quests: true,
+          lines: [
+            '청풍촌에 온 것을 환영하네, 젊은이.',
+            '동쪽 토끼 들판에서 다람쥐와 토끼를 잡으며 실력을 쌓게. 그 너머엔 늑대 언덕이 있지.',
+            '북쪽 여우 숲의 여우는 사람을 보면 먼저 덤벼드니 조심하게.',
+            '숲 깊은 곳 도깨비 굴 너머에는... 구미호가 산다는 소문이 있다네.',
+          ],
+        },
+    ],
+    spawns: [],
+  },
+  tavern: {
+    name: '주막',
+    w: 14, h: 10, indoor: true, safe: true,
+    build: buildRoom,
+    furniture: [['V', 1, 2, 12, 1], ['U', 4, 3, 2, 1], ['U', 8, 3, 2, 1], ['U', 2, 6, 2, 1], ['U', 10, 6, 2, 1], ['K', 12, 3]],
+    portals: [{ x: 6, y: 9, w: 2, h: 1, to: 'village', tx: 15, ty: 25 }],
+    npcs: [
+      {
+        id: 'innkeeper', name: '주모 연화', x: 7, y: 3, look: 'innkeeper', inn: true,
+        lines: ['어서 오시오! 뜨끈한 국밥 한 그릇 하고 가시구려.', '먼 길 왔으면 한숨 자고 가요. 잠자리도 깨끗하다오.'],
+        shop: ['tteok', 'gukbap', 'makgeolli', 'herb', 'dew', 'returnScroll'],
+      },
+      {
+        id: 'traveler', name: '떠돌이 나그네', x: 3, y: 7, look: 'traveler',
+        lines: ['서쪽 문 너머 청풍성에 성주님이 계시다오. 실력 있는 무사를 찾는다더군.', '상인 앞에서 "약초 10개 사자" 하고 말만 하면 물건을 내준다지. 편하지 않소?', '깊은 산 너머엔 이무기가, 설원 너머엔 흑룡이 산다는 소문이오.'],
+      },
+    ],
+    spawns: [],
+  },
+  castle: {
+    name: '청풍성',
+    w: 40, h: 30, seed: 19, safe: true,
+    build: buildCastle,
+    portals: [
+      { x: 39, y: 14, w: 1, h: 2, to: 'village', tx: 2, ty: 14 },
+      { x: 19, y: 8, w: 2, h: 1, to: 'palace', tx: 9, ty: 9, door: true },
+    ],
+    npcs: [
+      { id: 'gateguard1', name: '성문 수문장', x: 35, y: 12, look: 'guard', lines: ['청풍성에 온 것을 환영하오. 대전은 북쪽 큰 건물이오.'] },
+      { id: 'gateguard2', name: '성문 수문장', x: 35, y: 17, look: 'guard', lines: ['성주님께서 실력 있는 무사를 찾고 계시오.'] },
+      { id: 'palaceguard', name: '대전 호위무사', x: 17, y: 10, look: 'guard', lines: ['대전 안에서는 예를 갖추시오.'] },
+    ],
+    spawns: [],
+  },
+  palace: {
+    name: '청풍성 대전',
+    w: 20, h: 12, indoor: true, safe: true,
+    build: buildRoom,
+    furniture: [['V', 1, 2, 18, 1], ['U', 7, 3, 2, 1], ['U', 11, 3, 2, 1], ['U', 2, 5, 1, 4], ['U', 17, 5, 1, 4]],
+    portals: [{ x: 9, y: 11, w: 2, h: 1, to: 'castle', tx: 19, ty: 10 }],
+    npcs: [
+      {
+        id: 'lord', name: '성주 윤휘', x: 10, y: 3, look: 'lord', quests: true,
+        lines: ['그대가 요즘 고을에서 이름을 떨친다는 무사인가.', '이 땅의 평화를 위해 그대의 힘을 빌려 주게.'],
+      },
+      { id: 'royalguard1', name: '금위 무사', x: 4, y: 4, look: 'guard', lines: ['성주님을 뵙거든 고개를 숙이시오.'] },
+      { id: 'royalguard2', name: '금위 무사', x: 15, y: 4, look: 'guard', lines: ['……'] },
     ],
     spawns: [],
   },

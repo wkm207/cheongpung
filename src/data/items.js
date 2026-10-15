@@ -6,6 +6,9 @@ export const ITEMS = {
   dew: { name: '이슬', icon: '💧', type: 'consume', restore: { mp: 30 }, price: 15, desc: '마력을 30 회복한다.' },
   bigDew: { name: '감로수', icon: '🍶', type: 'consume', restore: { mp: 120 }, price: 80, desc: '마력을 120 회복한다.' },
   elixir: { name: '영약', icon: '✨', type: 'consume', restore: { hp: 99999, mp: 99999 }, price: 500, desc: '체력과 마력을 모두 회복한다.' },
+  tteok: { name: '떡', icon: '🍡', type: 'consume', restore: { hp: 120 }, price: 30, desc: '쫀득한 떡. 체력을 120 회복한다.' },
+  gukbap: { name: '국밥', icon: '🍲', type: 'consume', restore: { hp: 400, mp: 60 }, price: 120, desc: '뜨끈한 국밥. 체력 400·마력 60 회복.' },
+  makgeolli: { name: '막걸리', icon: '🍶', type: 'consume', restore: { mp: 220 }, price: 150, desc: '시원한 막걸리. 마력을 220 회복한다.' },
   returnScroll: { name: '귀환서', icon: '📜', type: 'consume', effect: 'return', price: 40, desc: '청풍촌으로 돌아간다.' },
 
   woodSword: { name: '목검', icon: '🗡️', type: 'weapon', wtype: 'sword', atk: 3, level: 1, price: 60, tint: '#c8a26a' },

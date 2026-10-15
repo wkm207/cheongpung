@@ -281,3 +281,45 @@ test('고급 장비(Lv55~85)와 강화: 3차 이후에도 장비가 레벨을 �
   const back = validatePlayer(importText(exportText(game.toSave())));
   assert.equal(back.enhance.weapon, 8);
 });
+
+test('집 문으로 들어가면 실내로, 나오면 문 앞으로 돌아온다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.loadMap('village', 7, 9, 'up');
+  game.inputDir = 'up';
+  tick(game, 400);
+  assert.equal(game.mapId, 'smithy');
+  assert.ok(game.npcs.some((n) => n.id === 'smith'));
+  game.inputDir = 'down';
+  tick(game, 1500);
+  assert.equal(game.mapId, 'village');
+  assert.deepEqual([game.pe.x, game.pe.y >= 9], [7, true]);
+});
+
+test('주막에서 쉬면 금전을 내고 체력·마력이 가득 찬다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.teleport('tavern');
+  game.setPlayer({ hp: 1, mp: 0, gold: 1000 });
+  assert.equal(game.rest(), true);
+  assert.equal(game.player.hp, game.stats().maxHp);
+  assert.ok(game.player.gold < 1000);
+});
+
+test('말로 사고팔기: 문장에서 물건·개수·사기/팔기를 읽는다', async () => {
+  const { parseTrade, findItemByName } = await import('../src/core/chatTrade.js');
+  assert.deepEqual(parseTrade('약초 10개 사자'), { verb: 'buy', name: '약초', qty: 10 });
+  assert.deepEqual(parseTrade('산삼 사자'), { verb: 'buy', name: '산삼', qty: 1 });
+  assert.deepEqual(parseTrade('도토리 5개 팔자'), { verb: 'sell', name: '도토리', qty: 5 });
+  assert.equal(parseTrade('안녕하세요'), null);
+  assert.equal(findItemByName(['herb', 'bigHerb', 'dew'], '약초'), 'herb');
+  assert.equal(findItemByName(['herb', 'bigHerb', 'dew'], '산'), 'bigHerb');
+});
+
+test('성주의 왕실 퀘스트도 진행된다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  assert.equal(game.questInfo('lord').state, 'offer');
+  game.acceptQuest('lord');
+  for (let i = 0; i < 20; i++) game.countQuestKill('goblin');
+  assert.equal(game.questInfo('lord').state, 'ready');
+  assert.equal(game.completeQuest('lord'), true);
+  assert.equal(game.player.quests.lord.id, 'l2');
+});

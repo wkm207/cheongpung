@@ -115,7 +115,7 @@ export class Panels {
     } else if (game.player.quests[npc.id] && s.view === 'main' && game.questInfo(npc.id).state !== 'done') {
       body = questPage(game, npc, game.questInfo(npc.id));
     } else {
-      body = talkPage(npc, s.line);
+      body = talkPage(npc, s.line, game);
     }
     return `${header(npc.name, null)}<div class="body">${body}</div>`;
   }
@@ -147,6 +147,7 @@ export class Panels {
       case 'discard': game.discardAt(s.selected); s.selected = null; s.confirm = false; break;
       case 'unequip': game.unequip(el.dataset.slot); s.selEquip = null; break;
       case 'enhance': game.enhance(el.dataset.slot); break;
+      case 'rest': game.rest(); break;
       case 'learn': game.learnSkill(el.dataset.id); break;
       case 'slot': game.assignSkill(i, el.dataset.id); break;
       case 'spellPick': this.spellLetter(i); return;

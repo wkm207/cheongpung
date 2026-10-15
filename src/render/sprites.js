@@ -232,6 +232,9 @@ const NPC_LOOK = {
   guard: { body: '#2c3e50', dark: '#c0392b', hair: '#111111', skin: '#e8c39e', hat: 'guard' },
   master: { body: '#f2efe6', dark: '#2b4c7e', hair: '#d9d9d9', skin: '#e8c39e', hat: 'gat' },
   forger: { body: '#4a3a2a', dark: '#c0392b', hair: '#2a1a10', skin: '#c98d5e' },
+  innkeeper: { body: '#d97b4a', dark: '#7b2d26', hair: '#1c1008', skin: '#f5cba7' },
+  traveler: { body: '#8a8f7a', dark: '#4a4a3a', hair: '#3a2a1a', skin: '#d9a77a', hat: 'strawHat' },
+  lord: { body: '#7b1f1f', dark: '#f4d03f', hair: '#111111', skin: '#e8c39e', hat: 'gat' },
 };
 
 const cache = new Map();

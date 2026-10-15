@@ -1,8 +1,8 @@
 import { mulberry32, randInt } from '../core/rng.js';
 
 // 지나갈 수 없는 타일
-// Q 돌담, Y 초가지붕, G 대문 기둥, J 장승, K 장독
-export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'D', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K']);
+// Q 돌담, Y 초가지붕, G 대문 기둥, J 장승, K 장독, H 실내 벽, U 탁자·계산대, V 선반 (D 문은 지나갈 수 있다)
+export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V']);
 
 const grid = (w, h, ch) => Array.from({ length: h }, () => Array(w).fill(ch));
 const inInterior = (g, x, y) => x >= 1 && y >= 1 && y < g.length - 1 && x < g[0].length - 1;
@@ -108,6 +108,72 @@ export function buildCave({ w, h, seed, fill = 0.45, portals }) {
   return fillUnreachable(g, w >> 1, h >> 1, 'X');
 }
 
+/** 가장자리 출입구에 붉은 기둥과 장승을 세운다(집 문 포탈은 건너뛴다). */
+function decorateGates(g, portals) {
+  const h = g.length;
+  const w = g[0].length;
+  for (const p of portals) {
+    if (p.door) continue;
+    fillRect(g, p.x, p.y, p.w, p.h, '=');
+    if (p.w === 1) {
+      const inward = p.x === 0 ? 2 : -2;
+      g[p.y - 1][p.x] = 'G';
+      g[p.y + p.h][p.x] = 'G';
+      g[p.y - 2][p.x + inward] = 'J';
+      g[p.y + p.h + 1][p.x + inward] = 'J';
+    } else {
+      const inward = p.y === 0 ? 2 : -2;
+      g[p.y][p.x - 1] = 'G';
+      g[p.y][p.x + p.w] = 'G';
+      if (p.y + inward >= 0 && p.y + inward < h) {
+        g[p.y + inward][Math.max(1, p.x - 2)] = 'J';
+        g[p.y + inward][Math.min(w - 2, p.x + p.w + 1)] = 'J';
+      }
+    }
+  }
+}
+
+/** 실내: 둘레는 벽, 뒷벽은 두 줄(벽면이 보이게), 바닥은 마루. 가구는 layout에서 칠한다. */
+export function buildRoom({ w, h, portals, furniture = [] }) {
+  const g = grid(w, h, 'P');
+  border(g, 'H');
+  fillRect(g, 0, 1, w, 1, 'H');
+  for (const [ch, x, y, fw = 1, fh = 1] of furniture) fillRect(g, x, y, fw, fh, ch);
+  for (const p of portals) fillRect(g, p.x, p.y, p.w, p.h, 'D');
+  return g;
+}
+
+/** 성: 성벽으로 둘러싸인 돌마당과 가운데 대전, 연못과 나무 */
+export function buildCastle({ w, h, seed, portals, npcs }) {
+  const rng = mulberry32(seed);
+  const g = grid(w, h, '.');
+  fillRect(g, 7, 9, w - 14, h - 13, 'S');
+  fillRect(g, 20, 9, w - 21, 2, '=');
+  fillRect(g, 31, 14, w - 32, 2, '=');
+  fillRect(g, 13, 3, 14, 3, 'R');
+  fillRect(g, 13, 6, 14, 3, 'W');
+  g[8][19] = 'D';
+  g[8][20] = 'D';
+  for (const [hx, hy] of [[3, 12], [31, 20]]) {
+    fillRect(g, hx, hy, 6, 2, 'R');
+    fillRect(g, hx, hy + 2, 6, 3, 'W');
+  }
+  fillRect(g, 3, 22, 4, 3, '~');
+  for (const [kx, ky] of [[9, 9], [10, 9], [29, 9], [30, 9]]) g[ky][kx] = 'K';
+  const nearNpc = (x, y) => npcs.some((n) => Math.abs(n.x - x) + Math.abs(n.y - y) <= 2);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      if (g[y][x] !== '.' || nearNpc(x, y)) continue;
+      const r = rng();
+      if (r < 0.05) g[y][x] = 'T';
+      else if (r < 0.1) g[y][x] = ',';
+    }
+  }
+  border(g, 'Q');
+  decorateGates(g, portals);
+  return fillUnreachable(g, 20, 15, 'T');
+}
+
 function house(g, x, y, roof = 'R') {
   fillRect(g, x, y, 6, 2, roof);
   fillRect(g, x, y + 2, 6, 3, 'W');
@@ -126,7 +192,6 @@ export function buildVillage({ w, h, seed, portals, npcs }) {
   fillRect(g, 29, 10, 1, 4, '=');
   fillRect(g, 33, 9, 4, 3, '~');
   g[12][16] = 'w';
-  fillRect(g, 12, 25, 6, 1, 'F');
   fillRect(g, 22, 25, 4, 1, 'F');
   // 장독대
   for (const [jx, jy] of [[11, 7], [12, 7], [33, 22], [34, 22], [3, 22], [20, 22]]) g[jy][jx] = 'K';
@@ -143,20 +208,6 @@ export function buildVillage({ w, h, seed, portals, npcs }) {
     }
   }
   border(g, 'Q');
-  for (const p of portals) {
-    fillRect(g, p.x, p.y, p.w, p.h, '=');
-    // 문 양쪽 기둥과 그 안쪽의 장승 한 쌍
-    if (p.w === 1) {
-      g[p.y - 1][p.x] = 'G';
-      g[p.y + p.h][p.x] = 'G';
-      g[p.y - 2][p.x - 2] = 'J';
-      g[p.y + p.h + 1][p.x - 2] = 'J';
-    } else {
-      g[p.y][p.x - 1] = 'G';
-      g[p.y][p.x + p.w] = 'G';
-      g[p.y + 2][p.x - 2] = 'J';
-      g[p.y + 2][p.x + p.w + 1] = 'J';
-    }
-  }
+  decorateGates(g, portals);
   return fillUnreachable(g, 19, 17, 'T');
 }

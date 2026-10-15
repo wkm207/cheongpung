@@ -10,6 +10,7 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './src/config.js',
+  './src/core/chatTrade.js',
   './src/core/combat.js',
   './src/core/enhance.js',
   './src/core/equip.js',

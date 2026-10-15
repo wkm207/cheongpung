@@ -179,6 +179,12 @@ export class Renderer {
   drawPortals(ctx, game) {
     const pulse = 0.35 + 0.2 * Math.sin(game.now / 250);
     for (const p of game.mapDef.portals) {
+      if (p.door) {
+        const cx = (p.x + p.w / 2) * TILE;
+        const bob = Math.sin(game.now / 300) * 2;
+        label(ctx, `▼ ${MAP_DEFS[p.to].name}`, cx, p.y * TILE - 2 + bob, '#ffe9a8', 8);
+        continue;
+      }
       ctx.fillStyle = `rgba(140, 220, 255, ${pulse})`;
       for (let y = p.y; y < p.y + p.h; y++) {
         for (let x = p.x; x < p.x + p.w; x++) {
@@ -248,6 +254,7 @@ export class Renderer {
     const flip = n.look === 'cat' ? n.face === 'right' : n.dir === 'right';
     drawSprite(ctx, img, x, y - 2, flip);
     label(ctx, n.name, x + 16, y - 2, '#ffe08a');
+    if (n.speech && n.speech.until > game.now) bubble(ctx, n.speech.text, x + 16, y - 10);
     const mark = this.npcMark(game, n);
     if (mark) {
       const hop = Math.abs(Math.sin(game.now / 250)) * 3;

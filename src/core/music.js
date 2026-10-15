@@ -27,11 +27,15 @@ export const TRACKS = {
   swamp: { seed: 61, scale: 'gyemyeon', root: 55, bpm: 64, meter: 12, lead: 'flute', drum: 'soft', density: 0.5, drone: true },
   snow: { seed: 71, scale: 'pyeong', root: 64, bpm: 66, meter: 12, lead: 'flute', drum: 'soft', density: 0.5 },
   boss: { seed: 81, scale: 'gyemyeon', root: 57, bpm: 138, meter: 8, lead: 'pluck', drum: 'battle', density: 0.85 },
+  indoor: { seed: 91, scale: 'pyeong', root: 65, bpm: 58, meter: 12, lead: 'pluck', drum: 'soft', density: 0.45 },
+  castle: { seed: 101, scale: 'pyeong', root: 60, bpm: 64, meter: 8, lead: 'flute', drum: 'heavy', density: 0.6, drone: true },
 };
 
 export const MAP_TRACK = {
   village: 'village', field1: 'field', forest: 'forest', deepMountain: 'forest', wolfHill: 'hill',
   goblinCave: 'cave', bossLair: 'cave', dragonCave: 'cave', imugiSwamp: 'swamp', snowPass: 'snow',
+  smithy: 'indoor', tailorShop: 'indoor', pharmacy: 'indoor', chiefHouse: 'indoor', tavern: 'indoor',
+  castle: 'castle', palace: 'castle',
 };
 
 const BAR_ROOTS = [0, 0, 3, 0, 1, 3, 0, 0]; // 마디마다 베이스가 짚는 음계 자리

@@ -13,6 +13,8 @@ import { MAP_TRACK } from './core/music.js';
 import { MONSTERS } from './data/monsters.js';
 import { listSaves, isCorrupt, writeSave, deleteSave, importText } from './core/save.js';
 import { runCommand } from './core/gm.js';
+import { parseTrade, findItemByName } from './core/chatTrade.js';
+import { ITEMS } from './data/items.js';
 import { AUTOSAVE_MS } from './config.js';
 
 const renderer = new Renderer($('#game'));
@@ -48,6 +50,39 @@ function submitChat(text) {
   }
   game.say(msg);
   game.log(`${game.player.name}: ${msg}`, '#ffffff');
+  tradeByChat(msg);
+}
+
+/** 상인 3칸 안에서 "약초 10개 사자" / "도토리 팔자"처럼 말하면 거래한다. */
+function tradeByChat(msg) {
+  const trade = parseTrade(msg);
+  if (!trade) return;
+  const near = game.npcs
+    .filter((n) => n.shop && Math.abs(n.x - game.pe.x) + Math.abs(n.y - game.pe.y) <= 3)
+    .sort((a, b) => Math.abs(a.x - game.pe.x) + Math.abs(a.y - game.pe.y) - (Math.abs(b.x - game.pe.x) + Math.abs(b.y - game.pe.y)))[0];
+  if (!near) {
+    game.log('주변에 물건을 사고팔 상인이 없습니다.', '#bbb');
+    return;
+  }
+  if (trade.verb === 'buy') {
+    const id = findItemByName(near.shop, trade.name);
+    if (!id) {
+      game.npcSay(near, `${trade.name}? 그런 물건은 없는데...`);
+      return;
+    }
+    if (game.buy(id, trade.qty)) game.npcSay(near, `${ITEMS[id].name} ${trade.qty}개, 여기 있네!`);
+    else game.npcSay(near, '돈이 모자라거나 가방이 꽉 찼구먼.');
+    return;
+  }
+  const ids = game.player.inv.map((s) => s.id);
+  const id = findItemByName(ids, trade.name);
+  if (!id) {
+    game.npcSay(near, `${trade.name}은(는) 안 가지고 있잖나.`);
+    return;
+  }
+  const index = game.player.inv.findIndex((s) => s.id === id);
+  game.sellAt(index, trade.qty);
+  game.npcSay(near, '좋은 물건이군, 잘 쓰겠네.');
 }
 
 const panels = new Panels($('#panel-layer'), $('#panel'), {
