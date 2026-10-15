@@ -35,6 +35,9 @@ export function compareHtml(rows, emptyText = '능력치 변화 없음') {
 const shortCompare = (rows) => rows.slice(0, 3).map((r) => `<span class="${r.diff > 0 ? 'good' : 'warn'}">${r.label}${signed(r)}</span>`).join(' ');
 
 // ── 가방 ──────────────────────────────────────────────
+const INV_GROUPS = [['consume', '🍙 소모품'], ['weapon', '⚔️ 무기'], ['helmet', '🎩 투구'], ['armor', '👘 옷'], ['necklace', '📿 목걸이'], ['ring', '💍 반지'], ['loot', '📦 기타']];
+const INV_FILTER = { consume: ['consume'], gear: ['weapon', 'helmet', 'armor', 'necklace', 'ring'], loot: ['loot'] };
+const INV_FILTER_LABELS = { all: '전체', consume: '소모품', gear: '장비', loot: '기타' };
 export function inventoryView(game, state) {
   const p = game.player;
   const s = game.stats();
@@ -50,9 +53,17 @@ export function inventoryView(game, state) {
   const auto = ups ? `<button class="green auto-equip" data-act="autoEquip">✨ 더 좋은 장비 한 번에 착용 (${ups}칸)</button>` : '';
   const strip = `<div class="stat-strip">공격 <b>${s.atk}</b> · 방어 <b>${s.def}</b> · 술력 <b>${s.mag}</b> · 체력 <b>${s.maxHp}</b> · 마력 <b>${s.maxMp}</b> · 치명 <b>${formatStat('crit', s.crit)}</b></div>`;
   const equipDetail = state.selEquip ? equippedDetail(game, state.selEquip) : '';
-  const rows = p.inv.length
-    ? p.inv.map((slot, i) => inventoryRow(game, slot, i, state)).join('')
-    : '<p class="hint">가방이 비어 있습니다.</p>';
+  // 분류: 소모품 → 무기·투구·옷·목걸이·반지 → 기타(전리품). 줄의 번호(i)는 가방 순서 그대로 둔다.
+  const filter = state.invFilter ?? 'all';
+  const shown = (type) => filter === 'all' || INV_FILTER[filter].includes(type);
+  const groups = INV_GROUPS.map(([type, label]) => {
+    if (!shown(type)) return '';
+    const items = p.inv.map((slot, i) => [slot, i]).filter(([slot]) => ITEMS[slot.id].type === type);
+    if (!items.length) return '';
+    return `<div class="inv-group">${label} <small class="muted">${items.length}</small></div>${items.map(([slot, i]) => inventoryRow(game, slot, i, state)).join('')}`;
+  }).join('');
+  const chips = Object.entries(INV_FILTER_LABELS).map(([key, label]) => `<button class="chip${filter === key ? ' on' : ''}" data-act="invFilter" data-f="${key}">${label}</button>`).join('');
+  const rows = p.inv.length ? (groups || '<p class="hint">이 분류에는 물건이 없습니다.</p>') : '<p class="hint">가방이 비어 있습니다.</p>';
   return `${header('가방', 'inventory', goldTag(game))}
     <div class="body">
       ${recent}
@@ -61,6 +72,7 @@ export function inventoryView(game, state) {
       ${auto}
       ${strip}
       <h3>소지품 (${p.inv.length}/24) <small class="muted">· 장비는 한 번 눌러 비교, 한 번 더 누르면 착용</small></h3>
+      <div class="chips">${chips}</div>
       ${rows}
     </div>`;
 }

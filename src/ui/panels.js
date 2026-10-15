@@ -164,6 +164,7 @@ export class Panels {
       case 'moveSpell': this.open('spells'); this.state.pickedLetter = i; this.render(); return;
       case 'castNow': this.close(); this.hooks.onCast(el.dataset.id); return;
       case 'tab': s.tab = el.dataset.tab; break;
+      case 'invFilter': s.invFilter = el.dataset.f; s.selected = null; break;
       case 'buy': game.buy(el.dataset.id, n); break;
       case 'sell': game.sellAt(i, n); break;
       case 'next': s.line += 1; break;
