@@ -385,11 +385,25 @@ export class Renderer {
       ctx.stroke();
     }
     const name = game.player.tier ? `${game.title()} ${game.player.name}` : game.player.name;
-    label(ctx, name, x + 16, y - 18, game.player.gm.god ? '#ffd166' : '#ffffff');
-    if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, y - 26);
+    const top = y - (riding ? 22 : 18);
+    this.drawVitals(ctx, game, x + 16, top - 1);
+    label(ctx, name, x + 16, top - 6, game.player.gm.god ? '#ffd166' : '#ffffff');
+    if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, top - 14);
   }
 
-  /** 말(옆모습, 갈색 몸통·검은 갈기). 오리지널 도트 */
+  /** 머리 위 체력(빨강)·마력(파랑) 막대 */
+  drawVitals(ctx, game, cx, y) {
+    const s = game.stats();
+    const w = 26;
+    const x = cx - w / 2;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillRect(x - 1, y - 1, w + 2, 6);
+    ctx.fillStyle = '#e53935';
+    ctx.fillRect(x, y, w * Math.max(0, Math.min(1, game.player.hp / s.maxHp)), 2);
+    ctx.fillStyle = '#3d7dff';
+    ctx.fillRect(x, y + 2.5, w * Math.max(0, Math.min(1, game.player.mp / s.maxMp)), 2);
+  }
+
   /** 말(옆모습, 왼쪽을 본다): 곡선으로 그린 갈색 말, 검은 갈기, 붉은 안장. t = 달리는 시각(멈추면 0) */
   drawHorse(ctx, x, y, flip, t) {
     ctx.save();

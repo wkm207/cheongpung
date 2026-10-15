@@ -17,6 +17,11 @@ export class Sidebar {
     this.name = $('#side-name');
     this.title = $('#side-title');
     this.doll = $('#doll-canvas');
+    this.hpBar = $('#side-hp');
+    this.mpBar = $('#side-mp');
+    this.hpText = $('#side-hp-text');
+    this.mpText = $('#side-mp-text');
+    this.barKey = '';
     this.slots = $$('.doll-slot');
     this.tabs = $$('[data-side]');
     this.sig = '';
@@ -61,6 +66,15 @@ export class Sidebar {
     const p = game.player;
     this.name.textContent = p.name;
     this.title.textContent = `Lv.${p.level} ${game.title()}`;
+    const s = game.stats();
+    const bk = `${p.hp}/${s.maxHp}/${p.mp}/${s.maxMp}`;
+    if (bk !== this.barKey) {
+      this.barKey = bk;
+      this.hpBar.style.width = `${Math.min(100, (p.hp / s.maxHp) * 100)}%`;
+      this.mpBar.style.width = `${Math.min(100, (p.mp / s.maxMp) * 100)}%`;
+      this.hpText.textContent = `체력 ${p.hp.toLocaleString()} / ${s.maxHp.toLocaleString()}`;
+      this.mpText.textContent = `마력 ${p.mp.toLocaleString()} / ${s.maxMp.toLocaleString()}`;
+    }
     const sig = this.panels.kind === 'character' ? `${p.hp}|${p.mp}|${p.exp}|${p.gold}|${p.level}|${p.statPoints}` : '';
     if (sig !== this.sig) {
       this.sig = sig;

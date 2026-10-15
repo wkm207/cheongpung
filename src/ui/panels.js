@@ -1,4 +1,5 @@
 import { shareOrDownload, copyText, readFileText } from './dom.js';
+import { worldMapHtml, drawWorldMap, pickWorldMap } from './worldmap.js';
 import { josa } from '../core/josa.js';
 import { ITEMS, isEquipment } from '../data/items.js';
 import { runCommand } from '../core/gm.js';
@@ -78,6 +79,7 @@ export class Panels {
     this.panel.innerHTML = this.html(game);
     const body = this.panel.querySelector('.body');
     if (body) body.scrollTop = scrollTop;
+    if (this.kind === 'worldmap') drawWorldMap(this.panel, game, this.state);
   }
 
   html(game) {
@@ -92,6 +94,7 @@ export class Panels {
       case 'gm': return gmView(game, s);
       case 'shop': return this.shopHtml(game);
       case 'dialog': return this.dialogHtml(game);
+      case 'worldmap': return worldMapHtml(game, s);
       default: return '';
     }
   }
@@ -143,6 +146,13 @@ export class Panels {
     this.hooks.onClick?.();
     switch (act) {
       case 'close': this.close(); return;
+      case 'wmTab': s.wmTab = el.dataset.tab; break;
+      case 'wmPick': {
+        const id = pickWorldMap(el, e);
+        if (!id) return;
+        s.wmSel = id;
+        break;
+      }
       case 'select': this.selectItem(game, i); break;
       case 'selEquip': s.selEquip = s.selEquip === el.dataset.slot ? null : el.dataset.slot; s.selected = null; break;
       case 'use': game.useItemAt(s.selected); this.fixSelection(game); if (!this.isOpen) return; break;

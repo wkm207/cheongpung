@@ -36,10 +36,6 @@ function applySettings(settings) {
   input.setMode(settings.control);
 }
 
-function toggleMinimap() {
-  applySettings(updateSettings({ minimap: !getSettings().minimap }));
-}
-
 /** 대화창 입력: /로 시작하면 운영자 명령, 아니면 머리 위 말풍선과 대화창에 말한다. */
 function submitChat(text) {
   const msg = text.trim();
@@ -147,7 +143,7 @@ const input = new Input({
       if (!game || panels.isOpen) return;
       chatInput.focus();
     },
-    toggleMinimap,
+    openMap: () => (panels.isOpen && panels.kind === 'worldmap' ? panels.close() : openPanel('worldmap')),
     toggleRide: () => game?.toggleRide(),
     spellLetter: (letter) => {
       const target = panels.kind === 'spells' ? panels : sidebar.active && sidebar.panels.kind === 'spells' ? sidebar.panels : null;
@@ -354,9 +350,9 @@ chatInput.addEventListener('keydown', (e) => {
     chatInput.blur();
   }
 });
-$('#minimap-toggle').addEventListener('click', toggleMinimap);
+$('#minimap-toggle').addEventListener('click', () => openPanel('worldmap'));
 $('#ride-toggle').addEventListener('click', () => game?.toggleRide());
-$('#minimap').addEventListener('click', toggleMinimap);
+$('#minimap').addEventListener('click', () => openPanel('worldmap'));
 
 applySettings(getSettings());
 setPlaying(false);

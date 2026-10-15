@@ -100,7 +100,7 @@ export class Input {
       return;
     }
     if (e.code === 'KeyN' && !e.repeat) {
-      this.actions.toggleMinimap();
+      this.actions.openMap();
       return;
     }
     if (this.actions.isPaused()) return;
