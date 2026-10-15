@@ -2,7 +2,7 @@ import { mulberry32, randInt } from '../core/rng.js';
 
 // 지나갈 수 없는 타일
 // Q 돌담, Y 초가지붕, G 대문 기둥, J 장승, K 장독, H 실내 벽, U 탁자·계산대, V 선반 (D 문은 지나갈 수 있다)
-export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V']);
+export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V', 'C', 'Z']);
 
 const grid = (w, h, ch) => Array.from({ length: h }, () => Array(w).fill(ch));
 const inInterior = (g, x, y) => x >= 1 && y >= 1 && y < g.length - 1 && x < g[0].length - 1;
@@ -88,24 +88,24 @@ export function buildField({ w, h, seed, density, ground = '.', obstacles = ['T'
   return fillUnreachable(g, w >> 1, h >> 1, 'T');
 }
 
-export function buildCave({ w, h, seed, fill = 0.45, portals }) {
+export function buildCave({ w, h, seed, fill = 0.45, portals, floor = 'c', wall = 'X' }) {
   const rng = mulberry32(seed);
-  let g = grid(w, h, 'X');
-  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) g[y][x] = rng() < fill ? 'X' : 'c';
+  let g = grid(w, h, wall);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) g[y][x] = rng() < fill ? wall : floor;
   for (let iter = 0; iter < 4; iter++) {
-    const next = grid(w, h, 'X');
+    const next = grid(w, h, wall);
     for (let y = 1; y < h - 1; y++) {
       for (let x = 1; x < w - 1; x++) {
         let walls = 0;
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (g[y + dy][x + dx] === 'X') walls++;
-        next[y][x] = walls >= 5 ? 'X' : 'c';
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (g[y + dy][x + dx] === wall) walls++;
+        next[y][x] = walls >= 5 ? wall : floor;
       }
     }
     g = next;
   }
-  fillRect(g, (w >> 1) - 2, (h >> 1) - 2, 5, 5, 'c');
-  carvePortals(g, portals, 'c');
-  return fillUnreachable(g, w >> 1, h >> 1, 'X');
+  fillRect(g, (w >> 1) - 2, (h >> 1) - 2, 5, 5, floor);
+  carvePortals(g, portals, floor);
+  return fillUnreachable(g, w >> 1, h >> 1, wall);
 }
 
 /** 가장자리 출입구에 붉은 기둥과 장승을 세운다(집 문 포탈은 건너뛴다). */

@@ -166,6 +166,21 @@ const MONSTER_LOOK = {
   dueok: { art: 'goblin', pal: { k: '#1a0b0b', g: '#a83232', y: '#f0e6d2', e: '#ffe066', w: '#fff', c: '#3b2a1a', f: '#2c2c2c', s: '#7a1f1f' } },
   bulgasari: { art: 'boar', pal: { k: '#15181c', b: '#6c7a89', e: '#ff8c1a', w: '#d5dbdb', n: '#95a5a6' } },
   blackDragon: { art: 'serpent', scale: 2, pal: { k: '#0b0612', g: '#2b1b3d', y: '#a64dff', e: '#ff3b3b', n: '#120a1c' } },
+  blueGuardian: { art: 'serpent', scale: 2, pal: { k: '#0b2a3f', g: '#2e86c1', y: '#aee1ff', e: '#ffffff', n: '#0b2a3f' } },
+  redGuardian: { art: 'serpent', scale: 2, pal: { k: '#3f0b0b', g: '#c0392b', y: '#ffb347', e: '#ffffff', n: '#3f0b0b' } },
+  zodiacRat: { art: 'squirrel', pal: { k: '#1c1c22', b: '#7f8590', T: '#9aa0aa', w: '#e5e7ea', e: '#ff4d4d', p: '#f5a6b8' } },
+  zodiacOx: { art: 'boar', pal: { k: '#140d08', b: '#4a2f1c', e: '#f4d03f', w: '#f4ecd8', n: '#8b5a2b' } },
+  zodiacTiger: { art: 'canine', pal: { k: '#1a1208', o: '#e8a33a', l: '#fff3d6', e: '#3fd18a', n: '#111', t: '#111111' } },
+  zodiacGeneral: { art: 'goblin', scale: 2, pal: { k: '#2a1f08', g: '#c9a24c', y: '#ffffff', e: '#fff', w: '#fff', c: '#8b5a2b', f: '#7b1f1f', s: '#f4d03f' } },
+  fishSoldier: { art: 'goblin', pal: { k: '#0b2a33', g: '#3fb0a6', y: '#ffd166', e: '#fff', w: '#fff', c: '#c9d6df', f: '#2e86c1', s: '#1b4f72' } },
+  turtleGeneral: { art: 'boar', pal: { k: '#0e2116', b: '#3f7a4a', e: '#ffd166', w: '#d8e8c0', n: '#8fbf6a' } },
+  seaDragon: { art: 'serpent', scale: 2, pal: { k: '#04212f', g: '#1f8fbf', y: '#bff5ff', e: '#ffdd33', n: '#04212f' } },
+  yeti: { art: 'goblin', pal: { k: '#2c3e50', g: '#eef3f8', y: '#9fb3c8', e: '#3fa9f5', w: '#fff', c: '#9fb3c8', f: '#cfdbe6', s: '#aab7b8' } },
+  iceSpirit: { art: 'ghost', alpha: 0.85, pal: { k: '#1c3a52', h: '#6fb6e6', w: '#f0fbff', e: '#1c5a8a', m: '#6fb6e6', b: '#bfe3ff' } },
+  iceDragon: { art: 'serpent', scale: 2, pal: { k: '#1c2f40', g: '#cfe8f7', y: '#ffffff', e: '#3fa9f5', n: '#1c2f40' } },
+  waterImp: { art: 'goblin', pal: { k: '#0f2410', g: '#4f9a4a', y: '#d9e88a', e: '#fff', w: '#fff', c: '#6b8e23', f: '#2e5a2a', s: '#1e3a1a' } },
+  redOgre: { art: 'goblin', pal: { k: '#200808', g: '#d4453a', y: '#f4ecd8', e: '#ffe066', w: '#fff', c: '#2c2c2c', f: '#f4d03f', s: '#7a1f1f' } },
+  eightSerpent: { art: 'serpent', scale: 2, pal: { k: '#1a0a24', g: '#6c3483', y: '#d2b4de', e: '#ff3b3b', n: '#1a0a24' } },
   gumiho: { art: 'canine', scale: 2, tails: true, pal: { k: '#4a2340', o: '#fdf2f8', l: '#ffffff', e: '#e0218a', n: '#7a2a5a', t: '#ff8cc6' } },
   imugi: { art: 'serpent', scale: 2, pal: { k: '#0e2a1e', g: '#2e8b57', y: '#d9e88a', e: '#ffdd33', n: '#103020' } },
 };
@@ -183,6 +198,7 @@ const NPC_LOOK = {
   traveler: { body: '#8a8f7a', dark: '#4a4a3a', hair: '#3a2a1a', skin: '#d9a77a', hat: 'strawHat' },
   lord: { body: '#7b1f1f', dark: '#f4d03f', hair: '#111111', skin: '#e8c39e', hat: 'gat' },
   stable: { body: '#7a5a34', dark: '#3e2a16', hair: '#2a1a10', skin: '#d9a77a', hat: 'strawHat' },
+  ferryman: { body: '#3a5a7a', dark: '#1e2f40', hair: '#2a1a10', skin: '#c98d5e', hat: 'strawHat' },
 };
 
 const cache = new Map();

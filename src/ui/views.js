@@ -315,6 +315,13 @@ function dragonBox(game) {
 
 export function talkPage(npc, line, game) {
   const last = line >= npc.lines.length - 1;
+  if (npc.travel && game) {
+    const rows = npc.travel.map((r, i) => {
+      const ok = game.player.level >= r.level;
+      return `<div class="list-row${ok ? '' : ' locked'}"><span class="tag">⛵</span><span class="grow"><b>${esc(MAP_DEFS[r.to].name)}</b> <small class="muted">Lv.${r.level} 이상</small></span><span class="price">${r.cost.toLocaleString()}전</span><button class="primary" data-act="voyage" data-i="${i}" ${ok ? '' : 'disabled'}>타기</button></div>`;
+    }).join('');
+    return `<p class="dialog-text">${esc(npc.lines[0])}</p>${rows}<p class="hint">돌아올 때는 각 지역 아래쪽 나루(빛나는 출구)로 나오면 청풍성 마당입니다.</p><div class="row end" style="margin:8px -10px -10px"><button data-act="close">닫기</button></div>`;
+  }
   const rest = npc.inn && game ? `<button class="green" data-act="rest">쉬어 가기 (${game.restCost().toLocaleString()}전)</button>` : '';
   const actions = last
     ? `${rest}${npc.shop ? '<button class="primary" data-act="openShop">물건 보기</button>' : ''}<button data-act="close">닫기</button>`

@@ -848,6 +848,22 @@ export class Game {
     return true;
   }
 
+  /** 뱃사공 이동: 레벨·뱃삯을 확인하고 그 지역 한가운데로 간다. */
+  voyage(route) {
+    if (this.player.level < route.level) {
+      this.log(`레벨 ${route.level}부터 갈 수 있는 곳입니다.`, '#ff9f80');
+      return false;
+    }
+    if (this.player.gold < route.cost) {
+      this.log(`뱃삯이 모자랍니다. (${route.cost.toLocaleString()}전)`, '#ff9f80');
+      return false;
+    }
+    this.setPlayer({ gold: this.player.gold - route.cost });
+    this.teleport(route.to);
+    this.emit('sfx', 'equip');
+    return true;
+  }
+
   /** 말 타기 켜고 끄기(말 증서가 있어야 함, 실내에서는 못 탄다) */
   toggleRide() {
     if (!this.player.inv.some((s) => s.id === 'horseTicket')) {

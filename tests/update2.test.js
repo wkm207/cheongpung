@@ -361,3 +361,15 @@ test('말 증서가 있으면 말을 타고 더 빨리 달린다, 실내에선 �
   game.teleport('tavern');
   assert.ok(!game.riding);
 });
+
+test('뱃사공: 레벨·뱃삯이 되면 먼 지역으로 가고, 지역 출구는 청풍성으로 이어진다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  const route = { to: 'dragonPalace', level: 65, cost: 12000 };
+  assert.equal(game.voyage(route), false, '레벨 부족');
+  game.gmSetLevel(70);
+  game.setPlayer({ gold: 20000 });
+  assert.equal(game.voyage(route), true);
+  assert.equal(game.mapId, 'dragonPalace');
+  assert.equal(game.player.gold, 8000);
+  assert.ok(game.monsters.some((m) => m.type === 'seaDragon'));
+});

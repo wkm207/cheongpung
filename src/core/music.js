@@ -36,6 +36,7 @@ export const MAP_TRACK = {
   goblinCave: 'cave', bossLair: 'cave', dragonCave: 'cave', imugiSwamp: 'swamp', snowPass: 'snow',
   smithy: 'indoor', tailorShop: 'indoor', pharmacy: 'indoor', chiefHouse: 'indoor', tavern: 'indoor',
   castle: 'castle', palace: 'castle',
+  trainingBlue: 'cave', trainingRed: 'cave', zodiacTemple: 'cave', dragonPalace: 'swamp', northFortress: 'snow', eastIsland: 'forest',
 };
 
 const BAR_ROOTS = [0, 0, 3, 0, 1, 3, 0, 0]; // 마디마다 베이스가 짚는 음계 자리

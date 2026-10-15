@@ -25,7 +25,7 @@ export const ADVANCEMENTS = [
   },
   {
     tier: 3, level: 45, gold: 100000,
-    items: [['imugiScale', 1], ['dueokHorn', 10]],
+    items: [['imugiScale', 1], ['dueokHorn', 10], ['blueScale', 1], ['redScale', 1]],
     reward: { warrior: 'tortoiseSword', rogue: 'ghostDagger', mage: 'taegeukStaff', priest: 'phoenixFan' },
     speech: '이무기의 비늘까지 거둔 자여... 그대는 이제 전설의 경지에 올랐다.',
   },
