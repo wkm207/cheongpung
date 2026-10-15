@@ -4,174 +4,10 @@ import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
 import { drawCharacter, CHAR_W, CHAR_H } from './characters.js';
 
-const PX = 2; // 도트 1칸 = 2픽셀 (타일 32px)
 
-export const MONSTER_ART = {
-  squirrel: [
-    '................',
-    '................',
-    '..........kkk...',
-    '.........kTTTk..',
-    '..kk....kTTTTTk.',
-    '.kbbk...kTTTTTk.',
-    'kbebbk..kTTTTk..',
-    'kbpbbbk..kTTTk..',
-    '.kbbbbbkkTTTk...',
-    '..kbwbbbbTTk....',
-    '..kbwwbbbbk.....',
-    '..kbwwbbbbk.....',
-    '...kbbbbbk......',
-    '...kbk.kbk......',
-    '...kk...kk......',
-    '................',
-  ],
-  rabbit: [
-    '....kk.kk.......',
-    '...kwwkwwk......',
-    '...kwpkwpk......',
-    '...kwpkwpk......',
-    '...kwwkwwk......',
-    '..kwwwwwwk......',
-    '.kwewwwwwwk.....',
-    '.kwpwwwwwwwkkk..',
-    '..kwwwwwwwwwwwk.',
-    '...kwwwwwwwwwwk.',
-    '...kwwwwwwwwwwk.',
-    '....kwwwwwwwwwk.',
-    '....kwwkkkwwwk..',
-    '....kwk...kwk...',
-    '....kk.....kk...',
-    '................',
-  ],
-  canine: [
-    '................',
-    '................',
-    '..k..k..........',
-    '.kok.kok.....kk.',
-    '.kooookok...kotk',
-    'kooeoooook..kotk',
-    'knoooooook.kook.',
-    '.kllooooookkook.',
-    '..kllooooooook..',
-    '...kooooooooook.',
-    '...kloooooooolk.',
-    '...klooooooollk.',
-    '....kok.kkkok...',
-    '....kok....kok..',
-    '....kk.....kk...',
-    '................',
-  ],
-  goblin: [
-    '.......yy.......',
-    '......kyyk......',
-    '.....kggggk.....',
-    '....kggggggk....',
-    '....kgegegk.....',
-    '....kggggggk....',
-    '....kgkwwkgk..c.',
-    '.....kggggk..cc.',
-    '...kkggggggkkcc.',
-    '..kggkggggkggkc.',
-    '..kgk.kffffk.kg.',
-    '..kk..kfsfsfk.k.',
-    '.....kffffffk...',
-    '.....kggkkggk...',
-    '.....kgk..kgk...',
-    '.....kk....kk...',
-  ],
-  boar: [
-    '................',
-    '................',
-    '................',
-    '.....kk..kk.....',
-    '....kbbkkbbkkk..',
-    '...kbbbbbbbbbbk.',
-    '..kbebbbbbbbbbbk',
-    '.kwbbbbbbbbbbbbk',
-    'knnwbbbbbbbbbbbk',
-    'knnkbbbbbbbbbbk.',
-    '.kk.kbbbbbbbbk..',
-    '.....kbk..kbk...',
-    '.....kbk..kbk...',
-    '.....kk....kk...',
-    '................',
-    '................',
-  ],
-  ghost: [
-    '.....kkkkkk.....',
-    '....khhhhhhk....',
-    '...khhhhhhhhk...',
-    '...khwwwwwwhk...',
-    '...khweewewhk...',
-    '...khwwwwwwhk...',
-    '...khwwmmwwhk...',
-    '..khhwwwwwwhhk..',
-    '..khhbbbbbbhhk..',
-    '..khbbbbbbbbhk..',
-    '.khhbbbbbbbbhhk.',
-    '.khbbbbbbbbbbhk.',
-    '.kbbbbbbbbbbbbk.',
-    '..kbbk.kbbk.kbk.',
-    '...kk...kk...k..',
-    '................',
-  ],
-  serpent: [
-    '................',
-    '..kkkk..........',
-    '.kggggk.........',
-    'kgeggggk........',
-    'kggggggk........',
-    'knggggk.........',
-    '.kkggk..........',
-    '...kggk....kkk..',
-    '...kgyyk..kgggk.',
-    '....kgyyk.kgyyk.',
-    '....kgyyykkgyyk.',
-    '.....kgyyyggyk..',
-    '......kgyyyyk...',
-    '.......kkkkk....',
-    '................',
-    '................',
-  ],
-  bird: [
-    '................',
-    '.......kk.......',
-    '......kyyk......',
-    '.....kyeyrk.....',
-    'kk...krrrrk...kk',
-    'krk..krrrrk..krk',
-    'krrk.krrrrk.krrk',
-    'korrkkrrrrkkrrok',
-    '.korrrrrrrrrrok.',
-    '..koorrrrrrook..',
-    '...kooyrryook...',
-    '....kkyrrykk....',
-    '......kyyk......',
-    '.....kyookyk....',
-    '....kyk..kyk....',
-    '....kk....kk....',
-  ],
-  cat: [
-    '................',
-    '................',
-    '................',
-    '.k.k............',
-    'kokok...........',
-    'koooook.........',
-    'koeooek......k..',
-    'kopnpok.....kok.',
-    '.kooook....kok..',
-    '..kooookkkkok...',
-    '..koowwooooook..',
-    '..koowwooooook..',
-    '..kooooooooook..',
-    '...kok.kok.kok..',
-    '...kk..kk..kk...',
-    '................',
-  ],
-};
+import { BEAST_ART } from './beasts.js';
 
-const MONSTER_LOOK = {
+export const MONSTER_LOOK = {
   squirrel: { art: 'squirrel', pal: { k: '#2b1a10', b: '#a0612b', T: '#c47a3a', w: '#f0d9b5', e: '#111', p: '#f5a6b8' } },
   rabbit: { art: 'rabbit', pal: { k: '#3a3a3a', w: '#f4f4f4', p: '#f5a6b8', e: '#c0392b' } },
   fox: { art: 'canine', pal: { k: '#3b1d0b', o: '#e0782a', l: '#fbe3c6', e: '#111', n: '#111', t: '#ffffff' } },
@@ -222,8 +58,6 @@ const NPC_LOOK = {
   ferryman: { body: '#3a5a7a', dark: '#1e2f40', hair: '#2a1a10', skin: '#c98d5e', hat: 'strawHat' },
 };
 
-import { smoothSprite } from './smooth.js';
-
 const CHAR_RES = 3; // 사람 캐릭터는 3배 해상도 벡터 그림
 
 const cache = new Map();
@@ -232,26 +66,7 @@ function makeCanvas(w, h) {
   return Object.assign(document.createElement('canvas'), { width: w, height: h });
 }
 
-export function drawPixelRows(ctx, rows, pal, ox = 0, oy = 0, px = PX) {
-  rows.forEach((row, y) => {
-    for (let x = 0; x < 16; x++) {
-      const color = pal[row[x]];
-      if (!color) continue;
-      ctx.fillStyle = color;
-      ctx.fillRect(ox + x * px, oy + y * px, px, px);
-    }
-  });
-}
 
-// 도트로 그린 뒤 부드러운 고해상도 그림으로 바꿔 둔다(dot = 도트 한 칸의 픽셀 수)
-function cached(key, w, h, draw, dot = PX) {
-  if (!cache.has(key)) {
-    const c = makeCanvas(w, h);
-    draw(c.getContext('2d', { willReadFrequently: true }));
-    cache.set(key, smoothSprite(c, dot));
-  }
-  return cache.get(key);
-}
 
 
 // 벡터로 그리는 그림: 고해상도 캔버스에 배율을 걸고 논리 좌표로 그린다
@@ -279,7 +94,7 @@ export function playerSprite(cls, opts = {}) {
 const FEMALE_NPC = new Set(['tailor', 'herbalist', 'peddler', 'innkeeper']);
 
 export function npcSprite(look, dir, blink = false) {
-  if (look === 'cat') return cached('n-cat', 32, 32, (ctx) => drawPixelRows(ctx, MONSTER_ART.cat, { k: '#3b2410', o: '#f0a24a', w: '#fff3e0', e: '#2b2b2b', n: '#f78fb3', p: '#ffb3c6' }));
+  if (look === 'cat') return cachedVector('n-cat', 32, 32, CHAR_RES, (ctx) => BEAST_ART.cat(ctx, { k: '#3b2410', o: '#f0a24a', w: '#fff3e0', e: '#2b2b2b', n: '#f78fb3', p: '#ffb3c6' }));
   return characterSprite(`n-${look}`, NPC_LOOK[look], { gender: FEMALE_NPC.has(look) ? 'f' : 'm', dir, blink });
 }
 
@@ -316,15 +131,12 @@ export function monsterSprite(type) {
   const look = MONSTER_LOOK[type];
   const scale = look.scale ?? 1;
   const size = 32 * scale;
-  const bodyArt = cached(`mb-${type}`, size, size, (ctx) => {
+  return cachedVector(`m-${type}`, size, size, CHAR_RES, (ctx) => {
+    ctx.scale(scale, scale);
+    ctx.lineJoin = 'round';
+    if (look.tails) drawTails(ctx, 32, look.pal);
     ctx.globalAlpha = look.alpha ?? 1;
-    drawPixelRows(ctx, MONSTER_ART[look.art], look.pal, 0, 0, PX * scale);
-  }, PX * scale);
-  if (!look.tails) return bodyArt;
-  // 꼬리는 매끈한 곡선으로 따로 그리고 그 위에 몸을 얹는다
-  return cachedVector(`m-${type}`, size, size, bodyArt.width / size, (ctx) => {
-    drawTails(ctx, size, look.pal);
-    ctx.drawImage(bodyArt, 0, 0, size, size);
+    BEAST_ART[look.art](ctx, look.pal);
   });
 }
 

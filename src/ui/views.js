@@ -170,7 +170,7 @@ function skillRow(game, id) {
     <span class="tag">${sk.icon}</span>
     <span class="grow"><span class="line1"><b>${esc(sk.name)}</b> ${status}</span>
       <span class="line2">${facts}</span><span class="line2" style="color:#3b2a1a">${esc(sk.desc)}</span></span>
-    <span class="row" style="justify-content:flex-end">${right}</span>
+    <span class="row acts">${right}</span>
   </div>`;
 }
 
@@ -408,7 +408,7 @@ export function forgeList(game) {
 
 // ── 메뉴 ───────────────────────────────────────────────
 const KEY_HELP = [
-  ['이동', '방향키 / WASD (짧게 누르면 제자리에서 돌기)'], ['공격 · NPC 대화', 'Space (누르고 있으면 계속)'],
+  ['이동', '방향키 (짧게 누르면 제자리에서 돌기)'], ['공격 · NPC 대화', 'Space (누르고 있으면 계속)'],
   ['기술 슬롯', '1 ~ 5'], ['체력약 / 마력약', 'Q / E'], ['가방 · 기술 · 정보', 'I · K · C'],
   ['퀘스트 · 메뉴 · GM', 'L · M · G'], ['창 닫기', 'Esc'],
 ];

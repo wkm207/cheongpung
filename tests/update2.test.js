@@ -12,7 +12,8 @@ import { ITEMS } from '../src/data/items.js';
 import { QUEST_CHAINS } from '../src/data/quests.js';
 import { ADVANCEMENTS } from '../src/data/tiers.js';
 import { MONSTERS } from '../src/data/monsters.js';
-import { MONSTER_ART } from '../src/render/sprites.js';
+import { MONSTER_LOOK } from '../src/render/sprites.js';
+import { BEAST_ART } from '../src/render/beasts.js';
 
 const tick = (game, ms, step = 16) => {
   for (let t = 0; t < ms; t += step) game.update(step);
@@ -174,9 +175,7 @@ test('데이터: 모든 기술·승급·퀘스트·몬스터·도트가 서로 �
       for (const id of Object.values(q.reward.byClass ?? {})) assert.ok(ITEMS[id], id);
     }
   }
-  for (const rows of Object.values(MONSTER_ART)) {
-    for (const r of rows) assert.equal(r.length, 16, r);
-  }
+  for (const id of Object.keys(MONSTERS)) assert.equal(typeof BEAST_ART[MONSTER_LOOK[id]?.art], 'function', `${id} 그림 없음`);
 });
 
 test('숫자 뒤 조사도 읽는 소리대로 붙는다', () => {

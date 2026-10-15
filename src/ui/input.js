@@ -1,6 +1,5 @@
 const KEY_DIRS = {
-  ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
-  ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
+  ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
 };
 export const KEY_PANELS = { KeyI: 'inventory', KeyK: 'skills', KeyC: 'character', KeyL: 'quests', KeyM: 'menu', KeyG: 'gm', Backquote: 'gm' };
 const SLOT_KEYS = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];

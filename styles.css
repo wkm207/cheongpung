@@ -717,3 +717,9 @@ body.docked .attack-btn { right: calc(var(--side-w) + 16px); }
 .chip { padding: 3px 10px; font-size: 12px; border-radius: 12px; }
 .chip.on { color: #fff3d6; background: linear-gradient(#b8432f, #8a2a1f); border-color: #4a120c; }
 .inv-group { margin: 8px 0 2px; padding: 3px 6px; font-size: 12px; font-weight: 800; color: var(--blue); background: rgba(43, 76, 126, 0.1); border-radius: 3px; }
+
+/* 좁은 오른쪽 창: 설명 칸이 너무 좁아지면 버튼 묶음을 아랫줄로 내린다 */
+.list-row .acts { justify-content: flex-end; flex-wrap: wrap; gap: 4px; }
+#sidebar .list-row { flex-wrap: wrap; }
+#sidebar .list-row > .grow { flex: 1 1 150px; }
+#sidebar .list-row > .acts { margin-left: auto; }

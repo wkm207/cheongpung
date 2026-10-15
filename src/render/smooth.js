@@ -1,6 +1,5 @@
-// 도트 그림을 부드럽게: 도트 격자를 Scale2x(EPX) 알고리즘으로 두 번 키워 계단 모서리를 둥글리고,
-// 위는 밝게·아래는 어둡게 빛을 얹어 입체감을 준다. 결과 그림은 HI배 해상도로 만들어
-// 화면에서는 원래 크기(lw×lh)로 그린다.
+// 도트 맵을 부드럽게: 도트 격자를 Scale2x(EPX) 알고리즘으로 키워 계단 모서리를 둥글리고 살짝 번지게 한다.
+// HI: 나무처럼 벡터로 그리는 그림의 해상도 배율.
 
 export const HI = 2;
 
@@ -50,45 +49,6 @@ export function scale2x({ data, w, h }) {
     }
   }
   return { data: out, w: W, h: h * 2 };
-}
-
-function toCanvas({ data, w, h }) {
-  const c = Object.assign(document.createElement('canvas'), { width: w, height: h });
-  const ctx = c.getContext('2d');
-  const img = ctx.createImageData(w, h);
-  new Uint32Array(img.data.buffer).set(data);
-  ctx.putImageData(img, 0, 0);
-  return c;
-}
-
-/** 위에서 내려오는 빛: 윗부분은 따뜻하게 밝히고 아랫부분은 그늘지게 */
-function shade(ctx, w, h, strength = 1) {
-  ctx.save();
-  ctx.globalCompositeOperation = 'source-atop';
-  const g = ctx.createLinearGradient(0, 0, w * 0.3, h);
-  g.addColorStop(0, `rgba(255, 246, 220, ${0.16 * strength})`);
-  g.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
-  g.addColorStop(1, `rgba(20, 12, 40, ${0.26 * strength})`);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, h);
-  ctx.restore();
-}
-
-/** 도트 스프라이트(dot px = 도트 한 칸)를 부드러운 고해상도 그림으로 바꾼다 */
-export function smoothSprite(src, dot = 2) {
-  const w = src.width;
-  const h = src.height;
-  const dots = readDots(src.getContext('2d', { willReadFrequently: true }), w, h, dot);
-  const big = toCanvas(scale2x(scale2x(dots)));
-  const out = Object.assign(document.createElement('canvas'), { width: w * HI, height: h * HI });
-  const ctx = out.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(big, 0, 0, out.width, out.height);
-  shade(ctx, out.width, out.height);
-  out.lw = w;
-  out.lh = h;
-  return out;
 }
 
 /** 맵 전체: 도트 격자를 Scale2x로 둥글리고(크기는 그대로) 살짝 번지게 해 붓으로 칠한 듯이 */

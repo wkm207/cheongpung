@@ -19,13 +19,13 @@ export function tone(hex, amt) {
   return `rgb(${f(r)}, ${f(g)}, ${f(b)})`;
 }
 
-function lin(ctx, x0, y0, x1, y1, stops) {
+export function lin(ctx, x0, y0, x1, y1, stops) {
   const g = ctx.createLinearGradient(x0, y0, x1, y1);
   stops.forEach(([o, c]) => g.addColorStop(o, c));
   return g;
 }
 
-function ellipse(ctx, x, y, rx, ry, fill, stroke = OUTLINE, lw = 0.7) {
+export function ellipse(ctx, x, y, rx, ry, fill, stroke = OUTLINE, lw = 0.7) {
   ctx.beginPath();
   ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
   ctx.fillStyle = fill;
@@ -37,7 +37,7 @@ function ellipse(ctx, x, y, rx, ry, fill, stroke = OUTLINE, lw = 0.7) {
   }
 }
 
-function shape(ctx, points, fill, stroke = OUTLINE, lw = 0.7) {
+export function shape(ctx, points, fill, stroke = OUTLINE, lw = 0.7) {
   ctx.beginPath();
   points.forEach(([x, y, cx, cy], i) => {
     if (i === 0) ctx.moveTo(x, y);
@@ -54,7 +54,7 @@ function shape(ctx, points, fill, stroke = OUTLINE, lw = 0.7) {
   }
 }
 
-function line(ctx, x0, y0, x1, y1, color, w) {
+export function line(ctx, x0, y0, x1, y1, color, w) {
   ctx.beginPath();
   ctx.moveTo(x0, y0);
   ctx.lineTo(x1, y1);
@@ -330,43 +330,139 @@ function hat(ctx, id, items) {
 }
 
 // ── 무기 ─────────────────────────────────────────────────
-/** 손(hx,hy)에 쥔 무기. ang = 칼끝이 향하는 각도(라디안, 위쪽이 -π/2) */
-function weapon(ctx, wtype, tint, hx, hy, ang) {
+/** 무기 둘레의 은은한 빛(승급 무기) */
+function aura(ctx, x, y, r, tint, strength) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, tone(tint, 0.4).replace('rgb', 'rgba').replace(')', `, ${0.45 * strength})`));
+  g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+
+function sparkle(ctx, x, y, r) {
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.quadraticCurveTo(x, y, x - r, y);
+  ctx.quadraticCurveTo(x, y, x, y - r);
+  ctx.fill();
+}
+
+/** 감개를 감은 손잡이(y0→y1) */
+function grip(ctx, y0, y1, w, color) {
+  shape(ctx, [[-w, y0], [w, y0], [w, y1], [-w, y1]], lin(ctx, -w, 0, w, 0, [[0, tone(color, 0.3)], [1, tone(color, -0.35)]]), 'rgba(20,10,5,0.8)', 0.3);
+  for (let y = y0 + 0.6; y < y1; y += 1.1) line(ctx, -w, y, w, y + 0.6, 'rgba(0,0,0,0.35)', 0.3);
+}
+
+/** 매듭 술 장식 */
+function tassel(ctx, x, y, color) {
+  line(ctx, x, y, x - 0.6, y + 2, '#c9a23a', 0.35);
+  shape(ctx, [[x - 0.6, y + 2], [x - 1.6, y + 5.2], [x + 0.4, y + 5.2]], lin(ctx, 0, y + 2, 0, y + 5.5, [[0, color], [1, tone(color, -0.35)]]), null);
+  ellipse(ctx, x - 0.6, y + 2, 0.55, 0.55, '#f4d03f', null);
+}
+
+/** 손(hx,hy)에 쥔 무기. ang = 칼끝이 향하는 각도(라디안, 위쪽이 -π/2). tier가 높을수록 빛난다. */
+function weapon(ctx, wtype, tint, hx, hy, ang, tier = 0) {
   ctx.save();
   ctx.translate(hx, hy);
   ctx.rotate(ang + Math.PI / 2);
-  // 이 좌표계에서 무기는 위(-y)를 향한다
-  if (wtype === 'sword' || wtype === 'dagger') {
-    const len = wtype === 'sword' ? 17 : 9;
-    shape(ctx, [[-0.9, -1.5], [0.9, -1.5], [0.6, -len], [0, -len - 1.8], [-0.6, -len]], lin(ctx, -1, 0, 1, 0, [[0, '#ffffff'], [0.5, tint], [1, tone(tint, -0.4)]]), 'rgba(20,20,30,0.8)', 0.4);
-    line(ctx, 0, -2.5, 0, -len + 1, 'rgba(255,255,255,0.55)', 0.35);
-    line(ctx, -2.4, -1.3, 2.4, -1.3, '#c9a23a', 1.2);
-    line(ctx, 0, -0.8, 0, 2.6, '#5b3a1e', 1.3);
-  } else if (wtype === 'staff') {
-    line(ctx, 0, 11, 0, -15, lin(ctx, 0, -15, 0, 11, [[0, '#b07a45'], [1, '#5b3a1e']]), 1.4);
-    const g = ctx.createRadialGradient(-0.6, -17.6, 0.3, 0, -17, 3.6);
-    g.addColorStop(0, '#ffffff');
-    g.addColorStop(0.4, tint);
-    g.addColorStop(1, tone(tint, -0.5));
-    ellipse(ctx, 0, -17, 2.6, 2.6, g, 'rgba(0,0,0,0.5)', 0.4);
-    ctx.globalAlpha = 0.35;
-    ellipse(ctx, 0, -17, 4.2, 4.2, tint, null);
-    ctx.globalAlpha = 1;
-  } else if (wtype === 'fan') {
+  // 이 좌표계에서 무기는 위(-y)를 향하고, 손은 (0,0)
+  const steel = (w, len) => lin(ctx, -w, 0, w, 0, [[0, '#ffffff'], [0.35, tone(tint, 0.35)], [0.55, tint], [1, tone(tint, -0.45)]]);
+  if (wtype === 'sword') {
+    const len = 19;
+    if (tier) aura(ctx, 0, -len * 0.55, 7, tint, tier / 3);
+    shape(ctx, [[-1.15, -2], [1.15, -2], [1, -len + 3], [0, -len], [-1, -len + 3]], steel(1.2, len), 'rgba(15,15,25,0.85)', 0.35);
+    line(ctx, 0, -3, 0, -len + 3.5, 'rgba(40, 40, 60, 0.45)', 0.45); // 피홈
+    line(ctx, -0.7, -2.5, -0.55, -len + 3, 'rgba(255,255,255,0.7)', 0.25); // 날 빛
+    // 코등이: 휘어진 가로대와 가운데 보석
+    shape(ctx, [[-3.6, -2.6], [-1, -1.6], [1, -1.6], [3.6, -2.6], [3, -0.6], [-3, -0.6]], lin(ctx, -3.6, 0, 3.6, 0, [[0, '#fff1a8'], [0.5, '#d4a72c'], [1, '#8a6410']]), 'rgba(40,25,5,0.8)', 0.3);
+    ellipse(ctx, 0, -1.5, 0.75, 0.75, tone(tint, -0.2), 'rgba(0,0,0,0.5)', 0.2);
+    grip(ctx, -0.6, 3.6, 0.7, '#6b2a1a');
+    ellipse(ctx, 0, 4.3, 1, 0.9, lin(ctx, -1, 0, 1, 0, [[0, '#fff1a8'], [1, '#8a6410']]), 'rgba(40,25,5,0.8)', 0.3);
+    tassel(ctx, 0, 4.8, '#c0392b');
+    if (tier >= 3) sparkle(ctx, 0.6, -len + 4, 1.4);
+  } else if (wtype === 'dagger') {
+    const len = 10;
+    if (tier) aura(ctx, 0, -len * 0.5, 5, tint, tier / 3);
+    // 살짝 휜 외날
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, 6.5, -Math.PI * 0.85, -Math.PI * 0.15);
+    ctx.moveTo(-1, -1.6);
+    ctx.quadraticCurveTo(-1.6, -len * 0.6, 0.8, -len);
+    ctx.quadraticCurveTo(1.4, -len * 0.5, 1, -1.6);
     ctx.closePath();
-    ctx.fillStyle = lin(ctx, -6, -6, 6, 0, [[0, '#ffffff'], [0.5, tint], [1, tone(tint, -0.3)]]);
+    ctx.fillStyle = steel(1.4, len);
     ctx.fill();
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 0.35;
+    ctx.strokeStyle = 'rgba(15,15,25,0.85)';
+    ctx.stroke();
+    line(ctx, -0.6, -2.4, 0.3, -len + 1.5, 'rgba(255,255,255,0.7)', 0.25);
+    ellipse(ctx, 0, -1.4, 2, 0.7, lin(ctx, -2, 0, 2, 0, [[0, '#d5dbdb'], [1, '#4a4a4a']]), 'rgba(20,20,20,0.8)', 0.3);
+    grip(ctx, -0.8, 2.6, 0.65, '#2b2b2b');
+    ellipse(ctx, 0, 3.4, 0.9, 0.9, 'rgba(0,0,0,0)', '#c9a23a', 0.45); // 고리
+    tassel(ctx, 0, 4.2, tone(tint, -0.2));
+    if (tier >= 3) sparkle(ctx, 1, -len + 2, 1.1);
+  } else if (wtype === 'staff') {
+    // 꼬인 나무 자루
+    line(ctx, 0, 12, 0, -14, '#5b3a1e', 1.7);
+    line(ctx, 0, 12, 0, -14, lin(ctx, -1, 0, 1, 0, [[0, '#c48a52'], [1, '#6b4423']]), 1.2);
+    for (let y = 10; y > -13; y -= 2.2) line(ctx, -0.65, y, 0.65, y - 1.1, 'rgba(60, 30, 10, 0.55)', 0.35);
+    // 머리 장식: 구슬을 감싸는 초승달 고리
+    ctx.beginPath();
+    ctx.arc(0, -17.5, 3.6, Math.PI * 0.1, Math.PI * 0.9, true);
+    ctx.strokeStyle = '#c9a23a';
+    ctx.lineWidth = 0.9;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, -17.5, 3.6, Math.PI * 0.1, Math.PI * 0.9, true);
+    ctx.strokeStyle = 'rgba(255, 245, 190, 0.7)';
+    ctx.lineWidth = 0.3;
+    ctx.stroke();
+    aura(ctx, 0, -17.5, 6 + tier, tint, 0.6 + tier * 0.15);
+    const g = ctx.createRadialGradient(-0.8, -18.4, 0.2, 0, -17.5, 2.8);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.35, tone(tint, 0.3));
+    g.addColorStop(1, tone(tint, -0.45));
+    ellipse(ctx, 0, -17.5, 2.4, 2.4, g, 'rgba(0,0,0,0.5)', 0.35);
+    ellipse(ctx, -0.7, -18.3, 0.6, 0.45, 'rgba(255,255,255,0.9)', null);
+    // 매단 끈
+    line(ctx, 0.5, -13.5, 2.6, -9, tone(tint, -0.1), 0.5);
+    line(ctx, -0.5, -13.5, -1.8, -8.5, tone(tint, 0.1), 0.5);
+    if (tier >= 2) sparkle(ctx, 2.6, -20.5, 1.2);
+  } else if (wtype === 'fan') {
+    if (tier) aura(ctx, 0, -3.5, 7, tint, tier / 3);
+    const r = 7.2;
+    const a0 = -Math.PI * 0.88;
+    const a1 = -Math.PI * 0.12;
+    // 부채 종이: 안쪽은 비우고 바깥 띠에 무늬
+    ctx.beginPath();
+    ctx.arc(0, 0, r, a0, a1);
+    ctx.arc(0, 0, 2.2, a1, a0, true);
+    ctx.closePath();
+    ctx.fillStyle = lin(ctx, -r, -r, r, 0, [[0, '#fffdf5'], [0.5, tone(tint, 0.45)], [1, tone(tint, 0)]]);
+    ctx.fill();
+    ctx.lineWidth = 0.4;
     ctx.strokeStyle = OUTLINE;
     ctx.stroke();
-    for (let i = 0; i <= 6; i++) {
-      const a = -Math.PI * 0.85 + (i / 6) * Math.PI * 0.7;
-      line(ctx, 0, 0, Math.cos(a) * 6.3, Math.sin(a) * 6.3, 'rgba(120, 90, 50, 0.5)', 0.3);
+    // 무늬: 구름 같은 둥근 점과 바깥 띠
+    ctx.beginPath();
+    ctx.arc(0, 0, r - 0.9, a0, a1);
+    ctx.strokeStyle = tone(tint, -0.35);
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+    for (const a of [-0.7, -0.5, -0.3]) ellipse(ctx, Math.cos(a * Math.PI) * 4.6, Math.sin(a * Math.PI) * 4.6, 0.8, 0.8, tone(tint, -0.25), null);
+    for (let i = 0; i <= 8; i++) {
+      const a = a0 + (i / 8) * (a1 - a0);
+      line(ctx, Math.cos(a) * 1, Math.sin(a) * 1, Math.cos(a) * (r - 0.3), Math.sin(a) * (r - 0.3), 'rgba(110, 70, 30, 0.45)', 0.25);
     }
-    line(ctx, 0, 0, 0, 2.5, '#5b3a1e', 1);
+    // 겉살과 사북(못)
+    line(ctx, 0, 0, Math.cos(a0) * r, Math.sin(a0) * r, '#5b3a1e', 0.7);
+    line(ctx, 0, 0, Math.cos(a1) * r, Math.sin(a1) * r, '#5b3a1e', 0.7);
+    line(ctx, 0, 0, 0, 2.8, '#5b3a1e', 1.1);
+    ellipse(ctx, 0, 0.3, 0.6, 0.6, '#f4d03f', 'rgba(0,0,0,0.5)', 0.2);
+    tassel(ctx, 0, 2.8, tone(tint, -0.15));
+    if (tier >= 3) sparkle(ctx, -4, -6, 1.2);
   }
   ctx.restore();
 }
@@ -394,7 +490,7 @@ export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 's
   ctx.lineJoin = 'round';
   const holdBehind = dir === 'up';
   const wp = wpn ? weaponPose(dir, pose, wpn.wtype) : null;
-  if (wpn && holdBehind) weapon(ctx, wpn.wtype, wpn.tint, 23.5, 31, -Math.PI * 0.6);
+  if (wpn && holdBehind) weapon(ctx, wpn.wtype, wpn.tint, 23.5, 31, -Math.PI * 0.6, wpn.tier);
   if (female && dir === 'down') {
     // 등 뒤로 늘어진 긴 머리
     shape(ctx, [[9, 12], [23, 12], [22.5, 30, 24.5, 24], [9.5, 30, 16, 32], [9, 12, 7.5, 24]], tone(c.hair, -0.15), null);
@@ -412,7 +508,7 @@ export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 's
   head(ctx, dir, c, female, (blink || pose === 'cast') && dir !== 'up');
   hat(ctx, equip.helmet ?? look.hat, items);
   arms(ctx, dir, pose, c);
-  if (wpn && !holdBehind && pose !== 'cast') weapon(ctx, wpn.wtype, wpn.tint, wp[0], wp[1], wp[2]);
+  if (wpn && !holdBehind && pose !== 'cast') weapon(ctx, wpn.wtype, wpn.tint, wp[0], wp[1], wp[2], wpn.tier);
   if (pose === 'cast' && dir !== 'up') {
     // 모은 손끝에 맺히는 빛
     const gx = dir === 'side' ? 11 : 16;
