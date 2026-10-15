@@ -377,6 +377,16 @@ export class Game {
     else castSkill(this, id);
   }
 
+  /** 마법 칸 두 개의 자리를 맞바꾼다 */
+  swapSlots(a, b) {
+    if (a === b) return;
+    const slots = [...this.player.skillSlots];
+    if (a < 0 || b < 0 || a >= slots.length || b >= slots.length) return;
+    [slots[a], slots[b]] = [slots[b], slots[a]];
+    this.setPlayer({ skillSlots: slots });
+    this.emit('sfx', 'equip');
+  }
+
   assignSkill(slotIndex, id) {
     this.setPlayer({ skillSlots: assignSlot(this.player.skillSlots, slotIndex, id) });
   }

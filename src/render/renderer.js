@@ -349,12 +349,16 @@ export class Renderer {
     const breathe = pose === 'stand' && Math.floor(game.now / 650) % 2 ? 1 : 0;
     const lunge = pose === 'attack' ? 3 : 0;
     const [ldx, ldy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[pe.dir];
+    const riding = game.riding;
+    // 말을 타면 늘 옆모습으로 걸터앉는다(위·아래로 갈 때는 마지막으로 본 좌우 방향 유지)
+    if (pe.dir === 'left' || pe.dir === 'right') this.rideFace = pe.dir;
+    const faceRight = riding ? this.rideFace === 'right' : pe.dir === 'right';
     const img = playerSprite(game.player.cls, {
-      gender: game.player.gender, dir: spriteDir(pe.dir), pose, equip: game.player.equip, blink: blinking(game.now, 1),
+      gender: game.player.gender, dir: riding ? 'side' : spriteDir(pe.dir), pose: riding && pose === 'walk' ? 'stand' : pose,
+      equip: game.player.equip, blink: blinking(game.now, 1), seated: !!riding,
     });
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
-    const riding = game.riding;
-    if (riding) this.drawHorse(ctx, x, y, pe.dir === 'right', pe.moving ? Math.floor(game.now / 120) % 2 : 0);
+    if (riding) this.drawHorse(ctx, x, y, faceRight, pe.moving ? game.now : 0);
     ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : game.isDodging() ? 0.75 : 1;
     const rollT = (game.now - (game.rollStart ?? -1e9)) / 330;
     if (rollT < 1) {
@@ -368,7 +372,9 @@ export class Renderer {
       drawSprite(ctx, img, -16, -24, pe.dir === 'right');
       ctx.restore();
     } else {
-      drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge - (riding ? 10 : 0), pe.dir === 'right');
+      const bounce = riding && pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
+      if (riding) drawSprite(ctx, img, x + (faceRight ? 1 : -1), y - 22 - bounce, faceRight);
+      else drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge, pe.dir === 'right');
     }
     ctx.globalAlpha = 1;
     if (game.buffs.length || game.guardianUntil > game.now) {
@@ -384,26 +390,123 @@ export class Renderer {
   }
 
   /** 말(옆모습, 갈색 몸통·검은 갈기). 오리지널 도트 */
-  drawHorse(ctx, x, y, flip, gallop) {
+  /** 말(옆모습, 왼쪽을 본다): 곡선으로 그린 갈색 말, 검은 갈기, 붉은 안장. t = 달리는 시각(멈추면 0) */
+  drawHorse(ctx, x, y, flip, t) {
     ctx.save();
+    ctx.translate(x, y);
     if (flip) {
-      ctx.translate(x * 2 + 32, 0);
+      ctx.translate(32, 0);
       ctx.scale(-1, 1);
     }
-    const r = (px, py, w, h, c) => {
-      ctx.fillStyle = c;
-      ctx.fillRect(x + px * 2, y + py * 2, w * 2, h * 2);
+    ctx.lineJoin = 'round';
+    const coat = '#8b5a2b';
+    const ink = 'rgba(40, 22, 10, 0.9)';
+    const fill = (draw, color, stroke = ink) => {
+      ctx.beginPath();
+      draw();
+      ctx.fillStyle = color;
+      ctx.fill();
+      if (stroke) {
+        ctx.lineWidth = 0.7;
+        ctx.strokeStyle = stroke;
+        ctx.stroke();
+      }
     };
-    r(2, 7, 12, 5, '#1a1110');
-    r(3, 8, 10, 3, '#8b5a2b');
-    r(0, 4, 4, 5, '#1a1110');
-    r(1, 5, 2, 3, '#8b5a2b');
-    r(1, 5, 1, 1, '#111');
-    r(3, 4, 3, 2, '#2b1d14');
-    r(13, 7, 2, 4, '#2b1d14');
-    const legs = gallop ? [[3, 1], [6, 0], [9, 1], [12, 0]] : [[3, 0], [6, 0], [10, 0], [12, 0]];
-    for (const [lx, off] of legs) r(lx + off, 12, 1, 3, '#5a3a1e');
-    r(5, 7, 5, 1, '#c0392b');
+    const grad = (x0, y0, x1, y1, a, b) => {
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, a);
+      g.addColorStop(1, b);
+      return g;
+    };
+    // 다리: 달릴 때 앞뒤로 흔든다
+    const swing = (phase) => (t ? Math.sin(t / 80 + phase) * 3 : 0);
+    const leg = (hx, phase, near) => {
+      const s = swing(phase);
+      const color = near ? '#7a4e25' : '#5e3b1c';
+      fill(() => {
+        ctx.moveTo(hx - 1.4, 20);
+        ctx.lineTo(hx + 1.4, 20);
+        ctx.lineTo(hx + s + 0.9, 29);
+        ctx.lineTo(hx + s - 0.9, 29);
+        ctx.closePath();
+      }, color);
+      fill(() => ctx.ellipse(hx + s, 29.6, 1.4, 0.9, 0, 0, Math.PI * 2), '#1a1110', null);
+    };
+    leg(9.5, 0, false);
+    leg(24.5, Math.PI, false);
+    // 꼬리
+    fill(() => {
+      ctx.moveTo(27.5, 14);
+      ctx.quadraticCurveTo(35 + swing(1), 16, 33 + swing(2), 26);
+      ctx.quadraticCurveTo(30, 20, 27, 17);
+      ctx.closePath();
+    }, '#2a1a10');
+    // 몸통
+    fill(() => ctx.ellipse(17.5, 17.5, 11.5, 6, 0, 0, Math.PI * 2), grad(8, 11, 26, 24, '#b07a45', '#5e3b1c'));
+    // 목과 머리
+    fill(() => {
+      ctx.moveTo(8.5, 15);
+      ctx.quadraticCurveTo(5, 9, 5.5, 5);
+      ctx.lineTo(9.5, 4.5);
+      ctx.quadraticCurveTo(11.5, 9, 14, 13.5);
+      ctx.closePath();
+    }, grad(5, 4, 14, 15, '#a8743f', coat));
+    fill(() => {
+      ctx.save();
+      ctx.translate(3.6, 7);
+      ctx.rotate(0.55);
+      ctx.ellipse(0, 0, 4.6, 2.5, 0, 0, Math.PI * 2);
+      ctx.restore();
+    }, grad(0, 4, 7, 10, '#b07a45', '#7a4e25'));
+    fill(() => ctx.ellipse(1.2, 9.6, 1.6, 1.3, 0.5, 0, Math.PI * 2), '#4a2e16', null); // 주둥이
+    fill(() => {
+      ctx.moveTo(6.5, 3.2);
+      ctx.lineTo(7.4, 0.4);
+      ctx.lineTo(8.6, 3.6);
+      ctx.closePath();
+    }, '#7a4e25');
+    fill(() => ctx.arc(4.4, 5.8, 0.75, 0, Math.PI * 2), '#111', null);
+    fill(() => ctx.arc(4.2, 5.5, 0.25, 0, Math.PI * 2), '#fff', null);
+    // 갈기
+    fill(() => {
+      ctx.moveTo(7.5, 3.5);
+      ctx.quadraticCurveTo(10, 4, 10.5, 7);
+      ctx.lineTo(13, 9);
+      ctx.lineTo(12, 10.5);
+      ctx.lineTo(14.5, 13);
+      ctx.quadraticCurveTo(10, 11, 8.5, 6);
+      ctx.closePath();
+    }, '#2a1a10');
+    // 앞쪽 다리
+    leg(12, Math.PI / 2, true);
+    leg(22, Math.PI * 1.5, true);
+    // 안장과 고삐
+    fill(() => {
+      ctx.moveTo(12.5, 11.5);
+      ctx.quadraticCurveTo(17.5, 14.5, 22.5, 11.5);
+      ctx.lineTo(23, 17.5);
+      ctx.quadraticCurveTo(17.5, 19.5, 12, 17.5);
+      ctx.closePath();
+    }, grad(12, 11, 23, 18, '#d64a3a', '#8b1a1a'));
+    ctx.strokeStyle = '#f4d03f';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(12.3, 16.8);
+    ctx.quadraticCurveTo(17.5, 18.8, 22.8, 16.8);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(60, 30, 10, 0.9)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(2.2, 8.6);
+    ctx.quadraticCurveTo(7, 12, 11, 12.5);
+    ctx.stroke();
+    // 등자
+    ctx.strokeStyle = '#9aa0a6';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(15.5, 17.5);
+    ctx.lineTo(15, 22);
+    ctx.stroke();
     ctx.restore();
   }
 

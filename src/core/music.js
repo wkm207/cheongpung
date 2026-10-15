@@ -16,6 +16,10 @@ const PROGRESSIONS = {
   dream: [3, 4, 2, 5, 3, 4, 0, 0], // Ⅳ-Ⅴ-Ⅲ-Ⅵ
   sad: [0, 5, 2, 6, 0, 5, 3, 4], // ⅰ-Ⅵ-Ⅲ-Ⅶ
   epic: [0, 5, 6, 4, 0, 5, 6, 6], // ⅰ-Ⅵ-Ⅶ-ⅴ
+  // 사냥터: 같은 화음을 끌다가 확 넘어가는 긴장된 진행
+  tense: [0, 0, 5, 6, 0, 0, 3, 4], // ⅰ-ⅰ-Ⅵ-Ⅶ-ⅰ-ⅰ-ⅳ-ⅴ
+  stalk: [0, 6, 5, 6, 0, 6, 3, 4], // ⅰ-Ⅶ-Ⅵ-Ⅶ
+  dread: [0, 1, 0, 4, 0, 1, 5, 4], // ⅰ-ⅱ°-ⅰ-ⅴ
 };
 
 // 한 마디 리듬(칸 길이 모음). 당김음이 있는 것일수록 귀에 잘 붙는다.
@@ -29,18 +33,21 @@ const GROOVES = {
   light: { 8: [[0, 'kick'], [4, 'snap'], [2, 'hat'], [6, 'hat']], 12: [[0, 'kick'], [6, 'snap'], [3, 'hat'], [9, 'hat']] },
   bounce: { 8: [[0, 'kick'], [3, 'kick'], [4, 'snap'], [1, 'hat'], [2, 'hat'], [5, 'hat'], [6, 'hat'], [7, 'hat']], 12: [[0, 'kick'], [5, 'kick'], [6, 'snap'], [2, 'hat'], [4, 'hat'], [8, 'hat'], [10, 'hat']] },
   battle: { 8: [[0, 'kick'], [2, 'kick'], [4, 'snap'], [5, 'kick'], [6, 'kick'], [1, 'hat'], [3, 'hat'], [5, 'hat'], [7, 'hat']], 12: [] },
+  // 사냥터: 쉬지 않고 몰아치는 북과 하이햇
+  drive: { 8: [[0, 'kick'], [3, 'kick'], [4, 'snap'], [6, 'kick'], [0, 'hat'], [1, 'hat'], [2, 'hat'], [3, 'hat'], [4, 'hat'], [5, 'hat'], [6, 'hat'], [7, 'hat']], 12: [] },
 };
 
 // meter: 한 마디 칸 수(12 = 12/8, 8 = 4/4), bpm: 1분당 박 수
 export const TRACKS = {
   title: { seed: 3, scale: 'major', root: 62, bpm: 78, meter: 8, prog: 'dream', groove: 'none', pad: true },
   village: { seed: 11, scale: 'major', root: 60, bpm: 104, meter: 8, prog: 'pop', groove: 'bounce', pad: false },
-  field: { seed: 21, scale: 'major', root: 62, bpm: 112, meter: 8, prog: 'sweet', groove: 'bounce', pad: false },
-  forest: { seed: 31, scale: 'minor', root: 57, bpm: 88, meter: 12, prog: 'sad', groove: 'light', pad: true },
-  hill: { seed: 41, scale: 'minor', root: 59, bpm: 116, meter: 8, prog: 'epic', groove: 'bounce', pad: false },
-  cave: { seed: 51, scale: 'minor', root: 52, bpm: 72, meter: 8, prog: 'sad', groove: 'light', pad: true },
-  swamp: { seed: 61, scale: 'minor', root: 55, bpm: 80, meter: 12, prog: 'sad', groove: 'light', pad: true },
-  snow: { seed: 71, scale: 'major', root: 64, bpm: 84, meter: 12, prog: 'dream', groove: 'light', pad: true },
+  // 사냥터: 단조·빠른 박자·몰아치는 베이스(drive)로 긴장감 있게
+  field: { seed: 21, scale: 'minor', root: 62, bpm: 122, meter: 8, prog: 'tense', groove: 'drive', pad: true, drive: true },
+  forest: { seed: 31, scale: 'minor', root: 57, bpm: 118, meter: 8, prog: 'stalk', groove: 'drive', pad: true, drive: true },
+  hill: { seed: 41, scale: 'minor', root: 59, bpm: 130, meter: 8, prog: 'epic', groove: 'drive', pad: false, drive: true },
+  cave: { seed: 51, scale: 'minor', root: 52, bpm: 104, meter: 8, prog: 'dread', groove: 'drive', pad: true, drive: true },
+  swamp: { seed: 61, scale: 'minor', root: 55, bpm: 110, meter: 8, prog: 'dread', groove: 'drive', pad: true, drive: true },
+  snow: { seed: 71, scale: 'minor', root: 64, bpm: 116, meter: 8, prog: 'stalk', groove: 'drive', pad: true, drive: true },
   boss: { seed: 81, scale: 'minor', root: 57, bpm: 144, meter: 8, prog: 'epic', groove: 'battle', pad: true },
   indoor: { seed: 91, scale: 'major', root: 65, bpm: 92, meter: 12, prog: 'sweet', groove: 'light', pad: false },
   castle: { seed: 101, scale: 'major', root: 60, bpm: 90, meter: 8, prog: 'pop', groove: 'light', pad: true },
@@ -122,8 +129,13 @@ export function makeSong(def) {
   for (let m = 0; m < 8; m++) {
     const chord = prog[m];
     const bass = degreeToMidi(def, chord) - 12;
-    notes.push({ step: m * bar, midi: bass, len: bar / 2, inst: 'bass', vol: 1 });
-    notes.push({ step: m * bar + bar / 2, midi: bass, len: bar / 2, inst: 'bass', vol: 0.75 });
+    if (def.drive) {
+      // 몰아치는 베이스: 8분음표마다 근음, 박마다 옥타브를 섞는다
+      for (let s = 0; s < bar; s++) notes.push({ step: m * bar + s, midi: s % 4 === 3 ? bass + 12 : bass, len: 1, inst: 'bass', vol: s % 2 ? 0.6 : 0.9 });
+    } else {
+      notes.push({ step: m * bar, midi: bass, len: bar / 2, inst: 'bass', vol: 1 });
+      notes.push({ step: m * bar + bar / 2, midi: bass, len: bar / 2, inst: 'bass', vol: 0.75 });
+    }
     if (def.pad) for (const d of [0, 2, 4]) notes.push({ step: m * bar, midi: degreeToMidi(def, chord + d), len: bar, inst: 'pad', vol: 1 });
     for (let s = 0, k = 0; s < bar; s += every, k++) {
       notes.push({ step: m * bar + s, midi: degreeToMidi(def, chord + arp[k % arp.length]), len: every * 2, inst: 'harp', vol: k % 2 ? 0.7 : 1 });

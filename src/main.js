@@ -214,10 +214,60 @@ function backToTitle() {
   title.show();
 }
 
+// 단축 칸: 짧게 누르면 마법을 쓰고, 꾹 누르거나 끌면 다른 칸으로 옮길 수 있다
+const DRAG_PX = 10;
+const HOLD_MS = 380;
+let slotDrag = null;
+function endSlotGhost() {
+  slotDrag?.ghost?.remove();
+  for (const b of $$('.hotbar [data-slot]')) b.classList.remove('drop-target', 'dragging');
+}
+function slotUnder(x, y) {
+  return document.elementFromPoint(x, y)?.closest('.hotbar [data-slot]') ?? null;
+}
 for (const btn of $$('.hotbar [data-slot]')) {
   btn.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    game?.castSlot(Number(btn.dataset.slot));
+    try {
+      btn.setPointerCapture(e.pointerId);
+    } catch {
+      // 캡처를 못 해도 끌기는 버튼 위 이벤트로 이어진다
+    }
+    slotDrag = { btn, from: Number(btn.dataset.slot), x: e.clientX, y: e.clientY, at: performance.now(), ghost: null };
+  });
+  btn.addEventListener('pointermove', (e) => {
+    if (!slotDrag || slotDrag.btn !== btn) return;
+    const moved = Math.hypot(e.clientX - slotDrag.x, e.clientY - slotDrag.y) > DRAG_PX;
+    const held = performance.now() - slotDrag.at > HOLD_MS;
+    if (!slotDrag.ghost && (moved || held) && game?.player.skillSlots[slotDrag.from]) {
+      const ghost = btn.cloneNode(true);
+      ghost.classList.add('slot-ghost');
+      document.body.append(ghost);
+      slotDrag.ghost = ghost;
+      btn.classList.add('dragging');
+    }
+    if (!slotDrag.ghost) return;
+    slotDrag.ghost.style.left = `${e.clientX}px`;
+    slotDrag.ghost.style.top = `${e.clientY}px`;
+    const over = slotUnder(e.clientX, e.clientY);
+    for (const b of $$('.hotbar [data-slot]')) b.classList.toggle('drop-target', b === over && b !== btn);
+  });
+  btn.addEventListener('pointerup', (e) => {
+    if (!slotDrag || slotDrag.btn !== btn) return;
+    const drag = slotDrag;
+    slotDrag = null;
+    if (drag.ghost) {
+      drag.ghost.remove();
+      endSlotGhost();
+      const over = slotUnder(e.clientX, e.clientY);
+      if (over && over !== btn) game?.swapSlots(drag.from, Number(over.dataset.slot));
+      return;
+    }
+    if (performance.now() - drag.at < HOLD_MS) game?.castSlot(drag.from);
+  });
+  btn.addEventListener('pointercancel', () => {
+    endSlotGhost();
+    slotDrag = null;
   });
 }
 for (const btn of $$('[data-quick]')) {

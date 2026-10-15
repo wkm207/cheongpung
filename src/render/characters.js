@@ -65,8 +65,16 @@ export function line(ctx, x0, y0, x1, y1, color, w) {
 }
 
 // ── 몸의 각 부분 ─────────────────────────────────────────
-function legs(ctx, dir, pose, c) {
+function legs(ctx, dir, pose, c, seated) {
   const walk = pose === 'walk';
+  if (seated) {
+    // 말 위에 걸터앉은 다리: 허벅지는 앞으로, 정강이는 아래로(옆모습)
+    const pants = lin(ctx, 10, 34, 18, 42, [[0, tone(c.pants, 0.25)], [1, c.pants]]);
+    shape(ctx, [[18, 33.5], [17.5, 37], [13.6, 38.6], [12.2, 36.2]], pants);
+    shape(ctx, [[12.2, 36.2], [14.8, 37.6], [14.6, 42.5], [12, 42.5]], pants);
+    ellipse(ctx, 12.6, 43.2, 2.3, 1.2, lin(ctx, 0, 42, 0, 45, [[0, '#4a4a4a'], [1, '#141414']]));
+    return;
+  }
   const pants = lin(ctx, 12, 0, 20, 0, [[0, tone(c.pants, 0.25)], [1, c.pants]]);
   const leg = (x, top, bottom, shoeDx = 0) => {
     shape(ctx, [[x - 1.6, top], [x + 1.6, top], [x + 1.4, bottom], [x - 1.4, bottom]], pants);
@@ -84,7 +92,7 @@ function legs(ctx, dir, pose, c) {
 }
 
 /** 옷 몸통. 여자는 저고리+치마, 남자는 도포 */
-function body(ctx, dir, c, female) {
+function body(ctx, dir, c, female, seated = false) {
   const side = dir === 'side';
   const L = side ? 11 : 9.6;
   const R = side ? 21 : 22.4;
@@ -92,6 +100,12 @@ function body(ctx, dir, c, female) {
   if (female) {
     // 치마: 아래로 넓게 퍼진다
     const skirt = lin(ctx, 6, 28, 26, 44, [[0, tone(c.trim, 0.25)], [0.55, c.trim], [1, tone(c.trim, -0.35)]]);
+    if (seated) {
+      // 말 등에 늘어뜨린 치마
+      shape(ctx, [[11, 27.5], [21, 27.5], [22, 37, 23, 32], [9, 39], [11, 27.5, 8.5, 33]], skirt);
+      shape(ctx, [[L + 1.2, 21], [R - 1.2, 21], [R + 0.3, 29], [L - 0.3, 29]], robe);
+      return finishBody(ctx, dir, c, female, L, R);
+    }
     shape(ctx, [[side ? 11 : 10, 27.5], [side ? 21 : 22, 27.5], [side ? 24.5 : 26, 44.5, side ? 23 : 25.5, 36], [side ? 7.5 : 6, 44.5], [side ? 11 : 10, 27.5, side ? 9 : 6.5, 36]], skirt);
     // 치마 주름
     for (const fx of side ? [12, 16, 20] : [11, 14, 18, 21]) line(ctx, fx + 0.5, 30, fx + (fx - 16) * 0.35, 44, 'rgba(0,0,0,0.15)', 0.5);
@@ -103,6 +117,12 @@ function body(ctx, dir, c, female) {
     if (dir === 'down') line(ctx, 13.5, 21.5, 19.5, 36.5, 'rgba(0,0,0,0.22)', 0.6);
     shape(ctx, [[L - 0.6, 35.5], [R + 0.6, 35.5], [R + 0.6, 37], [L - 0.6, 37]], tone(c.trim, -0.1), null);
   }
+  finishBody(ctx, dir, c, female, L, R);
+}
+
+/** 깃·허리띠(고름)·어깨 장식 */
+function finishBody(ctx, dir, c, female, L, R) {
+  const side = dir === 'side';
   if (dir === 'down') {
     // 흰 깃(V자)과 동정
     shape(ctx, [[13.2, 20.8], [16, 25.5], [18.8, 20.8], [17.6, 20.8], [16, 23.6], [14.4, 20.8]], c.collar, 'rgba(0,0,0,0.35)', 0.4);
@@ -139,8 +159,12 @@ function arm(ctx, sx, sy, hx, hy, c) {
   ellipse(ctx, hx + (dx / len) * 0.6, hy + (dy / len) * 0.6, 1.5, 1.5, c.skin, OUTLINE, 0.5);
 }
 
-function arms(ctx, dir, pose, c) {
+function arms(ctx, dir, pose, c, seated = false) {
   const side = dir === 'side';
+  if (seated && side && pose !== 'cast' && pose !== 'attack') {
+    arm(ctx, 15.5, 22.5, 10.5, 29, c); // 고삐를 쥔 손
+    return;
+  }
   if (pose === 'cast' && dir !== 'up') {
     if (side) arm(ctx, 15, 22.5, 11.5, 26.5, c);
     else {
@@ -478,7 +502,7 @@ function weaponPose(dir, pose, wtype) {
 }
 
 /** 캐릭터 한 장을 그린다. ctx는 32×48 논리 좌표(배율은 호출하는 쪽에서 미리 걸어 둔다). */
-export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 'stand', blink = false, equip = {}, items }) {
+export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 'stand', blink = false, equip = {}, items, seated = false }) {
   const armor = equip.armor && items[equip.armor];
   const neck = equip.necklace && items[equip.necklace];
   const wpn = equip.weapon && items[equip.weapon];
@@ -489,14 +513,14 @@ export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 's
   };
   ctx.lineJoin = 'round';
   const holdBehind = dir === 'up';
-  const wp = wpn ? weaponPose(dir, pose, wpn.wtype) : null;
+  const wp = wpn ? (seated && dir === 'side' && pose !== 'attack' && pose !== 'cast' ? [10.5, 29, wpn.wtype === 'staff' ? -Math.PI / 2 : -Math.PI * 0.62] : weaponPose(dir, pose, wpn.wtype)) : null;
   if (wpn && holdBehind) weapon(ctx, wpn.wtype, wpn.tint, 23.5, 31, -Math.PI * 0.6, wpn.tier);
   if (female && dir === 'down') {
     // 등 뒤로 늘어진 긴 머리
     shape(ctx, [[9, 12], [23, 12], [22.5, 30, 24.5, 24], [9.5, 30, 16, 32], [9, 12, 7.5, 24]], tone(c.hair, -0.15), null);
   }
-  legs(ctx, dir, pose, c);
-  body(ctx, dir, c, female);
+  legs(ctx, dir, pose, c, seated);
+  body(ctx, dir, c, female, seated);
   if (neck && dir !== 'up') {
     ctx.beginPath();
     ctx.arc(16, 20, 3.2, 0.15 * Math.PI, 0.85 * Math.PI);
@@ -507,7 +531,7 @@ export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 's
   }
   head(ctx, dir, c, female, (blink || pose === 'cast') && dir !== 'up');
   hat(ctx, equip.helmet ?? look.hat, items);
-  arms(ctx, dir, pose, c);
+  arms(ctx, dir, pose, c, seated);
   if (wpn && !holdBehind && pose !== 'cast') weapon(ctx, wpn.wtype, wpn.tint, wp[0], wp[1], wp[2], wpn.tier);
   if (pose === 'cast' && dir !== 'up') {
     // 모은 손끝에 맺히는 빛

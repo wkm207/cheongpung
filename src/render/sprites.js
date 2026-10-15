@@ -82,9 +82,9 @@ function cachedVector(key, w, h, res, draw) {
 }
 
 /** 사람 캐릭터(32×48): 성별·자세·장비가 반영된다. pose: stand | walk | cast | attack */
-function characterSprite(keyBase, look, { gender = 'm', dir = 'down', pose = 'stand', blink = false, equip = {} } = {}) {
-  const key = `${keyBase}:${gender}:${dir}:${pose}:${blink ? 1 : 0}:${equip.weapon}:${equip.helmet}:${equip.armor}:${equip.necklace}`;
-  return cachedVector(key, CHAR_W, CHAR_H, CHAR_RES, (ctx) => drawCharacter(ctx, { look, gender, dir, pose, blink, equip, items: ITEMS }));
+function characterSprite(keyBase, look, { gender = 'm', dir = 'down', pose = 'stand', blink = false, equip = {}, seated = false } = {}) {
+  const key = `${keyBase}:${gender}:${dir}:${pose}:${blink ? 1 : 0}:${seated ? 1 : 0}:${equip.weapon}:${equip.helmet}:${equip.armor}:${equip.necklace}`;
+  return cachedVector(key, CHAR_W, CHAR_H, CHAR_RES, (ctx) => drawCharacter(ctx, { look, gender, dir, pose, blink, equip, items: ITEMS, seated }));
 }
 
 export function playerSprite(cls, opts = {}) {

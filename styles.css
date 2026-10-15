@@ -744,3 +744,16 @@ body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 #sidebar .list-row { flex-wrap: wrap; }
 #sidebar .list-row > .grow { flex: 1 1 150px; }
 #sidebar .list-row > .acts { margin-left: auto; }
+
+/* 단축 칸 끌어서 옮기기 */
+.hotbar [data-slot] { touch-action: none; }
+.hotbar [data-slot].dragging { opacity: 0.35; }
+.hotbar [data-slot].drop-target { outline: 2px solid #ffe066; outline-offset: 1px; }
+.slot-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  transform: translate(-50%, -60%) scale(1.15);
+  opacity: 0.9;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+}
