@@ -2,7 +2,7 @@ import { mulberry32, randInt } from '../core/rng.js';
 
 // 지나갈 수 없는 타일
 // Q 돌담, Y 초가지붕, G 대문 기둥, J 장승, K 장독, H 실내 벽, U 탁자·계산대, V 선반 (D 문은 지나갈 수 있다)
-export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V', 'C', 'Z']);
+export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V', 'C', 'Z', 'L']);
 
 const grid = (w, h, ch) => Array.from({ length: h }, () => Array(w).fill(ch));
 const inInterior = (g, x, y) => x >= 1 && y >= 1 && y < g.length - 1 && x < g[0].length - 1;

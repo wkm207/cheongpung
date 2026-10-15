@@ -156,6 +156,7 @@ export const MAP_DEFS = {
           { to: 'dragonPalace', level: 65, cost: 12000 },
           { to: 'northFortress', level: 75, cost: 20000 },
           { to: 'eastIsland', level: 85, cost: 40000 },
+          { to: 'fireIsland', level: 95, cost: 60000 },
         ],
       },
     ],
@@ -212,6 +213,12 @@ export const MAP_DEFS = {
     build: buildField,
     portals: [{ x: 23, y: 39, w: 2, h: 1, to: 'castle', tx: 24, ty: 21 }],
     spawns: [['waterImp', 10], ['redOgre', 8], ['eightSerpent', 1]],
+  },
+  fireIsland: {
+    name: '불의 섬', w: 48, h: 40, seed: 201, density: 0.1, ground: 'a', obstacles: ['L', 'L', 'O'],
+    build: buildField,
+    portals: [{ x: 23, y: 39, w: 2, h: 1, to: 'castle', tx: 24, ty: 21 }],
+    spawns: [['fireLizard', 10], ['flameSpirit', 8], ['firebird', 1]],
   },
   field1: {
     name: '토끼 들판',

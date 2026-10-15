@@ -332,7 +332,8 @@ export class Game {
     this.attackPoseUntil = this.now + 160;
     const target = this.meleeTarget();
     const at = target ?? this.frontTile();
-    this.addEffect({ type: 'slash', x: at.x, y: at.y, dir: this.pe.dir, dur: 180 });
+    const tint = ITEMS[this.player.equip.weapon]?.tint;
+    this.addEffect({ type: 'slash', x: at.x, y: at.y, dir: this.pe.dir, dur: 200, color: tint });
     if (target) this.strike(target);
     else this.emit('sfx', 'swing');
   }
@@ -406,7 +407,8 @@ export class Game {
       if (!m.aggro) m.emote = { text: '!', until: this.now + 800 };
       m.aggro = true;
       this.addText(isCrit ? `${dmg}!` : `${dmg}`, m.x + jitter, m.y, isCrit ? '#ffcf3f' : '#ffffff', isCrit ? 13 : 10);
-      this.addEffect({ type: 'hit', x: m.x, y: m.y, dur: 200 });
+      this.addEffect({ type: 'hit', x: m.x, y: m.y, dur: isCrit ? 320 : 220, crit: isCrit });
+      if (isCrit) this.shake(120);
       this.emit('sfx', isCrit ? 'crit' : 'hit');
     }
     if (m.hp <= 0) this.killMonster(m);

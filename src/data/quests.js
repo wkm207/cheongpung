@@ -198,6 +198,13 @@ const LORD = [
     done: '이 성의 은인이여. 비취 가락지와 함께 그대의 이름을 성벽에 새기겠다.',
     reward: { gold: 100000, exp: 200000, items: [['highRing65', 1]] },
   },
+  {
+    id: 'l6', title: '불의 섬의 불새', where: '불의 섬',
+    goal: { type: 'kill', target: 'firebird', count: 1 },
+    offer: '먼 바다 불의 섬에서 불새 주작이 깨어나 바다를 끓이고 있다 한다. 이 나라 최고의 무사여, 마지막 어명이다.',
+    done: '불새마저 잠재우다니... 그대야말로 이 나라의 수호신이로다. 천신 가락지를 내리겠다.',
+    reward: { gold: 300000, exp: 800000, items: [['highRing85', 1]] },
+  },
 ];
 
 export const QUEST_CHAINS = { chief: CHIEF, herbalist: HERBALIST, smith: SMITH, tailor: TAILOR, peddler: PEDDLER, lord: LORD };

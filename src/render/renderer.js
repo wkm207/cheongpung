@@ -3,6 +3,7 @@ import { renderMapCanvas } from './tiles.js';
 import { playerSprite, npcSprite, monsterSprite, monsterScale } from './sprites.js';
 import { drawEffect } from './effects.js';
 import { Ambient } from './ambient.js';
+import { treeSprite } from './trees.js';
 import { lerpPos } from '../world/dirs.js';
 import { DEFAULT_WINDUP_MS } from '../world/monsters.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -10,6 +11,20 @@ import { ITEMS } from '../data/items.js';
 import { MAP_DEFS } from '../data/maps.js';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// 하루 = 20분(게임 시간). 0~0.5 낮, 0.5~0.6 저녁, 0.6~0.9 밤, 0.9~1 새벽
+export const DAY_MS = 20 * 60 * 1000;
+const CAVES = new Set(['goblinCave', 'bossLair', 'dragonCave', 'trainingBlue', 'trainingRed', 'zodiacTemple']);
+
+function darknessFor(game) {
+  if (game.mapDef.indoor) return 0;
+  if (CAVES.has(game.mapId)) return 0.42;
+  const t = ((game.now + DAY_MS * 0.25) % DAY_MS) / DAY_MS;
+  if (t < 0.5) return 0;
+  if (t < 0.6) return ((t - 0.5) / 0.1) * 0.5;
+  if (t < 0.9) return 0.5;
+  return (1 - (t - 0.9) / 0.1) * 0.5;
+}
 const FONT = "-apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
 
 function label(ctx, text, x, y, color, size = 8) {
@@ -112,6 +127,7 @@ export class Renderer {
     if (game.mapId !== this.mapId) {
       this.mapCanvas = renderMapCanvas(game.map.tiles);
       this.mapId = game.mapId;
+      this.trees = this.findTrees(game.map.tiles);
     }
     const k = this.scale * this.dpr;
     const viewW = this.cssW / this.scale;
@@ -142,6 +158,8 @@ export class Renderer {
     for (const e of game.effects) drawEffect(ctx, e, game.now);
     this.ambient.update(game.mapId, { x: this.camX, y: this.camY, w: viewW, h: viewH }, dt);
     this.ambient.draw(ctx, ts);
+    this.drawDarkness(game, pp, k);
+    ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
     this.drawTexts(ctx, game);
 
     if (game.dead) {
@@ -151,12 +169,56 @@ export class Renderer {
     }
   }
 
+  /** 나무 칸 목록(바닥 종류에 따라 활엽수·소나무·눈 덮인 소나무) */
+  findTrees(tiles) {
+    const out = [];
+    for (let y = 0; y < tiles.length; y++) {
+      for (let x = 0; x < tiles[0].length; x++) {
+        if (tiles[y][x] !== 'T') continue;
+        const near = [tiles[y + 1]?.[x], tiles[y - 1]?.[x], tiles[y]?.[x + 1], tiles[y]?.[x - 1]];
+        let kind = 'green';
+        if (near.includes('*')) kind = 'snow';
+        else if (near.includes(';')) kind = 'pine';
+        else if (near.includes(':')) kind = 'dry';
+        out.push({ x, y, look: kind, variant: (x * 7 + y * 3) % 3 });
+      }
+    }
+    return out;
+  }
+
   drawMap(ctx, viewW, viewH, mapW, mapH) {
     const sx = clamp(Math.floor(this.camX), 0, mapW);
     const sy = clamp(Math.floor(this.camY), 0, mapH);
     const sw = Math.min(mapW - sx, Math.ceil(viewW) + 2);
     const sh = Math.min(mapH - sy, Math.ceil(viewH) + 2);
     if (sw > 0 && sh > 0) ctx.drawImage(this.mapCanvas, sx, sy, sw, sh, sx, sy, sw, sh);
+  }
+
+  /** 밤낮(바깥)과 동굴의 어둠: 캐릭터 둘레만 등불처럼 밝게 */
+  drawDarkness(game, pp, k) {
+    const darkness = darknessFor(game);
+    if (darkness <= 0.01) return;
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    if (!this.dark || this.dark.width !== W || this.dark.height !== H) {
+      this.dark = Object.assign(document.createElement('canvas'), { width: W, height: H });
+    }
+    const d = this.dark.getContext('2d');
+    d.globalCompositeOperation = 'source-over';
+    d.clearRect(0, 0, W, H);
+    d.fillStyle = `rgba(8, 12, 34, ${darkness})`;
+    d.fillRect(0, 0, W, H);
+    d.globalCompositeOperation = 'destination-out';
+    const cx = (pp.x * TILE + 16 - this.camX) * k;
+    const cy = (pp.y * TILE + 8 - this.camY) * k;
+    const radius = 120 * k;
+    const grad = d.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius);
+    grad.addColorStop(0, 'rgba(0,0,0,1)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    d.fillStyle = grad;
+    d.fillRect(0, 0, W, H);
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.drawImage(this.dark, 0, 0);
   }
 
   /** 물 위로 반짝이는 물결 */
@@ -169,7 +231,7 @@ export class Renderer {
     for (let y = y0; y <= y1; y++) {
       const row = game.map.tiles[y];
       for (let x = x0; x <= x1; x++) {
-        if (row[x] !== '~') continue;
+        if (row[x] !== '~' && row[x] !== 'L') continue;
         const phase = ((game.now / 45 + x * 37 + y * 53) % 40) - 6;
         if (phase > 0 && phase < 24) ctx.fillRect(x * TILE + phase, y * TILE + 8 + ((x + y) % 3) * 6, 5, 1);
       }
@@ -218,10 +280,25 @@ export class Renderer {
 
   drawEntities(ctx, game) {
     const list = [...game.npcs, ...game.monsters, game.pe].map((e) => ({ e, p: lerpPos(e) }));
+    const x0 = this.camX / TILE - 2;
+    const y0 = this.camY / TILE - 2;
+    const x1 = x0 + this.cssW / this.scale / TILE + 4;
+    const y1 = y0 + this.cssH / this.scale / TILE + 4;
+    for (const t of this.trees ?? []) {
+      if (t.x >= x0 && t.x <= x1 && t.y >= y0 && t.y <= y1) list.push({ e: { kind: 'tree', ...t }, p: { x: t.x, y: t.y + 0.01 } });
+    }
     list.sort((a, b) => a.p.y - b.p.y);
     for (const { e, p } of list) {
       const x = p.x * TILE;
       const y = p.y * TILE;
+      if (e.kind === 'tree') {
+        // 플레이어가 나무 바로 뒤에 있으면 잎을 반투명하게
+        const behind = game.pe.x === e.x && (game.pe.y === e.y - 1);
+        ctx.globalAlpha = behind ? 0.55 : 1;
+        ctx.drawImage(treeSprite(e.look, e.variant), x, y - 22);
+        ctx.globalAlpha = 1;
+        continue;
+      }
       if (e.kind === 'player') this.drawPlayer(ctx, game, e, x, y);
       else if (e.kind === 'npc') this.drawNpc(ctx, game, e, x, y);
       else this.drawMonster(ctx, game, e, x, y);

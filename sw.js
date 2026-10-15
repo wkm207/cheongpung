@@ -38,6 +38,7 @@ const ASSETS = [
   './src/render/renderer.js',
   './src/render/sprites.js',
   './src/render/tiles.js',
+  './src/render/trees.js',
   './src/ui/bgm.js',
   './src/ui/dom.js',
   './src/ui/hud.js',

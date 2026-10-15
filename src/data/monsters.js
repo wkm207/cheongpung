@@ -153,4 +153,20 @@ export const MONSTERS = {
     special: { radius: 5, cd: 3500, power: 1.8, name: '여덟 갈래 독무', color: '#9b59b6' },
     drops: [['dragonBreath', 8], ['guardCharm', 2], ['highSword85', 0.3], ['highDagger85', 0.3], ['highStaff85', 0.3], ['highFan85', 0.3], ['highArmor85', 0.3], ['highHelm85', 0.3], ['highNeck85', 0.3], ['highRing85', 0.3]],
   },
+  fireLizard: {
+    name: '불도마뱀', level: 94, hp: 20000, atk: 380, def: 130, exp: 11000, gold: [700, 1100],
+    stepMs: 320, aggressive: true, sight: 6, respawnMs: 13000,
+    drops: [['emberStone', 0.35], ['elixir', 0.15], ['dragonBreath', 0.06]],
+  },
+  flameSpirit: {
+    name: '화염 정령', level: 97, hp: 17000, atk: 410, def: 110, exp: 12000, gold: [750, 1150],
+    stepMs: 300, aggressive: true, sight: 7, respawnMs: 13000,
+    drops: [['emberStone', 0.4], ['elixir', 0.15], ['dragonBreath', 0.07]],
+  },
+  firebird: {
+    name: '불새 주작', level: 99, hp: 300000, atk: 440, def: 160, exp: 700000, gold: [100000, 150000],
+    stepMs: 280, aggressive: true, sight: 9, boss: true, respawnMs: 420000,
+    special: { radius: 5, cd: 3200, power: 1.9, name: '불새의 날갯짓', color: '#ff5a1f' },
+    drops: [['firebirdFeather', 1], ['dragonBreath', 10], ['guardCharm', 2], ['highSword85', 0.35], ['highDagger85', 0.35], ['highStaff85', 0.35], ['highFan85', 0.35], ['highArmor85', 0.35], ['highRing85', 0.35]],
+  },
 };

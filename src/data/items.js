@@ -89,6 +89,8 @@ export const ITEMS = {
   pearlShell: { name: '용궁 진주조개', icon: '🐚', type: 'loot', price: 1100, desc: '용궁에서 나는 진주가 든 조개.' },
   frostCrystal: { name: '서리 결정', icon: '❄️', type: 'loot', price: 1300, desc: '북방 산성의 녹지 않는 얼음.' },
   islandCoin: { name: '섬나라 엽전', icon: '🪙', type: 'loot', price: 1500, desc: '바다 건너 섬나라의 낯선 엽전.' },
+  emberStone: { name: '불씨 돌', icon: '🔥', type: 'loot', price: 1800, desc: '꺼지지 않는 불씨가 든 돌.' },
+  firebirdFeather: { name: '불새의 깃털', icon: '🪶', type: 'loot', price: 100000, desc: '불새 주작이 떨군 타오르는 깃털.' },
   acorn: { name: '도토리', icon: '🌰', type: 'loot', price: 4, desc: '다람쥐가 모아둔 도토리.' },
   rabbitFur: { name: '토끼털', icon: '🧶', type: 'loot', price: 8, desc: '부드러운 토끼털.' },
   foxTail: { name: '여우꼬리', icon: '🦊', type: 'loot', price: 30, desc: '복슬복슬한 여우꼬리.' },

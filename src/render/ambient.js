@@ -10,7 +10,7 @@ const KIND_BY_MAP = {
   goblinCave: 'firefly',
   bossLair: 'foxfire',
   dragonCave: 'ember',
-  trainingBlue: 'firefly', trainingRed: 'ember', zodiacTemple: 'firefly', dragonPalace: 'seed', northFortress: 'snow', eastIsland: 'petal',
+  trainingBlue: 'firefly', trainingRed: 'ember', zodiacTemple: 'firefly', dragonPalace: 'seed', northFortress: 'snow', eastIsland: 'petal', fireIsland: 'ember',
 };
 const COUNT = { petal: 14, butterfly: 7, leaf: 12, seed: 10, firefly: 14, snow: 40, foxfire: 10, ember: 18 };
 const COLORS = {

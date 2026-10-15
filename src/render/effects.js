@@ -6,23 +6,53 @@ const center = (v) => v * TILE + 16;
 const DRAW = {
   slash(ctx, e, f, cx, cy) {
     const a = DIR_ANGLE[e.dir] ?? 0;
-    ctx.strokeStyle = `rgba(255,255,255,${1 - f})`;
-    ctx.lineWidth = e.big ? 4 : 2.5;
+    const bx = cx - Math.cos(a) * 10;
+    const by = cy - Math.sin(a) * 10;
+    const sweep = -1.2 + f * 2.4;
+    ctx.globalAlpha = 1 - f;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = e.color ?? '#ffffff';
+    ctx.lineWidth = e.big ? 7 : 5;
     ctx.beginPath();
-    ctx.arc(cx - Math.cos(a) * 10, cy - Math.sin(a) * 10, 16, a - 1.1 + f * 0.6, a + 1.1 + f * 0.6);
+    ctx.arc(bx, by, 17, a - 1.2, a + sweep);
     ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = e.big ? 3 : 2;
+    ctx.beginPath();
+    ctx.arc(bx, by, 14, a - 1.0, a + sweep);
+    ctx.stroke();
+    ctx.fillStyle = '#fff6d0';
+    for (let i = 0; i < 3; i++) {
+      const t = a + sweep - i * 0.25;
+      ctx.fillRect(bx + Math.cos(t) * 19 - 1, by + Math.sin(t) * 19 - 1, 2, 2);
+    }
   },
   hit(ctx, e, f, cx, cy) {
-    ctx.strokeStyle = `rgba(255,240,180,${1 - f})`;
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      const r1 = 4 + f * 6;
-      const r2 = 9 + f * 8;
+    const big = e.crit ? 1.8 : 1;
+    ctx.globalAlpha = 1 - f;
+    if (f < 0.25) {
+      ctx.fillStyle = e.crit ? 'rgba(255, 230, 120, 0.8)' : 'rgba(255,255,255,0.7)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 10 * big * (1 - f * 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = e.crit ? '#ffd84d' : '#fff0b4';
+    ctx.lineWidth = e.crit ? 3 : 2;
+    const rays = e.crit ? 10 : 6;
+    for (let i = 0; i < rays; i++) {
+      const a = (i / rays) * Math.PI * 2 + 0.3;
+      const r1 = (4 + f * 6) * big;
+      const r2 = (9 + f * 10) * big;
       ctx.beginPath();
       ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
       ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
       ctx.stroke();
+    }
+    ctx.fillStyle = '#ffb347';
+    for (let i = 0; i < 5; i++) {
+      const a = i * 1.3 + 0.5;
+      const d = f * 18 * big;
+      ctx.fillRect(cx + Math.cos(a) * d, cy + Math.sin(a) * d + f * f * 10, 2, 2);
     }
   },
   bite(ctx, e, f, cx, cy) {

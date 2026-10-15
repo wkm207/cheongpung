@@ -77,6 +77,13 @@ const PAINTERS = {
   T: (r, tx, ty, n) => {
     const ground = groundUnder(n);
     ground(r, tx, ty);
+    if (TALL_TREES) {
+      // 잎은 캐릭터와 같은 층에서 따로 그린다: 여기서는 밑동과 그림자만
+      r(3, 12, 10, 3, 'rgba(0,0,0,0.25)');
+      r(7, 10, 2, 5, '#5b3a1e');
+      r(7, 10, 1, 5, '#7a5230');
+      return;
+    }
     if (ground === snow) {
       // 눈 덮인 소나무
       r(7, 12, 2, 3, '#5b3a1e');
@@ -256,6 +263,17 @@ const PAINTERS = {
     }
     r(0, 14, 16, 2, '#3e2412');
   },
+  // 화산재 땅
+  a: (r, tx, ty) => {
+    r(0, 0, 16, 16, '#3a2e2a');
+    speckle(r, tx, ty, 9, ['#4a3a34', '#2c2220', '#5a4038']);
+  },
+  // 용암
+  L: (r, tx, ty, n) => {
+    r(0, 0, 16, 16, '#d4451f');
+    speckle(r, tx, ty, 8, ['#ff7b2e', '#ffb347', '#a8321a']);
+    if (n(0, -1) !== 'L') r(0, 0, 16, 2, '#2c2220');
+  },
   // 바닷속 모래
   b: (r, tx, ty) => {
     r(0, 0, 16, 16, '#2b6f8f');
@@ -304,6 +322,12 @@ const PAINTERS = {
   },
 };
 
+// 나무를 위쪽 층(캐릭터와 겹치는 층)에서 그릴지
+let TALL_TREES = true;
+export const setTallTrees = (on) => { TALL_TREES = on; };
+
+const WALLISH = new Set(['W', 'R', 'Y', 'Q', 'X', 'H', 'V', 'G']);
+
 /** 맵 전체를 한 장의 캔버스로 미리 그린다. */
 export function renderMapCanvas(tiles) {
   const h = tiles.length;
@@ -317,6 +341,17 @@ export function renderMapCanvas(tiles) {
       const ch = tiles[ty][tx];
       const n = (dx, dy) => tiles[ty + dy]?.[tx + dx] ?? ch;
       (PAINTERS[ch] ?? grass)(painter(ctx, tx * TILE, ty * TILE), tx, ty, n);
+    }
+  }
+  // 벽·지붕 바로 아래 칸에 그늘을 드리워 높이감을 준다
+  for (let ty = 1; ty < h; ty++) {
+    for (let tx = 0; tx < w; tx++) {
+      if (WALLISH.has(tiles[ty][tx]) || !WALLISH.has(tiles[ty - 1][tx])) continue;
+      const grad = ctx.createLinearGradient(0, ty * TILE, 0, ty * TILE + 12);
+      grad.addColorStop(0, 'rgba(0,0,0,0.35)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(tx * TILE, ty * TILE, TILE, 12);
     }
   }
   return canvas;
