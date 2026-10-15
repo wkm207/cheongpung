@@ -36,6 +36,11 @@ export const MAP_DEFS = {
         lines: ['수련은 끝이 없는 법. 때가 되면 내게 오너라, 한 단계 높은 길을 열어 주마.'],
       },
       {
+        id: 'stable', name: '마구간지기 덕배', x: 35, y: 18, look: 'stable',
+        lines: ['튼튼한 말 한 필 있으면 먼 길도 금방이지! R키나 [말] 버튼으로 타고 내리면 된다네.'],
+        shop: ['horseTicket'],
+      },
+      {
         id: 'guard', name: '포졸 돌쇠', x: 36, y: 12, look: 'guard',
         lines: ['동쪽 문을 나서면 토끼 들판이오. 처음이면 거기서 몸을 푸시오.', '북쪽 문 밖 여우 숲은 여우가 먼저 덤비니 각오하시오.'],
       },
@@ -86,7 +91,7 @@ export const MAP_DEFS = {
         {
           id: 'herbalist', name: '약방 할멈', x: 6, y: 3, look: 'herbalist',
           lines: ['아이고, 또 다쳐서 왔누?', '사냥 나가기 전에 약초랑 이슬은 넉넉히 챙기게나.'],
-          shop: ['herb', 'bigHerb', 'dew', 'bigDew', 'returnScroll'],
+          shop: ['herb', 'bigHerb', 'dew', 'bigDew', 'returnScroll', 'guardCharm'],
         },
     ],
     spawns: [],

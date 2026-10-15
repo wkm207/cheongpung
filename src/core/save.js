@@ -90,6 +90,8 @@ export function validatePlayer(raw) {
     quests: validateQuests(raw.quests),
     tier,
     enhance,
+    dragonStage: isInt(raw.dragonStage) && raw.dragonStage >= 0 && raw.dragonStage <= 10 ? raw.dragonStage : 0,
+    dragonClaimed: raw.dragonClaimed === true,
     statPoints: spent <= budget ? statPoints : budget,
     alloc: fairAlloc,
     bonusHp,

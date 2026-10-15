@@ -148,6 +148,8 @@ export class Panels {
       case 'unequip': game.unequip(el.dataset.slot); s.selEquip = null; break;
       case 'enhance': game.enhance(el.dataset.slot); break;
       case 'rest': game.rest(); break;
+      case 'claimDragon': game.claimDragonWeapon(); break;
+      case 'awaken': game.awaken(); break;
       case 'learn': game.learnSkill(el.dataset.id); break;
       case 'slot': game.assignSkill(i, el.dataset.id); break;
       case 'spellPick': this.spellLetter(i); return;

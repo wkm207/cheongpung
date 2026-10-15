@@ -20,6 +20,7 @@ import { canEquip, statDiff, formatStat, equipFromInventory, autoEquip, isUpgrad
 import { defaultSlots, slotNewSkill, assignSlot, starterSkills } from './core/skillslots.js';
 import { randInt } from './core/rng.js';
 import { enhanceInfo, emptyEnhance } from './core/enhance.js';
+import { awakenInfo, DRAGON_WEAPONS } from './core/dragon.js';
 
 const QUICK_ITEMS = { hp: ['herb', 'tteok', 'bigHerb', 'gukbap', 'elixir'], mp: ['dew', 'makgeolli', 'bigDew', 'elixir'] };
 export const GOLD_ID = '__gold';
@@ -133,6 +134,7 @@ export class Game {
     this.texts = [];
     this.respawnQueue = [];
     this.queued = null;
+    if (def.indoor) this.riding = false;
     this.pe = null;
     const start = this.nearestFree(x, y);
     this.pe = { kind: 'player', x: start.x, y: start.y, fromX: start.x, fromY: start.y, stepT: 1, moving: false, dir };
@@ -200,7 +202,7 @@ export class Game {
 
   updatePlayer(dt) {
     const pe = this.pe;
-    const stepMs = pe.stepMsOverride ?? PLAYER_STEP_MS / this.player.gm.speed;
+    const stepMs = pe.stepMsOverride ?? PLAYER_STEP_MS / this.player.gm.speed / (this.riding ? 1.8 : 1);
     const overflow = advanceStep(pe, dt, stepMs);
     if (overflow >= 0) {
       pe.stepMsOverride = undefined;
@@ -561,7 +563,13 @@ export class Game {
     this.stealthUntil = 0;
     this.guardianUntil = 0;
     this.hots = [];
-    this.player = withDeathPenalty(this.player);
+    const charm = this.player.inv.findIndex((s) => s.id === 'guardCharm');
+    if (charm >= 0) {
+      this.setPlayer({ inv: removeAt(this.player.inv, charm) });
+      this.log('수호부적이 타오르며 경험치를 지켜 주었습니다.', '#ffe9a8');
+    } else {
+      this.player = withDeathPenalty(this.player);
+    }
     this.log('쓰러졌습니다... 청풍촌에서 다시 깨어납니다.', '#ff8a80');
     this.emit('death');
   }
@@ -801,6 +809,58 @@ export class Game {
     this.log('능력치를 초기화했습니다.', '#9be7a1');
     this.emit('inventory');
     return true;
+  }
+
+  /** 용 무기 받기(사범에게 1차 승급 후 한 번) */
+  claimDragonWeapon() {
+    if (this.player.dragonClaimed || (this.player.tier ?? 0) < 1) return false;
+    const id = DRAGON_WEAPONS[this.player.cls];
+    const r = addItem(this.player.inv, id, 1);
+    if (r.leftover) {
+      this.log('가방에 자리가 없습니다.', '#ff9f80');
+      return false;
+    }
+    this.setPlayer({ inv: r.inv, dragonClaimed: true });
+    this.log(`${ITEMS[id].name}을(를) 받았습니다! 용의 숨결로 각성시켜 키울 수 있습니다.`, '#7fe3c3');
+    this.emit('sfx', 'quest');
+    this.emit('inventory');
+    return true;
+  }
+
+  /** 용 무기 각성: 용의 숨결과 금전을 써서 단계를 올린다(실패 없음). */
+  awaken() {
+    const info = awakenInfo(this.player);
+    if (!info) return false;
+    if (countOf(this.player.inv, 'dragonBreath') < info.breath || this.player.gold < info.gold) {
+      this.log(`각성 재료가 모자랍니다. (용의 숨결 ${info.breath}개, 금전 ${info.gold.toLocaleString()}전)`, '#ff9f80');
+      return false;
+    }
+    const before = this.stats();
+    this.setPlayer({
+      inv: removeCount(this.player.inv, 'dragonBreath', info.breath),
+      gold: this.player.gold - info.gold,
+      dragonStage: info.next,
+    });
+    this.announceDiff(`용 무기 각성 ${info.next}단계!`, statDiff(before, this.stats()));
+    this.addEffect({ type: 'pillar', x: this.pe.x, y: this.pe.y, color: '#4fe0b0', dur: 900 });
+    this.emit('sfx', 'levelup');
+    this.emit('inventory');
+    return true;
+  }
+
+  /** 말 타기 켜고 끄기(말 증서가 있어야 함, 실내에서는 못 탄다) */
+  toggleRide() {
+    if (!this.player.inv.some((s) => s.id === 'horseTicket')) {
+      this.log('말이 없습니다. 마구간에서 말을 사세요.', '#bbb');
+      return;
+    }
+    if (!this.riding && this.mapDef.indoor) {
+      this.log('실내에서는 말을 탈 수 없습니다.', '#bbb');
+      return;
+    }
+    this.riding = !this.riding;
+    this.log(this.riding ? '말에 올라탔습니다. 이랴!' : '말에서 내렸습니다.', '#c8e6a0');
+    this.emit('sfx', 'equip');
   }
 
   /** 주막에서 쉬기: 금전을 내고 체력·마력을 모두 채운다. */

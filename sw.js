@@ -12,6 +12,7 @@ const ASSETS = [
   './src/config.js',
   './src/core/chatTrade.js',
   './src/core/combat.js',
+  './src/core/dragon.js',
   './src/core/enhance.js',
   './src/core/equip.js',
   './src/core/gm.js',

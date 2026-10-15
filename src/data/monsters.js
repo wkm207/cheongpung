@@ -47,29 +47,29 @@ export const MONSTERS = {
   dueok: {
     name: '두억시니', level: 38, hp: 2400, atk: 115, def: 36, exp: 1100, gold: [120, 220],
     stepMs: 380, aggressive: true, sight: 5, respawnMs: 15000,
-    drops: [['dueokHorn', 0.35], ['elixir', 0.06], ['dragonArmor', 0.01], ['dragonHelm', 0.01], ['dragonPearl', 0.01], ['blueDragonRing', 0.01]],
+    drops: [['dueokHorn', 0.35], ['dragonBreath', 0.02], ['elixir', 0.06], ['dragonArmor', 0.01], ['dragonHelm', 0.01], ['dragonPearl', 0.01], ['blueDragonRing', 0.01]],
   },
   bulgasari: {
     name: '불가사리', level: 44, hp: 3600, atk: 140, def: 50, exp: 1700, gold: [180, 320],
     stepMs: 420, aggressive: true, sight: 5, respawnMs: 15000,
-    drops: [['ironScale', 0.35], ['elixir', 0.08], ['phoenixCrown', 0.006], ['heavenRobe', 0.005], ['yeouiNorigae', 0.005], ['heavenRing', 0.005]],
+    drops: [['ironScale', 0.35], ['dragonBreath', 0.03], ['elixir', 0.08], ['phoenixCrown', 0.006], ['heavenRobe', 0.005], ['yeouiNorigae', 0.005], ['heavenRing', 0.005]],
   },
   gumiho: {
     name: '구미호', level: 20, hp: 3000, atk: 48, def: 16, exp: 2500, gold: [500, 900],
     stepMs: 300, aggressive: true, sight: 7, boss: true, respawnMs: 180000,
     special: { radius: 2, cd: 5000, power: 1.4, name: '여우불', color: '#ff6fb5' },
-    drops: [['foxBead', 1], ['elixir', 0.6], ['ironArmor', 0.2], ['dragonSword', 0.15], ['shadowBlade', 0.15], ['phoenixStaff', 0.15], ['heavenFan', 0.15]],
+    drops: [['foxBead', 1], ['dragonBreath', 1], ['guardCharm', 0.5], ['elixir', 0.6], ['ironArmor', 0.2], ['dragonSword', 0.15], ['shadowBlade', 0.15], ['phoenixStaff', 0.15], ['heavenFan', 0.15]],
   },
   imugi: {
     name: '이무기', level: 30, hp: 9000, atk: 85, def: 28, exp: 9000, gold: [2000, 3500],
     stepMs: 360, aggressive: true, sight: 7, boss: true, respawnMs: 240000,
     special: { radius: 3, cd: 4500, power: 1.5, name: '물벼락', color: '#5dade2' },
-    drops: [['imugiScale', 1], ['elixir', 1], ['thunderSword', 0.2], ['moonDagger', 0.2], ['starStaff', 0.2], ['skyFan', 0.2], ['dragonArmor', 0.25], ['dragonHelm', 0.25]],
+    drops: [['imugiScale', 1], ['dragonBreath', 1], ['guardCharm', 1], ['elixir', 1], ['thunderSword', 0.2], ['moonDagger', 0.2], ['starStaff', 0.2], ['skyFan', 0.2], ['dragonArmor', 0.25], ['dragonHelm', 0.25]],
   },
   blackDragon: {
     name: '흑룡', level: 50, hp: 30000, atk: 170, def: 55, exp: 40000, gold: [8000, 15000],
     stepMs: 380, aggressive: true, sight: 8, boss: true, respawnMs: 300000,
     special: { radius: 3, cd: 4000, power: 1.6, name: '흑염', color: '#a64dff' },
-    drops: [['dragonOrb', 1], ['elixir', 1], ['tortoiseSword', 0.15], ['ghostDagger', 0.15], ['taegeukStaff', 0.15], ['phoenixFan', 0.15], ['heavenRobe', 0.2], ['phoenixCrown', 0.2], ['yeouiNorigae', 0.2], ['heavenRing', 0.2], ['highSword55', 0.06], ['highDagger55', 0.06], ['highStaff55', 0.06], ['highFan55', 0.06], ['highArmor55', 0.06]],
+    drops: [['dragonOrb', 1], ['dragonBreath', 2], ['guardCharm', 1], ['elixir', 1], ['tortoiseSword', 0.15], ['ghostDagger', 0.15], ['taegeukStaff', 0.15], ['phoenixFan', 0.15], ['heavenRobe', 0.2], ['phoenixCrown', 0.2], ['yeouiNorigae', 0.2], ['heavenRing', 0.2], ['highSword55', 0.06], ['highDagger55', 0.06], ['highStaff55', 0.06], ['highFan55', 0.06], ['highArmor55', 0.06]],
   },
 };

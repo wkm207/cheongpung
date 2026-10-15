@@ -138,6 +138,7 @@ const input = new Input({
       chatInput.focus();
     },
     toggleMinimap,
+    toggleRide: () => game?.toggleRide(),
     spellLetter: (letter) => panels.kind === 'spells' && panels.spellLetter('abcdefghijklmnopqrst'.indexOf(letter)),
   },
 });
@@ -268,6 +269,7 @@ chatInput.addEventListener('keydown', (e) => {
   }
 });
 $('#minimap-toggle').addEventListener('click', toggleMinimap);
+$('#ride-toggle').addEventListener('click', () => game?.toggleRide());
 $('#minimap').addEventListener('click', toggleMinimap);
 
 applySettings(getSettings());

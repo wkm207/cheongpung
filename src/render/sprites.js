@@ -182,6 +182,7 @@ const NPC_LOOK = {
   innkeeper: { body: '#d97b4a', dark: '#7b2d26', hair: '#1c1008', skin: '#f5cba7' },
   traveler: { body: '#8a8f7a', dark: '#4a4a3a', hair: '#3a2a1a', skin: '#d9a77a', hat: 'strawHat' },
   lord: { body: '#7b1f1f', dark: '#f4d03f', hair: '#111111', skin: '#e8c39e', hat: 'gat' },
+  stable: { body: '#7a5a34', dark: '#3e2a16', hair: '#2a1a10', skin: '#d9a77a', hat: 'strawHat' },
 };
 
 const cache = new Map();

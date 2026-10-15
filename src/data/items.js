@@ -20,6 +20,11 @@ export const ITEMS = {
 
   nightBlade: { name: '야행비검', icon: '🗡️', type: 'weapon', wtype: 'dagger', atk: 13, crit: 0.05, level: 12, price: 1500, tint: '#5d6d7e' },
   blackCloudBlade: { name: '흑운도', icon: '🗡️', type: 'weapon', wtype: 'dagger', atk: 34, crit: 0.07, level: 26, tier: 1, price: 24000, tint: '#2c3e50' },
+  // 용 무기: 각성(1~10단계)으로 계속 키우는 직업별 무기
+  dragonFangSword: { name: '용아검', icon: '🐲', type: 'weapon', wtype: 'sword', atk: 40, hp: 60, level: 20, tier: 1, price: 0, tint: '#4fe0b0', dragon: true },
+  dragonScaleDagger: { name: '용린비수', icon: '🐲', type: 'weapon', wtype: 'dagger', atk: 36, crit: 0.06, level: 20, tier: 1, price: 0, tint: '#4fe0b0', dragon: true },
+  dragonSongStaff: { name: '용음장', icon: '🐲', type: 'weapon', wtype: 'staff', atk: 6, mag: 40, level: 20, tier: 1, price: 0, tint: '#4fe0b0', dragon: true },
+  dragonCloudFan: { name: '용운선', icon: '🐲', type: 'weapon', wtype: 'fan', atk: 12, mag: 36, level: 20, tier: 1, price: 0, tint: '#4fe0b0', dragon: true },
   dagger: { name: '단검', icon: '🔪', type: 'weapon', wtype: 'dagger', atk: 3, level: 1, price: 60, tint: '#d5dbdb' },
   ironDagger: { name: '비수', icon: '🔪', type: 'weapon', wtype: 'dagger', atk: 9, level: 8, price: 600, tint: '#e5e8e8' },
   steelDagger: { name: '쌍월도', icon: '🔪', type: 'weapon', wtype: 'dagger', atk: 16, level: 14, price: 2500, tint: '#aed6f1' },
@@ -75,6 +80,9 @@ export const ITEMS = {
   heavenRing: { name: '천상 가락지', icon: '🌟', type: 'ring', atk: 26, mag: 26, crit: 0.1, level: 45, tier: 3, price: 160000 },
   foxRing: { name: '여우불 가락지', icon: '💎', type: 'ring', atk: 10, mag: 10, crit: 0.05, level: 18, tier: 1, price: 15000 },
 
+  dragonBreath: { name: '용의 숨결', icon: '🌀', type: 'loot', price: 2000, desc: '용의 기운이 서린 구슬. 용 무기 각성과 승급에 쓰인다.' },
+  guardCharm: { name: '수호부적', icon: '🧧', type: 'loot', price: 1500, desc: '지니고 있으면 쓰러져도 경험치를 잃지 않는다(대신 부적이 타 버린다).' },
+  horseTicket: { name: '말 증서', icon: '🐎', type: 'loot', price: 30000, desc: '마구간에서 산 말의 증서. 지니고 있으면 R키(말 버튼)로 말을 탈 수 있다.' },
   acorn: { name: '도토리', icon: '🌰', type: 'loot', price: 4, desc: '다람쥐가 모아둔 도토리.' },
   rabbitFur: { name: '토끼털', icon: '🧶', type: 'loot', price: 8, desc: '부드러운 토끼털.' },
   foxTail: { name: '여우꼬리', icon: '🦊', type: 'loot', price: 30, desc: '복슬복슬한 여우꼬리.' },

@@ -198,7 +198,9 @@ export function buildVillage({ w, h, seed, portals, npcs }) {
   // 꽃밭
   for (const [fx, fy] of [[14, 10], [15, 10], [24, 10], [25, 10], [14, 19], [15, 19], [24, 19], [25, 19]]) g[fy][fx] = ',';
 
-  const nearNpc = (x, y) => npcs.some((n) => Math.abs(n.x - x) + Math.abs(n.y - y) <= 2);
+  // NPC 주변과 집 문 앞은 나무로 막지 않는다
+  const keepClear = [...npcs, ...portals.filter((p) => p.door).map((p) => ({ x: p.x, y: p.y + 1 }))];
+  const nearNpc = (x, y) => keepClear.some((n) => Math.abs(n.x - x) + Math.abs(n.y - y) <= 2);
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       if (g[y][x] !== '.' || nearNpc(x, y)) continue;

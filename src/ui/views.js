@@ -12,6 +12,8 @@ import { MAX_LEVEL } from '../config.js';
 import { expToNext } from '../core/stats.js';
 import { canEquip, compareEquip, compareUnequip, isUpgrade, formatStat } from '../core/equip.js';
 import { enhanceInfo, MAX_ENHANCE, ENHANCE_STEP } from '../core/enhance.js';
+import { awakenInfo, MAX_AWAKEN, AWAKEN_STEP } from '../core/dragon.js';
+import { countOf } from '../core/inventory.js';
 import { exportText } from '../core/save.js';
 import { KEY_PANELS } from './input.js';
 
@@ -277,10 +279,11 @@ export function questPage(game, npc, info) {
 export function advancePage(game, npc, state) {
   const info = game.advanceInfo();
   if (state.advanced) return `<p class="dialog-text">${esc(state.advanced)}</p><div class="row end" style="margin:8px -10px -10px"><button data-act="close">닫기</button></div>`;
-  if (!info.next) return `<p class="dialog-text">그대는 이미 최고의 경지에 올랐다. 더 가르칠 것이 없구나.</p><div class="row end" style="margin:8px -10px -10px"><button data-act="close">닫기</button></div>`;
+  if (!info.next) return `<p class="dialog-text">그대는 이미 최고의 경지에 올랐다. 더 가르칠 것이 없구나.</p>${dragonBox(game)}<div class="row end" style="margin:8px -10px -10px"><button data-act="close">닫기</button></div>`;
   const checks = info.checks.map((c) => `<div class="check ${c.ok ? 'ok' : 'no'}">${c.ok ? '✔' : '✘'} ${esc(c.label)}</div>`).join('');
   const reward = info.next.reward[game.player.cls];
   return `<p class="dialog-text">${esc(npc.lines[0])}</p>
+    ${dragonBox(game)}
     <div class="quest-box">
       <div><b>⚜️ ${info.next.tier}차 승급: ${esc(game.title())} → ${esc(info.title)}</b></div>
       <div class="muted" style="margin:4px 0">기본 능력치가 크게 오르고, ${info.next.tier}차 기술을 배울 수 있으며, ${info.next.tier}차 장비를 착용할 수 있습니다.</div>
@@ -288,6 +291,26 @@ export function advancePage(game, npc, state) {
       <div class="muted" style="margin-top:4px">승급 기념 선물: ${ITEMS[reward].icon} ${esc(ITEMS[reward].name)}</div>
     </div>
     <div class="row end" style="margin:8px -10px -10px"><button class="primary" data-act="advance" ${info.ok ? '' : 'disabled'}>승급하기</button><button data-act="close">닫기</button></div>`;
+}
+
+/** 사범의 용 무기 상자: 받기(1차 승급 후) · 각성 */
+function dragonBox(game) {
+  const p = game.player;
+  if (!p.dragonClaimed) {
+    return p.tier >= 1
+      ? '<div class="quest-box"><b>🐲 용 무기</b><p class="muted">1차 승급을 마친 무사에게 용의 무기를 내린다. 용의 숨결로 각성시키면 끝없이 강해진다.</p><button class="green" data-act="claimDragon">용 무기 받기</button></div>'
+      : '<div class="quest-box muted">🐲 1차 승급을 마치면 용 무기를 받을 수 있다.</div>';
+  }
+  const info = awakenInfo(p);
+  const stage = p.dragonStage ?? 0;
+  if (!info) {
+    return `<div class="quest-box"><b>🐲 용 무기 각성 ${stage}단계</b><p class="muted">${stage >= MAX_AWAKEN ? '최고 단계에 이르렀다.' : '용 무기를 손에 들고 오면 각성시켜 주마.'}</p></div>`;
+  }
+  const have = countOf(p.inv, 'dragonBreath');
+  return `<div class="quest-box"><b>🐲 용 무기 각성 ${stage} → ${info.next}단계</b> <span class="muted">(무기 능력치 +${Math.round(AWAKEN_STEP * 100)}%)</span>
+    <div class="check ${have >= info.breath ? 'ok' : 'no'}">${have >= info.breath ? '✔' : '✘'} 용의 숨결 ${info.breath}개 (가진 것 ${have})</div>
+    <div class="check ${p.gold >= info.gold ? 'ok' : 'no'}">${p.gold >= info.gold ? '✔' : '✘'} 금전 ${info.gold.toLocaleString()}전</div>
+    <button class="primary" data-act="awaken">각성하기</button></div>`;
 }
 
 export function talkPage(npc, line, game) {

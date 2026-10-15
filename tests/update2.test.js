@@ -324,3 +324,40 @@ test('성주의 왕실 퀘스트도 진행된다', () => {
   assert.equal(game.completeQuest('lord'), true);
   assert.equal(game.player.quests.lord.id, 'l2');
 });
+
+test('용 무기: 1차 승급 후 받고, 용의 숨결로 각성하면 무기가 강해진다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  assert.equal(game.claimDragonWeapon(), false, '승급 전에는 못 받는다');
+  game.gmSetLevel(25); game.gmSetTier(1);
+  assert.equal(game.claimDragonWeapon(), true);
+  assert.equal(game.claimDragonWeapon(), false, '한 번만 받는다');
+  game.equipAt(game.player.inv.findIndex((s) => s.id === 'dragonFangSword'));
+  const atk = game.stats().atk;
+  game.giveItem('dragonBreath', 10);
+  game.setPlayer({ gold: 1e7 });
+  assert.equal(game.awaken(), true);
+  assert.equal(game.player.dragonStage, 1);
+  assert.ok(game.stats().atk > atk);
+  assert.equal(countOf(game.player.inv, 'dragonBreath'), 9);
+});
+
+test('수호부적이 있으면 쓰러져도 경험치를 잃지 않고 부적이 사라진다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.teleport('forest');
+  game.setPlayer({ exp: 100 });
+  game.giveItem('guardCharm', 1);
+  game.damagePlayer(99999);
+  assert.equal(game.player.exp, 100);
+  assert.equal(countOf(game.player.inv, 'guardCharm'), 0);
+});
+
+test('말 증서가 있으면 말을 타고 더 빨리 달린다, 실내에선 내린다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.toggleRide();
+  assert.ok(!game.riding);
+  game.giveItem('horseTicket', 1);
+  game.toggleRide();
+  assert.ok(game.riding);
+  game.teleport('tavern');
+  assert.ok(!game.riding);
+});

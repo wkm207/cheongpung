@@ -88,6 +88,10 @@ export class Input {
       this.actions.focusChat();
       return;
     }
+    if (e.code === 'KeyR' && !e.repeat && !this.actions.isPaused()) {
+      this.actions.toggleRide();
+      return;
+    }
     if (e.code === 'KeyN' && !e.repeat) {
       this.actions.toggleMinimap();
       return;

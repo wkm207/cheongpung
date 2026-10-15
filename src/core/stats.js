@@ -3,6 +3,7 @@ import { ITEMS } from '../data/items.js';
 import { MAX_LEVEL, DEATH_EXP_PENALTY } from '../config.js';
 import { TIER_MULT } from '../data/tiers.js';
 import { enhanceMult } from './enhance.js';
+import { awakenMult } from './dragon.js';
 
 const STAT_KEYS = ['hp', 'mp', 'atk', 'def', 'mag'];
 
@@ -17,13 +18,13 @@ export function baseStats(cls, level, tier = 0) {
   return Object.fromEntries(STAT_KEYS.map((k) => [k, Math.round((c.base[k] + c.growth[k] * (level - 1)) * mult)]));
 }
 
-export function equipBonus(equip, enhance = {}) {
+export function equipBonus(equip, enhance = {}, dragonStage = 0) {
   const keys = [...STAT_KEYS, 'crit'];
   const bonus = Object.fromEntries(keys.map((k) => [k, 0]));
   for (const [slot, id] of Object.entries(equip)) {
     const it = id && ITEMS[id];
     if (!it) continue;
-    const mult = enhanceMult(enhance[slot]);
+    const mult = enhanceMult(enhance[slot]) * (slot === 'weapon' && it.dragon ? awakenMult(dragonStage) : 1);
     for (const k of keys) bonus[k] += k === 'crit' ? (it[k] ?? 0) : Math.round((it[k] ?? 0) * mult);
   }
   return bonus;
@@ -32,7 +33,7 @@ export function equipBonus(equip, enhance = {}) {
 /** 버프는 { stat, mult?, add?, until } 형태. 만료된 버프는 무시한다. */
 export function computeStats(player, buffs = [], now = 0) {
   const base = baseStats(player.cls, player.level, player.tier ?? 0);
-  const bonus = equipBonus(player.equip, player.enhance);
+  const bonus = equipBonus(player.equip, player.enhance, player.dragonStage);
   const mult = { atk: 1, def: 1, mag: 1 };
   let critAdd = 0;
   for (const b of buffs) {

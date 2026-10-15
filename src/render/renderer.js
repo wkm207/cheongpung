@@ -240,8 +240,10 @@ export class Renderer {
       gender: game.player.gender, dir: spriteDir(pe.dir), pose, equip: game.player.equip, blink: blinking(game.now, 1),
     });
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
+    const riding = game.riding;
+    if (riding) this.drawHorse(ctx, x, y, pe.dir === 'right', pe.moving ? Math.floor(game.now / 120) % 2 : 0);
     ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : 1;
-    drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge, pe.dir === 'right');
+    drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge - (riding ? 10 : 0), pe.dir === 'right');
     ctx.globalAlpha = 1;
     if (game.buffs.length || game.guardianUntil > game.now) {
       ctx.strokeStyle = game.guardianUntil > game.now ? 'rgba(255, 246, 213, 0.8)' : `rgba(255, 209, 102, ${0.4 + 0.2 * Math.sin(game.now / 150)})`;
@@ -253,6 +255,30 @@ export class Renderer {
     const name = game.player.tier ? `${game.title()} ${game.player.name}` : game.player.name;
     label(ctx, name, x + 16, y - 18, game.player.gm.god ? '#ffd166' : '#ffffff');
     if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, y - 26);
+  }
+
+  /** 말(옆모습, 갈색 몸통·검은 갈기). 오리지널 도트 */
+  drawHorse(ctx, x, y, flip, gallop) {
+    ctx.save();
+    if (flip) {
+      ctx.translate(x * 2 + 32, 0);
+      ctx.scale(-1, 1);
+    }
+    const r = (px, py, w, h, c) => {
+      ctx.fillStyle = c;
+      ctx.fillRect(x + px * 2, y + py * 2, w * 2, h * 2);
+    };
+    r(2, 7, 12, 5, '#1a1110');
+    r(3, 8, 10, 3, '#8b5a2b');
+    r(0, 4, 4, 5, '#1a1110');
+    r(1, 5, 2, 3, '#8b5a2b');
+    r(1, 5, 1, 1, '#111');
+    r(3, 4, 3, 2, '#2b1d14');
+    r(13, 7, 2, 4, '#2b1d14');
+    const legs = gallop ? [[3, 1], [6, 0], [9, 1], [12, 0]] : [[3, 0], [6, 0], [10, 0], [12, 0]];
+    for (const [lx, off] of legs) r(lx + off, 12, 1, 3, '#5a3a1e');
+    r(5, 7, 5, 1, '#c0392b');
+    ctx.restore();
   }
 
   /** 시전할 때 발밑에 도는 법진 */
