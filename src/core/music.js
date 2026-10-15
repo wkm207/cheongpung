@@ -1,34 +1,49 @@
-// 배경음악 작곡기: 한국 전통 5음계와 장단을 바탕으로, 곡마다 정해진 씨앗(seed)에서
-// 같은 오리지널 선율을 늘 똑같이 만들어 낸다(외부 음원·기존 곡 없음).
+// 배경음악 작곡기: 곡마다 정해진 씨앗(seed)에서 늘 같은 오리지널 곡을 만든다(외부 음원·기존 곡 없음).
+// 귀에 붙는 짧은 후렴 가락(훅)을 화음에 맞춰 되풀이하고, 높은 음역의 소프라노풍 목소리가 부른다.
+// 반주는 하프 아르페지오·은은한 화음 패드·베이스, 가벼운 박자(킥·하이햇·손뼉).
 import { mulberry32 } from './rng.js';
 
-// 평조(밝은 느낌)·계면조(구슬픈 느낌) 5음계 — 으뜸음에서의 반음 거리
-export const SCALES = { pyeong: [0, 2, 5, 7, 9], gyemyeon: [0, 3, 5, 7, 10] };
-
-// 장단(한 마디 안의 [칸, 소리]): deong 덩(북+채) · kung 쿵(북) · ki 기(채) · deok 덕(테)
-const RHYTHMS = {
-  gutgeori: [[0, 'deong'], [4, 'ki'], [5, 'deok'], [6, 'kung'], [9, 'ki'], [10, 'deok']],
-  semachi: [[0, 'deong'], [3, 'kung'], [6, 'ki'], [7, 'deok'], [9, 'kung']],
-  soft: [[0, 'kung'], [6, 'ki']],
-  softEven: [[0, 'kung'], [4, 'ki']],
-  beat: [[0, 'kung'], [2, 'ki'], [4, 'kung'], [6, 'ki'], [7, 'deok']],
-  heavy: [[0, 'kung'], [4, 'kung'], [6, 'deok']],
-  battle: [[0, 'deong'], [1, 'ki'], [2, 'deok'], [3, 'ki'], [4, 'kung'], [5, 'ki'], [6, 'deong'], [7, 'ki']],
+// 7음계(반음 거리)
+export const SCALES = {
+  major: [0, 2, 4, 5, 7, 9, 11],
+  minor: [0, 2, 3, 5, 7, 8, 10],
 };
 
-// meter: 한 마디의 칸 수(12 = 12/8 박, 8 = 4/4 박), bpm: 1분당 박 수
+// 화음 진행(8마디, 음계 자리 0=Ⅰ … 6=Ⅶ). 앞 4마디와 뒤 4마디가 대구를 이룬다.
+const PROGRESSIONS = {
+  pop: [0, 4, 5, 3, 0, 4, 3, 4], // Ⅰ-Ⅴ-Ⅵ-Ⅳ
+  sweet: [0, 5, 3, 4, 0, 5, 3, 4], // Ⅰ-Ⅵ-Ⅳ-Ⅴ
+  dream: [3, 4, 2, 5, 3, 4, 0, 0], // Ⅳ-Ⅴ-Ⅲ-Ⅵ
+  sad: [0, 5, 2, 6, 0, 5, 3, 4], // ⅰ-Ⅵ-Ⅲ-Ⅶ
+  epic: [0, 5, 6, 4, 0, 5, 6, 6], // ⅰ-Ⅵ-Ⅶ-ⅴ
+};
+
+// 한 마디 리듬(칸 길이 모음). 당김음이 있는 것일수록 귀에 잘 붙는다.
+const HOOK_RHYTHMS = {
+  8: [[2, 1, 1, 2, 2], [1, 1, 2, 1, 1, 2], [3, 1, 2, 2], [1, 2, 1, 2, 2], [2, 1, 2, 1, 2]],
+  12: [[3, 1, 2, 3, 3], [2, 1, 3, 2, 1, 3], [3, 3, 2, 1, 3], [1, 2, 3, 1, 2, 3]],
+};
+// 박자 무늬: [칸, 소리] kick 낮은 북 · hat 하이햇 · snap 손뼉
+const GROOVES = {
+  none: { 8: [], 12: [] },
+  light: { 8: [[0, 'kick'], [4, 'snap'], [2, 'hat'], [6, 'hat']], 12: [[0, 'kick'], [6, 'snap'], [3, 'hat'], [9, 'hat']] },
+  bounce: { 8: [[0, 'kick'], [3, 'kick'], [4, 'snap'], [1, 'hat'], [2, 'hat'], [5, 'hat'], [6, 'hat'], [7, 'hat']], 12: [[0, 'kick'], [5, 'kick'], [6, 'snap'], [2, 'hat'], [4, 'hat'], [8, 'hat'], [10, 'hat']] },
+  battle: { 8: [[0, 'kick'], [2, 'kick'], [4, 'snap'], [5, 'kick'], [6, 'kick'], [1, 'hat'], [3, 'hat'], [5, 'hat'], [7, 'hat']], 12: [] },
+};
+
+// meter: 한 마디 칸 수(12 = 12/8, 8 = 4/4), bpm: 1분당 박 수
 export const TRACKS = {
-  title: { seed: 3, scale: 'pyeong', root: 62, bpm: 60, meter: 12, lead: 'flute', drum: 'soft', density: 0.55 },
-  village: { seed: 11, scale: 'pyeong', root: 60, bpm: 70, meter: 12, lead: 'pluck', drum: 'gutgeori', density: 0.7 },
-  field: { seed: 21, scale: 'pyeong', root: 62, bpm: 92, meter: 12, lead: 'pluck', drum: 'semachi', density: 0.75 },
-  forest: { seed: 31, scale: 'gyemyeon', root: 57, bpm: 76, meter: 8, lead: 'flute', drum: 'softEven', density: 0.55 },
-  hill: { seed: 41, scale: 'gyemyeon', root: 59, bpm: 100, meter: 8, lead: 'pluck', drum: 'beat', density: 0.7 },
-  cave: { seed: 51, scale: 'gyemyeon', root: 52, bpm: 62, meter: 8, lead: 'flute', drum: 'heavy', density: 0.45, drone: true },
-  swamp: { seed: 61, scale: 'gyemyeon', root: 55, bpm: 64, meter: 12, lead: 'flute', drum: 'soft', density: 0.5, drone: true },
-  snow: { seed: 71, scale: 'pyeong', root: 64, bpm: 66, meter: 12, lead: 'flute', drum: 'soft', density: 0.5 },
-  boss: { seed: 81, scale: 'gyemyeon', root: 57, bpm: 138, meter: 8, lead: 'pluck', drum: 'battle', density: 0.85 },
-  indoor: { seed: 91, scale: 'pyeong', root: 65, bpm: 58, meter: 12, lead: 'pluck', drum: 'soft', density: 0.45 },
-  castle: { seed: 101, scale: 'pyeong', root: 60, bpm: 64, meter: 8, lead: 'flute', drum: 'heavy', density: 0.6, drone: true },
+  title: { seed: 3, scale: 'major', root: 62, bpm: 78, meter: 8, prog: 'dream', groove: 'none', pad: true },
+  village: { seed: 11, scale: 'major', root: 60, bpm: 104, meter: 8, prog: 'pop', groove: 'bounce', pad: false },
+  field: { seed: 21, scale: 'major', root: 62, bpm: 112, meter: 8, prog: 'sweet', groove: 'bounce', pad: false },
+  forest: { seed: 31, scale: 'minor', root: 57, bpm: 88, meter: 12, prog: 'sad', groove: 'light', pad: true },
+  hill: { seed: 41, scale: 'minor', root: 59, bpm: 116, meter: 8, prog: 'epic', groove: 'bounce', pad: false },
+  cave: { seed: 51, scale: 'minor', root: 52, bpm: 72, meter: 8, prog: 'sad', groove: 'light', pad: true },
+  swamp: { seed: 61, scale: 'minor', root: 55, bpm: 80, meter: 12, prog: 'sad', groove: 'light', pad: true },
+  snow: { seed: 71, scale: 'major', root: 64, bpm: 84, meter: 12, prog: 'dream', groove: 'light', pad: true },
+  boss: { seed: 81, scale: 'minor', root: 57, bpm: 144, meter: 8, prog: 'epic', groove: 'battle', pad: true },
+  indoor: { seed: 91, scale: 'major', root: 65, bpm: 92, meter: 12, prog: 'sweet', groove: 'light', pad: false },
+  castle: { seed: 101, scale: 'major', root: 60, bpm: 90, meter: 8, prog: 'pop', groove: 'light', pad: true },
 };
 
 export const MAP_TRACK = {
@@ -39,69 +54,89 @@ export const MAP_TRACK = {
   trainingBlue: 'cave', trainingRed: 'cave', zodiacTemple: 'cave', dragonPalace: 'swamp', northFortress: 'snow', eastIsland: 'forest', fireIsland: 'boss',
 };
 
-const BAR_ROOTS = [0, 0, 3, 0, 1, 3, 0, 0]; // 마디마다 베이스가 짚는 음계 자리
-const BEAT_PATTERNS = {
-  12: [[3], [2, 1], [1, 1, 1], [1, 2]],
-  8: [[2], [1, 1]],
-};
+const LOW = 7; // 노래 음역: 으뜸음 한 옥타브 위부터
+const HIGH = 16;
 
-/** 음계 자리(0,1,2… 두 옥타브 이상 이어짐)를 MIDI 음 높이로 */
+/** 음계 자리(0,1,2… 옥타브를 넘어 이어짐)를 MIDI 음 높이로 */
 export function degreeToMidi(def, degree) {
   const scale = SCALES[def.scale];
-  const octave = Math.floor(degree / scale.length);
-  return def.root + 12 * octave + scale[((degree % scale.length) + scale.length) % scale.length];
+  const n = scale.length;
+  const octave = Math.floor(degree / n);
+  return def.root + 12 * octave + scale[((degree % n) + n) % n];
 }
 
-/** 두 마디짜리 가락(동기)을 만든다: 주로 이웃한 음으로 움직이는 선율 */
-function makeMotif(rng, def, startDegree) {
-  const beatSteps = def.meter === 12 ? 3 : 2;
-  const beats = (def.meter / beatSteps) * 2;
-  const notes = [];
-  let degree = startDegree;
-  let step = 0;
-  for (let b = 0; b < beats; b++) {
-    const patterns = BEAT_PATTERNS[def.meter];
-    const pattern = patterns[Math.floor(rng() * patterns.length)];
-    for (const len of pattern) {
-      if (rng() < def.density || b === 0) {
-        const move = [-2, -1, -1, 0, 1, 1, 2][Math.floor(rng() * 7)];
-        degree = Math.max(4, Math.min(13, degree + move));
-        notes.push({ step, degree, len });
-      }
-      step += len;
-    }
-  }
-  return notes;
+const pick = (rng, list) => list[Math.floor(rng() * list.length)];
+
+/** 한 마디짜리 가락의 뼈대: 리듬과, 화음 근음에서 얼마나 떨어진 음인지(상대 음계 자리) */
+function makeMotif(rng, meter) {
+  const rhythm = pick(rng, HOOK_RHYTHMS[meter]);
+  let rel = pick(rng, [0, 2, 4]);
+  const rels = rhythm.map((_, i) => {
+    if (i > 0) rel += pick(rng, [-2, -1, -1, 1, 1, 2, 3]);
+    rel = Math.max(-2, Math.min(6, rel));
+    return rel;
+  });
+  return { rhythm, rels };
 }
 
-/** 곡 하나: 가 가' 나 가'' (각 두 마디) = 8마디가 되풀이된다. */
+/** 가락을 지금 화음 위로 옮겨 노래 음역 안에 앉힌다 */
+function placeMotif(motif, chord, bar, meter) {
+  const base = chord + LOW;
+  const lift = base + Math.max(...motif.rels) > HIGH ? -7 : 0;
+  let step = bar * meter;
+  return motif.rhythm.map((len, i) => {
+    const note = { step, degree: Math.max(LOW, Math.min(HIGH, base + lift + motif.rels[i])), len };
+    step += len;
+    return note;
+  });
+}
+
+/** 마디를 맺는 긴 음(화음 구성음) */
+function cadence(chord, bar, meter, high) {
+  const degree = chord + LOW + (high ? 4 : 0);
+  const half = meter / 2;
+  return [
+    { step: bar * meter, degree: Math.min(HIGH, degree + 2), len: half },
+    { step: bar * meter + half, degree: Math.min(HIGH, degree), len: half },
+  ];
+}
+
+/** 곡 하나: 훅 훅' 훅 맺음 | 대답 대답' 훅 끝맺음 (8마디)이 되풀이된다. */
 export function makeSong(def) {
   const rng = mulberry32(def.seed);
   const bar = def.meter;
-  const phrase = bar * 2;
-  const a = makeMotif(rng, def, 8);
-  const b = makeMotif(rng, def, 10);
-  const endOn = (motif, degree) => motif.map((n, i) => (i === motif.length - 1 ? { ...n, degree } : n));
-  const sections = [a, endOn(a, a[a.length - 1].degree + 1), b, endOn(a, 5)];
+  const prog = PROGRESSIONS[def.prog];
+  const hook = makeMotif(rng, bar);
+  const answer = makeMotif(rng, bar);
+  const plan = [hook, hook, hook, 'cad', answer, answer, hook, 'end'];
   const notes = [];
-  sections.forEach((motif, si) => {
-    for (const n of motif) {
-      notes.push({ step: si * phrase + n.step, midi: degreeToMidi(def, n.degree), len: n.len, inst: def.lead, vol: 1 });
-    }
+  plan.forEach((part, m) => {
+    const phrase = part === 'cad' ? cadence(prog[m], m, bar, true)
+      : part === 'end' ? cadence(prog[m], m, bar, false)
+        : placeMotif(part, prog[m], m, bar);
+    for (const n of phrase) notes.push({ step: n.step, midi: degreeToMidi(def, n.degree), len: n.len, inst: 'voice', vol: 1 });
   });
+  // 반주: 하프 아르페지오(위아래로 굴림), 패드, 베이스(근음·5음)
+  const arp = [0, 2, 4, 7, 4, 2];
+  const every = bar === 12 ? 2 : 1;
   for (let m = 0; m < 8; m++) {
-    const root = degreeToMidi(def, BAR_ROOTS[m]) - 12;
-    notes.push({ step: m * bar, midi: root, len: bar / 2, inst: 'bass', vol: 1 });
-    notes.push({ step: m * bar + bar / 2, midi: root + 7, len: bar / 2, inst: 'bass', vol: 0.7 });
-    if (def.drone && m % 2 === 0) notes.push({ step: m * bar, midi: def.root - 24, len: bar * 2, inst: 'drone', vol: 1 });
+    const chord = prog[m];
+    const bass = degreeToMidi(def, chord) - 12;
+    notes.push({ step: m * bar, midi: bass, len: bar / 2, inst: 'bass', vol: 1 });
+    notes.push({ step: m * bar + bar / 2, midi: bass, len: bar / 2, inst: 'bass', vol: 0.75 });
+    if (def.pad) for (const d of [0, 2, 4]) notes.push({ step: m * bar, midi: degreeToMidi(def, chord + d), len: bar, inst: 'pad', vol: 1 });
+    for (let s = 0, k = 0; s < bar; s += every, k++) {
+      notes.push({ step: m * bar + s, midi: degreeToMidi(def, chord + arp[k % arp.length]), len: every * 2, inst: 'harp', vol: k % 2 ? 0.7 : 1 });
+    }
   }
   const drums = [];
-  for (let m = 0; m < 8; m++) for (const [s, kind] of RHYTHMS[def.drum]) drums.push({ step: m * bar + s, kind });
+  const groove = GROOVES[def.groove][bar] ?? [];
+  for (let m = 0; m < 8; m++) for (const [s, kind] of groove) drums.push({ step: m * bar + s, kind });
   const beatSteps = bar === 12 ? 3 : 2;
   return {
     stepDur: 60 / def.bpm / beatSteps,
     steps: bar * 8,
     notes: notes.sort((x, y) => x.step - y.step),
-    drums,
+    drums: drums.sort((x, y) => x.step - y.step),
   };
 }
