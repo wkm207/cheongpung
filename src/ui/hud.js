@@ -122,9 +122,11 @@ export class Hud {
     if (pk !== this.portraitKey) {
       this.portraitKey = pk;
       const ctx = this.portrait.getContext('2d');
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, 32, 32);
-      ctx.drawImage(portraitSprite(p.cls, p.equip, p.gender), 0, 0, 32, 32, 0, 0, 32, 32);
+      const img = portraitSprite(p.cls, p.equip, p.gender);
+      const hi = img.width / img.lw;
+      this.portrait.width = 32 * hi;
+      this.portrait.height = 32 * hi;
+      ctx.drawImage(img, 0, 0, 32 * hi, 32 * hi, 0, 0, 32 * hi, 32 * hi);
     }
   }
 

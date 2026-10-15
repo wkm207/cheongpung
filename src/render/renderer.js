@@ -4,6 +4,7 @@ import { playerSprite, npcSprite, monsterSprite, monsterScale } from './sprites.
 import { drawEffect } from './effects.js';
 import { Ambient } from './ambient.js';
 import { treeSprite } from './trees.js';
+import { smoothMap } from './smooth.js';
 import { lerpPos } from '../world/dirs.js';
 import { DEFAULT_WINDUP_MS } from '../world/monsters.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -68,15 +69,18 @@ function shadow(ctx, cx, cy, w) {
   ctx.fill();
 }
 
+// 스프라이트는 고해상도로 만들어 두고 원래 크기(lw×lh)로 그린다
 function drawSprite(ctx, img, x, y, flip) {
+  const w = img.lw ?? img.width;
+  const h = img.lh ?? img.height;
   if (!flip) {
-    ctx.drawImage(img, Math.round(x), Math.round(y));
+    ctx.drawImage(img, x, y, w, h);
     return;
   }
   ctx.save();
-  ctx.translate(Math.round(x) + img.width, Math.round(y));
+  ctx.translate(x + w, y);
   ctx.scale(-1, 1);
-  ctx.drawImage(img, 0, 0);
+  ctx.drawImage(img, 0, 0, w, h);
   ctx.restore();
 }
 
@@ -128,7 +132,7 @@ export class Renderer {
     if (!game) return;
 
     if (game.mapId !== this.mapId) {
-      this.mapCanvas = renderMapCanvas(game.map.tiles);
+      this.mapCanvas = smoothMap(renderMapCanvas(game.map.tiles));
       this.mapId = game.mapId;
       this.trees = this.findTrees(game.map.tiles);
     }
@@ -151,7 +155,8 @@ export class Renderer {
     this.camX = Math.round(camX * k) / k;
     this.camY = Math.round(camY * k) / k;
 
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
     this.drawMap(ctx, viewW, viewH, mapW, mapH);
     this.drawWater(ctx, game, viewW, viewH);
@@ -162,6 +167,7 @@ export class Renderer {
     for (const e of game.effects) drawEffect(ctx, e, game.now);
     this.ambient.update(game.mapId, { x: this.camX, y: this.camY, w: viewW, h: viewH }, dt);
     this.ambient.draw(ctx, ts);
+    this.drawLight();
     this.drawDarkness(game, pp, k);
     ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
     this.drawTexts(ctx, game);
@@ -199,6 +205,30 @@ export class Renderer {
   }
 
   /** 밤낮(바깥)과 동굴의 어둠: 캐릭터 둘레만 등불처럼 밝게 */
+  /** 햇빛과 가장자리 그늘: 왼쪽 위에서 따뜻한 빛이 들고 화면 가장자리는 살짝 어둡게 */
+  drawLight() {
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    if (!this.light || this.light.width !== W || this.light.height !== H) {
+      this.light = Object.assign(document.createElement('canvas'), { width: W, height: H });
+      const l = this.light.getContext('2d');
+      const sun = l.createLinearGradient(0, 0, W, H);
+      sun.addColorStop(0, 'rgba(255, 236, 190, 0.16)');
+      sun.addColorStop(0.5, 'rgba(255, 236, 190, 0)');
+      sun.addColorStop(1, 'rgba(30, 20, 60, 0.12)');
+      l.fillStyle = sun;
+      l.fillRect(0, 0, W, H);
+      const r = Math.hypot(W, H) / 2;
+      const vig = l.createRadialGradient(W / 2, H / 2, r * 0.55, W / 2, H / 2, r);
+      vig.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      vig.addColorStop(1, 'rgba(10, 6, 20, 0.32)');
+      l.fillStyle = vig;
+      l.fillRect(0, 0, W, H);
+    }
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.drawImage(this.light, 0, 0);
+  }
+
   drawDarkness(game, pp, k) {
     const darkness = darknessFor(game);
     if (darkness <= 0.01) return;
@@ -299,7 +329,7 @@ export class Renderer {
         // 플레이어가 나무 바로 뒤에 있으면 잎을 반투명하게
         const behind = game.pe.x === e.x && (game.pe.y === e.y - 1);
         ctx.globalAlpha = behind ? 0.55 : 1;
-        ctx.drawImage(treeSprite(e.look, e.variant), x, y - 22);
+        ctx.drawImage(treeSprite(e.look, e.variant), x, y - 22, 32, 48);
         ctx.globalAlpha = 1;
         continue;
       }
@@ -387,14 +417,14 @@ export class Renderer {
     shadow(ctx, x + 16, y + 30, n.look === 'cat' ? 7 : 9);
     const img = npcSprite(n.look, spriteDir(n.dir), blinking(game.now, n.x * 3 + n.y));
     const flip = n.look === 'cat' ? n.face === 'right' : n.dir === 'right';
-    const top = img.height > 32 ? 18 : 2;
+    const top = (img.lh ?? img.height) > 32 ? 18 : 2;
     drawSprite(ctx, img, x, y - top, flip);
     label(ctx, n.name, x + 16, y - top, '#ffe08a');
     if (n.speech && n.speech.until > game.now) bubble(ctx, n.speech.text, x + 16, y - top - 8);
     const mark = this.npcMark(game, n);
     if (mark) {
       const hop = Math.abs(Math.sin(game.now / 250)) * 3;
-      label(ctx, mark.text, x + 16, y - (img.height > 32 ? 27 : 11) - hop, mark.color, 13);
+      label(ctx, mark.text, x + 16, y - ((img.lh ?? img.height) > 32 ? 27 : 11) - hop, mark.color, 13);
     }
   }
 

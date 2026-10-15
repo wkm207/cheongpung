@@ -127,10 +127,11 @@ export class Title {
     const saves = this.view === 'main' ? this.listSaves() : [];
     for (const canvas of this.root.querySelectorAll('[data-preview]')) {
       const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = false;
       const save = canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)] : null;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(playerSprite(canvas.dataset.preview, { gender: save?.gender ?? this.gender, equip: save?.equip ?? {} }), 0, 0);
+      const img = playerSprite(canvas.dataset.preview, { gender: save?.gender ?? this.gender, equip: save?.equip ?? {} });
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
     }
     this.updateStartButton();
   }

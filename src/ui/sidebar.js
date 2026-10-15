@@ -70,9 +70,10 @@ export class Sidebar {
     if (dk === this.dollKey) return;
     this.dollKey = dk;
     const ctx = this.doll.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, 32, 48);
-    ctx.drawImage(portraitSprite(p.cls, p.equip, p.gender), 0, 0);
+    const img = portraitSprite(p.cls, p.equip, p.gender);
+    this.doll.width = img.width;
+    this.doll.height = img.height;
+    ctx.drawImage(img, 0, 0);
     for (const s of this.slots) {
       const slot = s.dataset.doll;
       const id = p.equip[slot];

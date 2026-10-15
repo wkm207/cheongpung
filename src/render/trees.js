@@ -1,4 +1,6 @@
 // 키 큰 나무(32×48): 잎 덩어리를 여러 겹으로 칠해 입체감을 낸다. 오리지널 도트.
+import { HI } from './smooth.js';
+
 const cache = new Map();
 
 const PALETTES = {
@@ -18,8 +20,9 @@ function blob(ctx, cx, cy, rx, ry, color) {
 export function treeSprite(kind = 'green', variant = 0) {
   const key = `${kind}:${variant}`;
   if (cache.has(key)) return cache.get(key);
-  const c = Object.assign(document.createElement('canvas'), { width: 32, height: 48 });
+  const c = Object.assign(document.createElement('canvas'), { width: 32 * HI, height: 48 * HI, lw: 32, lh: 48 });
   const ctx = c.getContext('2d');
+  ctx.scale(HI, HI);
   const p = PALETTES[kind] ?? PALETTES.green;
   if (kind === 'pine' || kind === 'snow') {
     // 소나무: 층층이 쌓인 삼각 잎

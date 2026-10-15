@@ -222,6 +222,10 @@ const NPC_LOOK = {
   ferryman: { body: '#3a5a7a', dark: '#1e2f40', hair: '#2a1a10', skin: '#c98d5e', hat: 'strawHat' },
 };
 
+import { smoothSprite } from './smooth.js';
+
+const CHAR_RES = 3; // 사람 캐릭터는 3배 해상도 벡터 그림
+
 const cache = new Map();
 
 function makeCanvas(w, h) {
@@ -239,20 +243,33 @@ export function drawPixelRows(ctx, rows, pal, ox = 0, oy = 0, px = PX) {
   });
 }
 
-function cached(key, w, h, draw) {
+// 도트로 그린 뒤 부드러운 고해상도 그림으로 바꿔 둔다(dot = 도트 한 칸의 픽셀 수)
+function cached(key, w, h, draw, dot = PX) {
   if (!cache.has(key)) {
     const c = makeCanvas(w, h);
-    draw(c.getContext('2d'));
-    cache.set(key, c);
+    draw(c.getContext('2d', { willReadFrequently: true }));
+    cache.set(key, smoothSprite(c, dot));
   }
   return cache.get(key);
 }
 
 
+// 벡터로 그리는 그림: 고해상도 캔버스에 배율을 걸고 논리 좌표로 그린다
+function cachedVector(key, w, h, res, draw) {
+  if (!cache.has(key)) {
+    const c = Object.assign(makeCanvas(w * res, h * res), { lw: w, lh: h });
+    const ctx = c.getContext('2d');
+    ctx.scale(res, res);
+    draw(ctx);
+    cache.set(key, c);
+  }
+  return cache.get(key);
+}
+
 /** 사람 캐릭터(32×48): 성별·자세·장비가 반영된다. pose: stand | walk | cast | attack */
 function characterSprite(keyBase, look, { gender = 'm', dir = 'down', pose = 'stand', blink = false, equip = {} } = {}) {
   const key = `${keyBase}:${gender}:${dir}:${pose}:${blink ? 1 : 0}:${equip.weapon}:${equip.helmet}:${equip.armor}:${equip.necklace}`;
-  return cached(key, CHAR_W, CHAR_H, (ctx) => drawCharacter(ctx, { look, gender, dir, pose, blink, equip, items: ITEMS }));
+  return cachedVector(key, CHAR_W, CHAR_H, CHAR_RES, (ctx) => drawCharacter(ctx, { look, gender, dir, pose, blink, equip, items: ITEMS }));
 }
 
 export function playerSprite(cls, opts = {}) {
@@ -266,20 +283,30 @@ export function npcSprite(look, dir, blink = false) {
   return characterSprite(`n-${look}`, NPC_LOOK[look], { gender: FEMALE_NPC.has(look) ? 'f' : 'm', dir, blink });
 }
 
+/** 아홉 꼬리: 끝으로 갈수록 가늘어지는 곡선 꼬리(벡터, 논리 좌표) */
 function drawTails(ctx, size, pal) {
   const cx = size * 0.72;
-  const cy = size * 0.55;
+  const cy = size * 0.58;
+  const len = size * 0.42;
   for (let i = 0; i < 9; i++) {
     const a = -Math.PI * 0.95 + (i / 8) * Math.PI * 0.9;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(a);
-    ctx.fillStyle = pal.k;
-    ctx.fillRect(0, -5, size * 0.42, 10);
-    ctx.fillStyle = pal.o;
-    ctx.fillRect(2, -3, size * 0.38, 6);
-    ctx.fillStyle = pal.t;
-    ctx.fillRect(size * 0.3, -3, size * 0.1, 6);
+    const g = ctx.createLinearGradient(0, 0, len, 0);
+    g.addColorStop(0, pal.o);
+    g.addColorStop(0.7, pal.l ?? pal.o);
+    g.addColorStop(1, pal.t);
+    ctx.beginPath();
+    ctx.moveTo(0, -size * 0.07);
+    ctx.quadraticCurveTo(len * 0.6, -size * 0.13, len, 0);
+    ctx.quadraticCurveTo(len * 0.6, size * 0.1, 0, size * 0.07);
+    ctx.closePath();
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.lineWidth = size * 0.02;
+    ctx.strokeStyle = pal.k;
+    ctx.stroke();
     ctx.restore();
   }
 }
@@ -289,10 +316,15 @@ export function monsterSprite(type) {
   const look = MONSTER_LOOK[type];
   const scale = look.scale ?? 1;
   const size = 32 * scale;
-  return cached(`m-${type}`, size, size, (ctx) => {
-    if (look.tails) drawTails(ctx, size, look.pal);
+  const bodyArt = cached(`mb-${type}`, size, size, (ctx) => {
     ctx.globalAlpha = look.alpha ?? 1;
     drawPixelRows(ctx, MONSTER_ART[look.art], look.pal, 0, 0, PX * scale);
+  }, PX * scale);
+  if (!look.tails) return bodyArt;
+  // 꼬리는 매끈한 곡선으로 따로 그리고 그 위에 몸을 얹는다
+  return cachedVector(`m-${type}`, size, size, bodyArt.width / size, (ctx) => {
+    drawTails(ctx, size, look.pal);
+    ctx.drawImage(bodyArt, 0, 0, size, size);
   });
 }
 
