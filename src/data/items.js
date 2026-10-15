@@ -191,5 +191,6 @@ export function itemStatText(id) {
   const parts = Object.keys(STAT_LABELS).filter((k) => it[k]).map((k) => `${STAT_LABELS[k]} +${statValue(k, it[k])}`);
   const who = it.wtype ? ` · ${WEAPON_CLASS[it.wtype]} 전용` : it.gender ? ` · ${it.gender === 'f' ? '여성' : '남성'} 전용` : '';
   const tier = it.tier ? ` · ${it.tier}차` : '';
-  return `${parts.join(' · ')} (Lv.${it.level}${tier}${who})`;
+  const dragon = it.dragon ? ' · 🐲용 무기(각성 가능)' : '';
+  return `${parts.join(' · ')} (Lv.${it.level}${tier}${who}${dragon})`;
 }
