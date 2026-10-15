@@ -193,10 +193,18 @@ export function updateMonsters(game, dt) {
       provoke(game, m);
     }
 
+    // 싸움을 그만두면(은신·추격 포기) 준비하던 기술과 공격도 거둔다
+    if (!m.aggro && (m.casting || m.strikeAt)) {
+      cancelCast(game, m);
+      m.strikeAt = 0;
+    }
+
     if (m.aggro) {
       const strayed = manhattan(m, { x: m.homeX, y: m.homeY }) > HOME_LEASH;
       if (game.dead || dist > LEASH_DISTANCE || strayed) {
         m.aggro = false;
+        cancelCast(game, m);
+        m.strikeAt = 0;
         m.returningUntil = game.now + RETURN_TIMEOUT_MS;
         m.emote = { text: '?', until: game.now + 900 };
         continue;

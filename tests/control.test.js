@@ -121,3 +121,29 @@ test('몹몰이: 한 마리를 건드리면 근처 같은 종류도 따라오고
   game.update(16);
   assert.ok(m.aggro);
 });
+
+test('죽은 몬스터가 예고해 둔 장판은 사라지고 터지지 않는다', () => {
+  const { game, m } = arena('goblin', 1, 0);
+  m.engagedAt = 0;
+  tick(game, 32);
+  assert.ok(m.casting && game.hazards.length === 1, '내려찍기 예고 중');
+  game.damageMonster(m, m.hp + 1, false);
+  assert.ok(!game.monsters.includes(m), '죽었다');
+  const hp = game.player.hp;
+  tick(game, 1200);
+  assert.equal(game.hazards.length, 0, '장판이 사라진다');
+  assert.equal(game.player.hp, hp, '죽은 몬스터의 공격은 들어오지 않는다');
+});
+
+test('은신하면 몬스터가 준비하던 장판도 사라진다', () => {
+  const { game, m } = arena('goblin', 1, 0);
+  m.engagedAt = 0;
+  tick(game, 32);
+  assert.ok(m.casting);
+  game.stealthUntil = game.now + 5000;
+  const hp = game.player.hp;
+  tick(game, 1200);
+  assert.equal(game.hazards.length, 0);
+  assert.equal(game.player.hp, hp);
+  assert.equal(m.casting, null);
+});
