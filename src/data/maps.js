@@ -42,6 +42,14 @@ export const MAP_DEFS = {
         shop: ['beadNecklace', 'amberNecklace', 'pearlNecklace', 'copperRing', 'jadeRing', 'silverRing'],
       },
       {
+        id: 'forger', name: '명장 해림', x: 12, y: 13, look: 'forger', forge: true,
+        lines: ['쇠는 불에 달궈야 강해지고, 사람은 고생을 해야 강해지는 법이지.', '최고의 장비를 원하나? 아니면 지금 장비를 더 단단히 벼려 줄까?'],
+        shop: ['highSword55', 'highDagger55', 'highStaff55', 'highFan55', 'highArmor55', 'highHelm55', 'highNeck55', 'highRing55',
+          'highSword65', 'highDagger65', 'highStaff65', 'highFan65', 'highArmor65', 'highHelm65', 'highNeck65', 'highRing65',
+          'highSword75', 'highDagger75', 'highStaff75', 'highFan75', 'highArmor75', 'highHelm75', 'highNeck75', 'highRing75',
+          'highSword85', 'highDagger85', 'highStaff85', 'highFan85', 'highArmor85', 'highHelm85', 'highNeck85', 'highRing85'],
+      },
+      {
         id: 'master', name: '사범 청운', x: 22, y: 17, look: 'master', advance: true,
         lines: ['수련은 끝이 없는 법. 때가 되면 내게 오너라, 한 단계 높은 길을 열어 주마.'],
       },

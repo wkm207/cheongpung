@@ -259,3 +259,25 @@ test('배경음악: 모든 곡이 정해진 음계 안의 음으로 늘 똑같�
     }
   }
 });
+
+test('고급 장비(Lv55~85)와 강화: 3차 이후에도 장비가 레벨을 따라간다', async () => {
+  const { HIGH_GEAR } = await import('../src/data/items.js');
+  assert.equal(HIGH_GEAR.length, 32);
+  const sword85 = ITEMS.highSword85;
+  assert.ok(sword85.atk > ITEMS.tortoiseSword.atk * 2.5);
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.gmSetLevel(85); game.gmSetTier(3);
+  game.giveItem('highSword85', 1);
+  game.equipAt(game.player.inv.findIndex((s) => s.id === 'highSword85'));
+  assert.equal(game.player.equip.weapon, 'highSword85');
+  const atk = game.stats().atk;
+  game.setPlayer({ gold: 1e9 });
+  assert.equal(game.enhance('weapon', () => 0), true);
+  assert.equal(game.player.enhance.weapon, 1);
+  assert.ok(game.stats().atk > atk);
+  game.setPlayer({ enhance: { ...game.player.enhance, weapon: 8 } });
+  assert.equal(game.enhance('weapon', () => 0.999), false, '실패하면 단계는 그대로');
+  assert.equal(game.player.enhance.weapon, 8);
+  const back = validatePlayer(importText(exportText(game.toSave())));
+  assert.equal(back.enhance.weapon, 8);
+});

@@ -231,6 +231,7 @@ const NPC_LOOK = {
   peddler: { body: '#e86f9a', dark: '#2e7d5b', hair: '#2c1a0e', skin: '#fbd7bd' },
   guard: { body: '#2c3e50', dark: '#c0392b', hair: '#111111', skin: '#e8c39e', hat: 'guard' },
   master: { body: '#f2efe6', dark: '#2b4c7e', hair: '#d9d9d9', skin: '#e8c39e', hat: 'gat' },
+  forger: { body: '#4a3a2a', dark: '#c0392b', hair: '#2a1a10', skin: '#c98d5e' },
 };
 
 const cache = new Map();

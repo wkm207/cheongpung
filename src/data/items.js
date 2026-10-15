@@ -80,6 +80,37 @@ export const ITEMS = {
   foxBead: { name: '여우구슬', icon: '🔮', type: 'loot', price: 3000, desc: '구미호가 품고 있던 신비한 구슬.' },
 };
 
+// ── 3차 이후 고급 장비(Lv55·65·75·85): 이름만 정하고 능력치는 Lv45 장비를 기준으로 키운다 ──
+const HIGH_TIERS = [
+  { level: 55, mult: 1.35, price: 300000, tint: '#ff7b6b' },
+  { level: 65, mult: 1.75, price: 800000, tint: '#7ee0ff' },
+  { level: 75, mult: 2.2, price: 2000000, tint: '#ffe066' },
+  { level: 85, mult: 2.8, price: 5000000, tint: '#d9a6ff' },
+];
+const HIGH_SETS = [
+  { base: 'tortoiseSword', key: 'Sword', icon: '⚔️', names: ['적룡검', '태산검', '일월검', '천하검'] },
+  { base: 'ghostDagger', key: 'Dagger', icon: '🗡️', names: ['혈영도', '무영비', '귀검', '멸혼도'] },
+  { base: 'taegeukStaff', key: 'Staff', icon: '🪄', names: ['현무장', '백학장', '일월장', '태청장'] },
+  { base: 'phoenixFan', key: 'Fan', icon: '🪭', names: ['청학선', '금란선', '일월선', '태극선'] },
+  { base: 'heavenRobe', key: 'Armor', icon: '🥋', names: ['금린갑', '현무갑', '일월갑', '천신갑'] },
+  { base: 'phoenixCrown', key: 'Helm', icon: '👑', names: ['금관', '현무관', '일월관', '천신관'] },
+  { base: 'yeouiNorigae', key: 'Neck', icon: '📿', names: ['산호 노리개', '비취 노리개', '일월 노리개', '천신 노리개'] },
+  { base: 'heavenRing', key: 'Ring', icon: '💍', names: ['산호 가락지', '비취 가락지', '일월 가락지', '천신 가락지'] },
+];
+const STAT_FIELDS = ['atk', 'def', 'mag', 'hp', 'mp'];
+for (const set of HIGH_SETS) {
+  const base = ITEMS[set.base];
+  HIGH_TIERS.forEach((t, i) => {
+    const item = { ...base, name: set.names[i], icon: set.icon, level: t.level, tier: 3, price: t.price };
+    for (const k of STAT_FIELDS) if (base[k]) item[k] = Math.round(base[k] * t.mult);
+    if (base.crit) item.crit = +(base.crit * (1 + i * 0.25)).toFixed(3);
+    if (base.tint) item.tint = t.tint;
+    if (base.gem) item.gem = t.tint;
+    ITEMS[`high${set.key}${t.level}`] = item;
+  });
+}
+export const HIGH_GEAR = Object.keys(ITEMS).filter((id) => id.startsWith('high'));
+
 export const EQUIP_SLOTS = ['weapon', 'helmet', 'armor', 'necklace', 'ring'];
 export const SLOT_LABELS = { weapon: '무기', helmet: '투구', armor: '갑옷', necklace: '목걸이', ring: '반지' };
 export const SLOT_ICONS = { weapon: '⚔️', helmet: '🎩', armor: '👕', necklace: '📿', ring: '💍' };

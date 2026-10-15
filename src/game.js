@@ -19,6 +19,7 @@ import { addItem, removeAt, removeCount, countOf } from './core/inventory.js';
 import { canEquip, statDiff, formatStat, equipFromInventory, autoEquip, isUpgrade, upgradeCount } from './core/equip.js';
 import { defaultSlots, slotNewSkill, assignSlot, starterSkills } from './core/skillslots.js';
 import { randInt } from './core/rng.js';
+import { enhanceInfo, emptyEnhance } from './core/enhance.js';
 
 const QUICK_ITEMS = { hp: ['herb', 'bigHerb', 'elixir'], mp: ['dew', 'bigDew', 'elixir'] };
 const NPC_STEP_MS = 480;
@@ -35,6 +36,7 @@ export function createPlayer(name, cls) {
     playMs: 0, gm: { god: false, speed: 1 },
     quests: newQuestState(),
     tier: 0,
+    enhance: emptyEnhance(),
     learned: starterSkills(cls),
     skillSlots: defaultSlots(starterSkills(cls)),
   };
@@ -726,6 +728,31 @@ export class Game {
     this.emit('sfx', 'equip');
     this.emit('inventory');
     return rows;
+  }
+
+  /** 장비 칸 강화. 성공하면 true, 실패(금전만 소모)·불가면 false */
+  enhance(slot, rng = Math.random) {
+    const info = enhanceInfo(this.player, slot);
+    if (!info) return false;
+    if (this.player.gold < info.cost) {
+      this.log(`금전이 부족합니다. (${info.cost.toLocaleString()}전 필요)`, '#ff9f80');
+      return false;
+    }
+    const before = this.stats();
+    const name = ITEMS[this.player.equip[slot]].name;
+    this.setPlayer({ gold: this.player.gold - info.cost });
+    if (rng() >= info.rate) {
+      this.log(`강화 실패... ${name} +${info.plus} 그대로입니다. (-${info.cost.toLocaleString()}전)`, '#ff8a80');
+      this.emit('sfx', 'hurt');
+      this.emit('inventory');
+      return false;
+    }
+    this.setPlayer({ enhance: { ...this.player.enhance, [slot]: info.next } });
+    this.announceDiff(`강화 성공! ${name} +${info.next}`, statDiff(before, this.stats()));
+    this.addEffect({ type: 'pillar', x: this.pe.x, y: this.pe.y, color: '#ffe066', dur: 700 });
+    this.emit('sfx', 'levelup');
+    this.emit('inventory');
+    return true;
   }
 
   upgradeCount() {

@@ -7,6 +7,7 @@ import { sanitizeSlots, sanitizeLearned } from './skillslots.js';
 import { computeStats } from './stats.js';
 import { canEquip } from './equip.js';
 import { addItem } from './inventory.js';
+import { emptyEnhance, MAX_ENHANCE } from './enhance.js';
 
 const SAVE_FORMAT = 'cheongpung-save';
 
@@ -56,7 +57,11 @@ export function validatePlayer(raw) {
       equip[slot] = null;
     }
   }
-  const max = computeStats({ cls: raw.cls, level: raw.level, tier, equip });
+  const enhance = Object.fromEntries(Object.keys(emptyEnhance()).map((k) => {
+    const v = raw.enhance?.[k];
+    return [k, isInt(v) && v >= 0 && v <= MAX_ENHANCE ? v : 0];
+  }));
+  const max = computeStats({ cls: raw.cls, level: raw.level, tier, equip, enhance });
   return {
     name,
     cls: raw.cls,
@@ -75,6 +80,7 @@ export function validatePlayer(raw) {
     gm: { god: raw.gm?.god === true, speed: [1, 2, 3].includes(raw.gm?.speed) ? raw.gm.speed : 1 },
     quests: validateQuests(raw.quests),
     tier,
+    enhance,
     learned,
     skillSlots: sanitizeSlots(raw.skillSlots, learned),
   };

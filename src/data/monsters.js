@@ -70,6 +70,6 @@ export const MONSTERS = {
     name: '흑룡', level: 50, hp: 30000, atk: 170, def: 55, exp: 40000, gold: [8000, 15000],
     stepMs: 380, aggressive: true, sight: 8, boss: true, respawnMs: 300000,
     special: { radius: 3, cd: 4000, power: 1.6, name: '흑염', color: '#a64dff' },
-    drops: [['dragonOrb', 1], ['elixir', 1], ['tortoiseSword', 0.15], ['ghostDagger', 0.15], ['taegeukStaff', 0.15], ['phoenixFan', 0.15], ['heavenRobe', 0.2], ['phoenixCrown', 0.2], ['yeouiNorigae', 0.2], ['heavenRing', 0.2]],
+    drops: [['dragonOrb', 1], ['elixir', 1], ['tortoiseSword', 0.15], ['ghostDagger', 0.15], ['taegeukStaff', 0.15], ['phoenixFan', 0.15], ['heavenRobe', 0.2], ['phoenixCrown', 0.2], ['yeouiNorigae', 0.2], ['heavenRing', 0.2], ['highSword55', 0.06], ['highDagger55', 0.06], ['highStaff55', 0.06], ['highFan55', 0.06], ['highArmor55', 0.06]],
   },
 };

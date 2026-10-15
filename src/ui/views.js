@@ -11,6 +11,7 @@ import { TIER_TITLES } from '../data/tiers.js';
 import { MAX_LEVEL } from '../config.js';
 import { expToNext } from '../core/stats.js';
 import { canEquip, compareEquip, compareUnequip, isUpgrade, formatStat } from '../core/equip.js';
+import { enhanceInfo, MAX_ENHANCE, ENHANCE_STEP } from '../core/enhance.js';
 import { exportText } from '../core/save.js';
 import { KEY_PANELS } from './input.js';
 
@@ -39,7 +40,7 @@ export function inventoryView(game, state) {
     const id = p.equip[slot];
     const sel = state.selEquip === slot ? ' sel' : '';
     return `<button class="eq-slot${id ? '' : ' empty'}${sel}" data-act="selEquip" data-slot="${slot}">
-      <span class="eq-icon">${id ? ITEMS[id].icon : SLOT_ICONS[slot]}</span><small>${id ? esc(ITEMS[id].name) : SLOT_LABELS[slot]}</small></button>`;
+      <span class="eq-icon">${id ? ITEMS[id].icon : SLOT_ICONS[slot]}</span><small>${id ? esc(ITEMS[id].name) : SLOT_LABELS[slot]}${p.enhance?.[slot] ? ` +${p.enhance[slot]}` : ''}</small></button>`;
   }).join('');
   const recent = game.lastDiff && game.now - game.lastDiff.at < 8000
     ? `<div class="banner">✨ ${esc(game.lastDiff.title)} ${shortCompare(game.lastDiff.rows) || ''}</div>` : '';
@@ -208,7 +209,8 @@ export function characterView(game) {
   ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   const equip = EQUIP_SLOTS.map((slot) => {
     const id = p.equip[slot];
-    const body = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b> <small class="muted">${esc(itemStatText(id))}</small>` : '<span class="muted">없음</span>';
+    const plus = p.enhance?.[slot] ? ` <span class="good">+${p.enhance[slot]}</span>` : '';
+    const body = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b>${plus} <small class="muted">${esc(itemStatText(id))}</small>` : '<span class="muted">없음</span>';
     return `<div class="list-row"><span class="badge eq">${SLOT_LABELS[slot]}</span><span class="grow">${body}</span></div>`;
   }).join('');
   return `${header('정보', 'character')}
@@ -328,6 +330,22 @@ export function shopSellList(game) {
       <button class="primary" data-act="sell" data-i="${i}" data-n="1">팔기</button>${all}
     </div>`;
   }).join('');
+}
+
+/** 명장의 강화 탭: 장비 칸마다 지금 강화 수치, 다음 단계 비용과 성공 확률 */
+export function forgeList(game) {
+  const p = game.player;
+  const rows = EQUIP_SLOTS.map((slot) => {
+    const id = p.equip[slot];
+    const plus = p.enhance?.[slot] ?? 0;
+    const info = enhanceInfo(p, slot);
+    const name = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b>${plus ? ` <span class="good">+${plus}</span>` : ''}` : '<span class="muted">장비 없음</span>';
+    let right = '<span class="muted">-</span>';
+    if (id && plus >= MAX_ENHANCE) right = '<span class="good">최대 강화</span>';
+    else if (info) right = `<span class="price${p.gold < info.cost ? ' warn' : ''}">${info.cost.toLocaleString()}전 · 성공 ${Math.round(info.rate * 100)}%</span><button class="primary" data-act="enhance" data-slot="${slot}">+${info.next} 강화</button>`;
+    return `<div class="list-row"><span class="badge eq">${SLOT_LABELS[slot]}</span><span class="grow">${name}</span>${right}</div>`;
+  }).join('');
+  return `<p class="hint">강화는 장비 칸에 붙습니다. 장비를 바꿔 껴도 강화 수치는 그대로이고, 한 단계마다 그 칸 장비의 능력치가 ${Math.round(ENHANCE_STEP * 100)}% 오릅니다. 실패해도 장비는 깨지지 않습니다(금전만 소모).</p>${rows}`;
 }
 
 // ── 메뉴 ───────────────────────────────────────────────

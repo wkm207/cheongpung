@@ -5,7 +5,7 @@ import { runCommand } from '../core/gm.js';
 import { exportText, importText } from '../core/save.js';
 import {
   header, goldTag, inventoryView, skillsView, spellsView, characterView, questsView,
-  questPage, advancePage, talkPage, shopBuyList, shopSellList, menuView, gmView,
+  questPage, advancePage, talkPage, shopBuyList, shopSellList, forgeList, menuView, gmView,
 } from './views.js';
 
 /** 가방·기술·정보·퀘스트·상점·대화·메뉴·GM 창. 열려 있는 동안 게임은 멈춘다. */
@@ -96,8 +96,10 @@ export class Panels {
     const npc = this.state.data;
     const tabs = `<div class="tabs">
       <button class="${this.state.tab === 'buy' ? 'on' : ''}" data-act="tab" data-tab="buy">사기</button>
-      <button class="${this.state.tab === 'sell' ? 'on' : ''}" data-act="tab" data-tab="sell">팔기</button></div>`;
-    const list = this.state.tab === 'buy' ? shopBuyList(game, npc) : shopSellList(game);
+      <button class="${this.state.tab === 'sell' ? 'on' : ''}" data-act="tab" data-tab="sell">팔기</button>${npc.forge ? `
+      <button class="${this.state.tab === 'forge' ? 'on' : ''}" data-act="tab" data-tab="forge">강화</button>` : ''}</div>`;
+    const lists = { buy: () => shopBuyList(game, npc), sell: () => shopSellList(game), forge: () => forgeList(game) };
+    const list = (lists[this.state.tab] ?? lists.buy)();
     return `${header(npc.name, null, goldTag(game))}${tabs}<div class="body">${list}</div>`;
   }
 
@@ -144,6 +146,7 @@ export class Panels {
       case 'confirm': s.confirm = true; break;
       case 'discard': game.discardAt(s.selected); s.selected = null; s.confirm = false; break;
       case 'unequip': game.unequip(el.dataset.slot); s.selEquip = null; break;
+      case 'enhance': game.enhance(el.dataset.slot); break;
       case 'learn': game.learnSkill(el.dataset.id); break;
       case 'slot': game.assignSkill(i, el.dataset.id); break;
       case 'spellPick': this.spellLetter(i); return;

@@ -2,6 +2,7 @@ import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
 import { MAX_LEVEL, DEATH_EXP_PENALTY } from '../config.js';
 import { TIER_MULT } from '../data/tiers.js';
+import { enhanceMult } from './enhance.js';
 
 const STAT_KEYS = ['hp', 'mp', 'atk', 'def', 'mag'];
 
@@ -16,13 +17,14 @@ export function baseStats(cls, level, tier = 0) {
   return Object.fromEntries(STAT_KEYS.map((k) => [k, Math.round((c.base[k] + c.growth[k] * (level - 1)) * mult)]));
 }
 
-export function equipBonus(equip) {
+export function equipBonus(equip, enhance = {}) {
   const keys = [...STAT_KEYS, 'crit'];
   const bonus = Object.fromEntries(keys.map((k) => [k, 0]));
-  for (const id of Object.values(equip)) {
+  for (const [slot, id] of Object.entries(equip)) {
     const it = id && ITEMS[id];
     if (!it) continue;
-    for (const k of keys) bonus[k] += it[k] ?? 0;
+    const mult = enhanceMult(enhance[slot]);
+    for (const k of keys) bonus[k] += k === 'crit' ? (it[k] ?? 0) : Math.round((it[k] ?? 0) * mult);
   }
   return bonus;
 }
@@ -30,7 +32,7 @@ export function equipBonus(equip) {
 /** 버프는 { stat, mult?, add?, until } 형태. 만료된 버프는 무시한다. */
 export function computeStats(player, buffs = [], now = 0) {
   const base = baseStats(player.cls, player.level, player.tier ?? 0);
-  const bonus = equipBonus(player.equip);
+  const bonus = equipBonus(player.equip, player.enhance);
   const mult = { atk: 1, def: 1, mag: 1 };
   let critAdd = 0;
   for (const b of buffs) {
