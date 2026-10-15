@@ -374,11 +374,11 @@ export class Game {
     const roll = rollDamage({
       power,
       attackStat: s[stat],
-      defense: MONSTERS[m.type].def * (cursed ? 0.5 : 1),
-      crit: forceCrit ? 1 : magic ? 0 : s.crit,
+      defense: MONSTERS[m.type].def * (cursed ? 0.5 : 1) * (1 - s.pen),
+      crit: forceCrit ? 1 : magic ? s.mcrit : s.crit,
       magic,
     });
-    let { dmg } = roll;
+    let dmg = Math.round(roll.dmg * (1 + s.dmgPct));
     let { isCrit } = roll;
     if (cursed) dmg = Math.round(dmg * 1.3);
     if (this.isStealthed()) {

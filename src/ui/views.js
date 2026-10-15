@@ -218,6 +218,10 @@ export function characterView(game) {
     ['직업', `${game.title()}${p.tier ? ` (${p.tier}차)` : ''}`], ['레벨', p.level],
     ['체력', `${p.hp} / ${s.maxHp}`], ['마력', `${p.mp} / ${s.maxMp}`],
     ['공격', s.atk], ['방어', s.def], ['술력', s.mag], ['치명타', formatStat('crit', s.crit)],
+    ...[['mcrit', '마법치명'], ['dmgPct', '피해증가'], ['pen', '방어무시'], ['cdr', '쿨타임 감소']]
+      .filter(([k]) => s[k] > 0).map(([k, label]) => [label, formatStat(k, s[k])]),
+    ...[['mcrit', '마법치명'], ['dmgPct', '피해증가'], ['pen', '방어무시'], ['cdr', '쿨타임 감소']]
+      .filter(([k]) => s[k] > 0).map(([k, label]) => [label, formatStat(k, s[k])]),
     ['경험치', `${p.exp.toLocaleString()} / ${need}`], ['금전', `${p.gold.toLocaleString()}전`],
     ['배운 기술', `${p.learned.length} / ${CLASSES[p.cls].skills.length}`], ['플레이 시간', formatPlayTime(game.playMs)],
   ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
@@ -481,11 +485,22 @@ export function gmView(game, state) {
   const mobs = Object.entries(MONSTERS).map(([id, m]) => btn(`/소환 ${id} 1`, `${m.name} Lv${m.level}${m.boss ? '(보스)' : ''}`)).join('');
   const classes = Object.entries(CLASSES).map(([id, c]) => btn(`/직업 ${id}`, c.name, id === p.cls ? 'on' : '')).join('');
   const groups = [['consume', '소모품'], ['weapon', '무기'], ['armor', '갑옷'], ['helmet', '투구'], ['necklace', '목걸이'], ['ring', '반지'], ['loot', '전리품']];
+  const itemRow = ([id, it]) => {
+    const ten = isStackable(id) ? btn(`/아이템 ${id} 10`, '+10') : '';
+    return `<div class="list-row"><span class="tag">${it.icon}</span><span class="grow">${esc(it.name)} <small class="muted">${esc(itemStatText(id))}</small></span>${btn(`/아이템 ${id} 1`, '+1')}${ten}</div>`;
+  };
+  const byLevel = (a, b) => (a[1].level ?? 0) - (b[1].level ?? 0);
+  const subGroup = (title, list) => (list.length ? `<div class="inv-group">${title}</div>${list.sort(byLevel).map(itemRow).join('')}` : '');
   const items = groups.map(([type, label]) => {
-    const rows = Object.entries(ITEMS).filter(([, it]) => it.type === type).map(([id, it]) => {
-      const ten = isStackable(id) ? btn(`/아이템 ${id} 10`, '+10') : '';
-      return `<div class="list-row"><span class="tag">${it.icon}</span><span class="grow">${esc(it.name)} <small class="muted">${esc(itemStatText(id))}</small></span>${btn(`/아이템 ${id} 1`, '+1')}${ten}</div>`;
-    }).join('');
+    const list = Object.entries(ITEMS).filter(([, it]) => it.type === type);
+    let rows;
+    if (type === 'weapon') {
+      rows = Object.entries(CLASSES).map(([, c]) => subGroup(`${c.name} 무기`, list.filter(([, it]) => it.wtype === c.weapon))).join('');
+    } else if (type === 'armor') {
+      rows = [['공용', undefined], ['남성 전용', 'm'], ['여성 전용', 'f']].map(([t, g]) => subGroup(t, list.filter(([, it]) => it.gender === g))).join('');
+    } else {
+      rows = list.sort(byLevel).map(itemRow).join('');
+    }
     return `<details><summary>${label}</summary>${rows}</details>`;
   }).join('');
   return `${header('운영자 도구', 'gm')}

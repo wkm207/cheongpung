@@ -5,7 +5,9 @@ import { addItem, removeAt } from './inventory.js';
 
 export const COMPARE_KEYS = [
   ['atk', '공격'], ['def', '방어'], ['mag', '술력'], ['maxHp', '체력'], ['maxMp', '마력'], ['crit', '치명'],
+  ['mcrit', '마법치명'], ['dmgPct', '피해증가'], ['pen', '방어무시'], ['cdr', '쿨감'],
 ];
+const PCT_KEYS = ['crit', 'mcrit', 'dmgPct', 'pen', 'cdr'];
 
 // 직업별로 어떤 능력치를 더 중요하게 볼지(‘더 좋은 장비’ 판단용)
 const WEIGHTS = {
@@ -16,7 +18,7 @@ const WEIGHTS = {
 };
 
 export function formatStat(key, value) {
-  return key === 'crit' ? `${Math.round(value * 100)}%` : String(value);
+  return PCT_KEYS.includes(key) ? `${Math.round(value * 100)}%` : String(value);
 }
 
 export function canEquip(player, id) {
@@ -57,7 +59,8 @@ export function compareUnequip(player, slot) {
 
 function score(cls, s) {
   const w = WEIGHTS[cls];
-  return s.atk * w.atk + s.mag * w.mag + s.def + s.maxHp * 0.1 + s.maxMp * 0.05 + s.crit * 150;
+  const power = (s.atk * w.atk + s.mag * w.mag) * (1 + s.dmgPct + s.pen * 0.5 + s.cdr + s.mcrit * 0.5 * Math.sign(w.mag));
+  return power + s.def + s.maxHp * 0.1 + s.maxMp * 0.05 + s.crit * 150;
 }
 
 /** 지금 장비 대비 얼마나 좋아지는지(0 이하면 좋아지지 않음). 착용할 수 없으면 0. */

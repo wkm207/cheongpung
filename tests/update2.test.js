@@ -382,3 +382,28 @@ test('바닥에 떨어진 돈도 그릴 수 있다(그리기 오류로 캐릭터
   const fake = { now: 0, groundItems: [{ id: GOLD_ID, qty: 10, x: 1, y: 1, spawnAt: 0, expiresAt: 60000 }, { id: 'herb', qty: 1, x: 2, y: 1, spawnAt: 0, expiresAt: 60000 }] };
   assert.doesNotThrow(() => Renderer.prototype.drawGroundItems.call({}, ctx, fake));
 });
+
+test('무기 옵션: 쿨감·술력증가·방어무시가 능력치와 기술 대기시간에 반영된다', () => {
+  const game = new Game(createPlayer('시험', 'mage'));
+  game.setPlayer({ level: 99, tier: 3, learned: [...CLASSES.mage.skills] });
+  const before = game.stats();
+  assert.equal(before.cdr, 0);
+  game.setPlayer({ equip: { ...game.player.equip, weapon: 'jujakStaff' } });
+  const after = game.stats();
+  assert.equal(after.cdr, 0.15);
+  assert.equal(after.pen, 0.2);
+  assert.ok(after.mag > before.mag * 1.3);
+  game.player.mp = 99999;
+  const id = game.player.skillSlots.find((s) => s && SKILLS[s].cd > 0 && SKILLS[s].kind !== 'passive');
+  game.castSkillById(id);
+  assert.equal(game.cooldowns[id] - game.now, Math.round(SKILLS[id].cd * 0.85));
+});
+
+test('신물 무기는 같은 직업의 어느 무기보다 옵션이 크다', () => {
+  for (const id of ['jujakSword', 'jujakDagger', 'jujakStaff', 'jujakFan']) {
+    const m = ITEMS[id];
+    for (const it of Object.values(ITEMS).filter((x) => x.wtype === m.wtype && x !== m)) {
+      for (const k of ['cdr', 'magPct', 'dmgPct', 'pen', 'mcrit']) assert.ok((it[k] ?? 0) <= (m[k] ?? 0), `${it.name}.${k}`);
+    }
+  }
+});

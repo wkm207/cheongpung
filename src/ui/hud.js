@@ -93,7 +93,7 @@ export class Hud {
       if (!id) return;
       const sk = SKILLS[id];
       const remain = Math.max(0, (game.cooldowns[id] ?? 0) - game.now);
-      setStyle(btn, '--cd', (remain / sk.cd).toFixed(3));
+      setStyle(btn, '--cd', Math.min(1, remain / (game.cooldownLen?.[id] ?? sk.cd)).toFixed(3));
       btn.classList.toggle('cooling', remain > 0);
       btn.classList.toggle('nomp', p.mp < sk.mp);
       if (remain > 0) setText(btn.querySelector('.cd'), remain >= 10000 ? String(Math.ceil(remain / 1000)) : (remain / 1000).toFixed(1));

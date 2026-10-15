@@ -1,5 +1,5 @@
 import { CLASSES } from '../data/classes.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, PCT_STATS } from '../data/items.js';
 import { MAX_LEVEL, DEATH_EXP_PENALTY } from '../config.js';
 import { TIER_MULT } from '../data/tiers.js';
 import { enhanceMult } from './enhance.js';
@@ -19,13 +19,13 @@ export function baseStats(cls, level, tier = 0) {
 }
 
 export function equipBonus(equip, enhance = {}, dragonStage = 0) {
-  const keys = [...STAT_KEYS, 'crit'];
+  const keys = [...STAT_KEYS, ...PCT_STATS];
   const bonus = Object.fromEntries(keys.map((k) => [k, 0]));
   for (const [slot, id] of Object.entries(equip)) {
     const it = id && ITEMS[id];
     if (!it) continue;
     const mult = enhanceMult(enhance[slot]) * (slot === 'weapon' && it.dragon ? awakenMult(dragonStage) : 1);
-    for (const k of keys) bonus[k] += k === 'crit' ? (it[k] ?? 0) : Math.round((it[k] ?? 0) * mult);
+    for (const k of keys) bonus[k] += PCT_STATS.includes(k) ? (it[k] ?? 0) : Math.round((it[k] ?? 0) * mult);
   }
   return bonus;
 }
@@ -53,8 +53,12 @@ export function computeStats(player, buffs = [], now = 0) {
     maxMp: base.mp + bonus.mp + int * 4 + (player.bonusMp ?? 0),
     atk: Math.round((base.atk + bonus.atk + str * 2) * mult.atk),
     def: Math.round((base.def + bonus.def + dex + con * 0.5) * mult.def),
-    mag: Math.round((base.mag + bonus.mag + int * 2) * mult.mag),
+    mag: Math.round((base.mag + bonus.mag + int * 2) * mult.mag * (1 + bonus.magPct)),
     crit: Math.min(0.9, CLASSES[player.cls].crit + bonus.crit + critAdd + dex * 0.004),
+    mcrit: Math.min(0.6, bonus.mcrit),
+    dmgPct: bonus.dmgPct,
+    pen: Math.min(0.8, bonus.pen),
+    cdr: Math.min(0.5, bonus.cdr),
   };
 }
 

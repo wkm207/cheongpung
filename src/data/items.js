@@ -138,17 +138,51 @@ for (const set of HIGH_SETS) {
 }
 export const HIGH_GEAR = Object.keys(ITEMS).filter((id) => id.startsWith('high'));
 
+// ── 무기 특수 옵션: 쿨감(기술 재사용 대기 감소)·피해 증가·방어 무시·술력 증가·마법 치명 ──
+// 승급 무기일수록, 고급 무기는 레벨이 높을수록 옵션이 커진다.
+const WEAPON_OPTS = {
+  sword: (t) => ({ cdr: 0.02 * t, dmgPct: 0.05 * t, pen: 0.03 * t }),
+  dagger: (t) => ({ cdr: 0.02 * t, pen: 0.05 * t }),
+  staff: (t) => ({ cdr: 0.025 * t, magPct: 0.04 * t, mcrit: 0.02 * t }),
+  fan: (t) => ({ cdr: 0.03 * t, magPct: 0.03 * t }),
+};
+const HIGH_STEP = { 55: 3.5, 65: 4, 75: 4.5, 85: 5 };
+for (const it of Object.values(ITEMS)) {
+  if (it.type !== 'weapon' || !it.tier) continue;
+  const t = it.tier === 3 && HIGH_STEP[it.level] ? HIGH_STEP[it.level] : it.tier;
+  for (const [k, v] of Object.entries(WEAPON_OPTS[it.wtype](t))) it[k] = +v.toFixed(2);
+}
+
+// ── 불새 주작이 떨구는 신물 무기(Lv99): 옵션이 가장 크다 ──
+const MYTHIC = [
+  ['jujakSword', '주작신검', 'Sword', { dmgPct: 0.5, pen: 0.2, cdr: 0.15, crit: 0.1 }],
+  ['jujakDagger', '주작비도', 'Dagger', { dmgPct: 0.4, pen: 0.3, cdr: 0.15 }],
+  ['jujakStaff', '주작신장', 'Staff', { magPct: 0.33, pen: 0.2, dmgPct: 0.5, mcrit: 0.15, cdr: 0.15 }],
+  ['jujakFan', '주작신선', 'Fan', { magPct: 0.25, pen: 0.1, cdr: 0.2, mcrit: 0.08 }],
+];
+for (const [id, name, key, opts] of MYTHIC) {
+  const base = ITEMS[`high${key}85`];
+  const item = { ...base, name, icon: '🔥', level: 99, tier: 3, price: 20000000, tint: '#ff5a1f', ...opts };
+  for (const k of STAT_FIELDS) if (base[k]) item[k] = Math.round(base[k] * 1.3);
+  ITEMS[id] = item;
+}
+
 export const EQUIP_SLOTS = ['weapon', 'helmet', 'armor', 'necklace', 'ring'];
 export const SLOT_LABELS = { weapon: '무기', helmet: '투구', armor: '갑옷', necklace: '목걸이', ring: '반지' };
 export const SLOT_ICONS = { weapon: '⚔️', helmet: '🎩', armor: '👕', necklace: '📿', ring: '💍' };
-export const STAT_LABELS = { atk: '공격', def: '방어', mag: '술력', hp: '체력', mp: '마력', crit: '치명' };
+export const STAT_LABELS = {
+  atk: '공격', def: '방어', mag: '술력', hp: '체력', mp: '마력', crit: '치명',
+  magPct: '술력증가', dmgPct: '피해증가', pen: '방어무시', mcrit: '마법치명', cdr: '쿨감',
+};
+/** 비율(%)로 나타내는 능력치: 강화 배율을 받지 않는다 */
+export const PCT_STATS = ['crit', 'magPct', 'dmgPct', 'pen', 'mcrit', 'cdr'];
 export const WEAPON_CLASS = { sword: '전사', dagger: '도적', staff: '주술사', fan: '도사' };
 
 export const isStackable = (id) => ['consume', 'loot'].includes(ITEMS[id]?.type);
 export const isEquipment = (id) => EQUIP_SLOTS.includes(ITEMS[id]?.type);
 export const sellPrice = (id) => Math.floor((ITEMS[id]?.price ?? 0) / 2);
 
-const statValue = (key, v) => (key === 'crit' ? `${Math.round(v * 100)}%` : v);
+const statValue = (key, v) => (PCT_STATS.includes(key) ? `${Math.round(v * 100)}%` : v);
 
 export function itemStatText(id) {
   const it = ITEMS[id];

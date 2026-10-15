@@ -410,7 +410,9 @@ export function castSkill(game, id) {
     return false;
   }
   if (CASTERS[sk.kind](game, sk, id) === false) return false;
-  game.cooldowns = { ...game.cooldowns, [id]: game.now + sk.cd };
+  const cd = Math.round(sk.cd * (1 - game.stats().cdr));
+  game.cooldowns = { ...game.cooldowns, [id]: game.now + cd };
+  game.cooldownLen = { ...game.cooldownLen, [id]: cd };
   game.setPlayer({ mp: game.player.mp - sk.mp });
   game.say(`${sk.name}!`);
   if (sk.magic || ['heal', 'hot', 'buff', 'guardian', 'convert'].includes(sk.kind)) game.castPoseUntil = game.now + 420;

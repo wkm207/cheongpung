@@ -167,6 +167,6 @@ export const MONSTERS = {
     name: '불새 주작', level: 99, hp: 300000, atk: 440, def: 160, exp: 700000, gold: [100000, 150000],
     stepMs: 280, aggressive: true, sight: 9, boss: true, respawnMs: 420000,
     special: { radius: 5, cd: 3200, power: 1.9, name: '불새의 날갯짓', color: '#ff5a1f' },
-    drops: [['firebirdFeather', 1], ['dragonBreath', 10], ['guardCharm', 2], ['highSword85', 0.35], ['highDagger85', 0.35], ['highStaff85', 0.35], ['highFan85', 0.35], ['highArmor85', 0.35], ['highRing85', 0.35]],
+    drops: [['firebirdFeather', 1], ['dragonBreath', 10], ['jujakSword', 0.12], ['jujakDagger', 0.12], ['jujakStaff', 0.12], ['jujakFan', 0.12], ['jujakSword', 0.12], ['jujakDagger', 0.12], ['jujakStaff', 0.12], ['jujakFan', 0.12], ['guardCharm', 2], ['highSword85', 0.35], ['highDagger85', 0.35], ['highStaff85', 0.35], ['highFan85', 0.35], ['highArmor85', 0.35], ['highRing85', 0.35]],
   },
 };
