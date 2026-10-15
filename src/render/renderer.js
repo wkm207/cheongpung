@@ -170,6 +170,7 @@ export class Renderer {
     this.ambient.update(game.mapId, { x: this.camX, y: this.camY, w: viewW, h: viewH }, dt);
     this.ambient.draw(ctx, ts);
     this.drawLight();
+    this.drawScreenFlash(game);
     this.drawDarkness(game, pp, k);
     ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
     this.drawTexts(ctx, game);
@@ -207,6 +208,19 @@ export class Renderer {
   }
 
   /** 밤낮(바깥)과 동굴의 어둠: 캐릭터 둘레만 등불처럼 밝게 */
+  /** 화면 전체 기술: 화면이 그 기술 빛깔로 번쩍였다가 잦아든다 */
+  drawScreenFlash(game) {
+    const fl = game.screenFlash;
+    if (!fl) return;
+    const f = (game.now - fl.start) / fl.dur;
+    if (f >= 1 || f < 0) return;
+    const n = parseInt(fl.color.slice(1), 16);
+    const a = f < 0.15 ? f / 0.15 : 1 - (f - 0.15) / 0.85;
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.fillStyle = `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a * 0.32})`;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
   /** 햇빛과 가장자리 그늘: 왼쪽 위에서 따뜻한 빛이 들고 화면 가장자리는 살짝 어둡게 */
   drawLight() {
     const W = this.canvas.width;

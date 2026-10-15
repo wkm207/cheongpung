@@ -147,3 +147,26 @@ test('은신하면 몬스터가 준비하던 장판도 사라진다', () => {
   assert.equal(game.player.hp, hp);
   assert.equal(m.casting, null);
 });
+
+test('화면 전체 궁극기는 화면 안의 적을 모두 세 번 때리고, 화면 밖은 안 맞는다', () => {
+  for (const [cls, id] of [['warrior', 'heavenquake'], ['rogue', 'bladerain'], ['mage', 'starfall'], ['priest', 'heavenlight']]) {
+    const game = new Game(createPlayer('궁극', cls));
+    game.gmSetLevel(70);
+    game.gmSetTier(3);
+    game.gmLearnAll();
+    assert.ok(game.player.learned.includes(id), `${cls} ${id} 배움`);
+    game.teleport('field1');
+    game.monsters = [];
+    const near = createMonster(game, 'rabbit', game.pe.x + 6, game.pe.y);
+    const far = createMonster(game, 'rabbit', game.pe.x + 15, game.pe.y);
+    near.hp = near.maxHp = far.hp = far.maxHp = 1e9;
+    near.nextActAt = far.nextActAt = 1e12;
+    game.monsters.push(near, far);
+    game.player.mp = 1e6;
+    game.castSkillById(id);
+    assert.ok(game.cooldowns[id] > game.now, `${id} 시전`);
+    tick(game, 800);
+    assert.ok(near.hp < 1e9, `${id} 가까운 적 맞음`);
+    assert.equal(far.hp, 1e9, `${id} 화면 밖은 안 맞음`);
+  }
+});

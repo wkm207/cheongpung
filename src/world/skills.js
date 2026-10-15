@@ -23,6 +23,23 @@ function applyStatus(game, m, sk) {
 }
 
 const SLASH_DIRS = ['right', 'down', 'left', 'up'];
+const SCREEN_RADIUS = 9;
+
+/** 화면 전체 기술이 한 칸에 내리꽂히는 모습 */
+function screenBlow(game, sk, x, y, delay) {
+  const base = { x, y, delay, color: sk.color };
+  if (sk.visual === 'meteor') game.addEffect({ ...base, type: 'meteor', dur: 650 });
+  else if (sk.visual === 'quake') {
+    game.addEffect({ ...base, type: 'cracks', dur: 700 });
+    game.addEffect({ ...base, type: 'blast', look: 'quake', dur: 450, delay: delay + 120 });
+  } else if (sk.visual === 'blades') {
+    game.addEffect({ ...base, type: 'slash', dir: SLASH_DIRS[(x + y + 8) % 4], big: true, dur: 360 });
+    game.addEffect({ ...base, type: 'blast', look: 'spear', dur: 320, delay: delay + 80 });
+  } else {
+    game.addEffect({ ...base, type: 'pillar', dur: 700 });
+    game.addEffect({ ...base, type: 'blast', look: 'nova', dur: 400, delay: delay + 150 });
+  }
+}
 
 /** 연타 기술: 타격을 MULTI_HIT_GAP_MS 간격으로 하나씩 넣어 칼바람이 눈에 보이게 한다 */
 function multiHit(game, sk, targets, onHit) {
@@ -141,6 +158,22 @@ const CASTERS = {
       x: pe.x, y: pe.y, fromX: pe.x, fromY: pe.y, stepT: 1, moving: false,
       dir: pe.dir, remaining: sk.range, skillId: id, color: sk.color, visual: sk.visual,
     });
+    return true;
+  },
+
+  /** 화면 전체: 화면 안의 모든 적에게 hits번, 하늘에서 내리꽂힌다(적이 없어도 쓸 수 있다) */
+  screen(game, sk) {
+    const inView = () => game.monsters.filter((m) => chebyshev(m, game.pe) <= SCREEN_RADIUS);
+    game.screenFlash = { color: sk.color, start: game.now, dur: 1100 };
+    game.shake(700);
+    if (sk.healPct) game.restore({ hp: Math.round(game.stats().maxHp * sk.healPct) });
+    // 적이 없는 빈자리에도 떨어져 화면 가득 쏟아지는 느낌을 낸다
+    for (let i = 0; i < 14; i++) {
+      const x = game.pe.x + Math.round((Math.random() * 2 - 1) * SCREEN_RADIUS);
+      const y = game.pe.y + Math.round((Math.random() * 2 - 1) * (SCREEN_RADIUS - 2));
+      screenBlow(game, sk, x, y, Math.random() * 700);
+    }
+    multiHit(game, sk, inView, (m) => screenBlow(game, sk, m.x, m.y, 0));
     return true;
   },
 

@@ -90,6 +90,11 @@ export const SKILLS = {
   darkdance: { name: '흑풍검무', icon: '🌀', level: 34, tier: 2, mp: 40, cd: 9000, kind: 'aoe', radius: 2, power: 1.0, hits: 5, stat: 'atk', color: '#8e7cc3', desc: '검은 바람처럼 휘도는 칼춤으로 주변 2칸의 적을 다섯 번 벤다.' },
   gale: { name: '질풍보', icon: '💨', level: 10, mp: 10, cd: 4000, kind: 'leap', range: 5, desc: '바라보는 쪽으로 바람처럼 최대 5칸 도약한다(장애물을 넘어 빈 칸에 내려선다).' },
   karma: { name: '업화', icon: '🔥', level: 50, tier: 3, mp: 85, cd: 22000, kind: 'aoe', radius: 5, power: 4.6, burn: { power: 0.8, duration: 6000 }, stat: 'mag', magic: true, color: '#ff4500', visual: 'meteor', desc: '지옥의 불길을 불러 주변 5칸을 불태우고 오래 타는 화상을 남긴다.' },
+  // ── 화면 전체 궁극기(3차·Lv70): 화면 안의 모든 적에게 세 번 내리꽂힌다 ──
+  heavenquake: { name: '천지개벽', icon: '🌋', level: 70, tier: 3, mp: 150, cd: 40000, kind: 'screen', hits: 3, power: 2.6, stun: 1200, stat: 'atk', color: '#ffb347', visual: 'quake', desc: '하늘과 땅을 뒤엎어 화면 안의 모든 적을 세 번 내려치고 잠깐 기절시킨다.' },
+  bladerain: { name: '만검우', icon: '🗡️', level: 70, tier: 3, mp: 150, cd: 40000, kind: 'screen', hits: 3, power: 2.8, stat: 'atk', color: '#c9d6ff', visual: 'blades', desc: '하늘에서 만 자루 칼날이 비처럼 쏟아져 화면 안의 모든 적을 세 번 벤다.' },
+  starfall: { name: '유성낙하', icon: '☄️', level: 70, tier: 3, mp: 160, cd: 40000, kind: 'screen', hits: 3, power: 3.0, burn: { power: 0.8, duration: 6000 }, stat: 'mag', magic: true, color: '#ff6b2e', visual: 'meteor', desc: '유성우를 불러 화면 안의 모든 적에게 세 번 떨어뜨리고 불태운다.' },
+  heavenlight: { name: '천상광휘', icon: '🌞', level: 70, tier: 3, mp: 160, cd: 40000, kind: 'screen', hits: 3, power: 2.7, healPct: 0.25, stat: 'mag', magic: true, color: '#fff3a0', visual: 'holy', desc: '하늘빛 기둥으로 화면 안의 모든 적을 세 번 내려치고, 내 체력을 25% 되찾는다.' },
   revival: { name: '회생술', icon: '🕯️', level: 35, tier: 2, mp: 0, cd: 300000, kind: 'passive', desc: '[패시브] 쓰러지면 그 자리에서 체력 30%로 되살아난다(5분에 한 번, 마력 절반 소모).' },
 };
 
@@ -102,7 +107,7 @@ export const hotkeyLabel = (i) => (i < HOTKEY_SLOTS ? String((i + 1) % 10) : '')
 export const KIND_LABELS = {
   melee: '근접', projectile: '원거리', aoe: '주변 범위', zone: '지정 범위', line: '일직선', target: '단일', chain: '연쇄',
   dash: '돌진', blink: '순간이동', multiblink: '순간이동 연타', multitarget: '다중', buff: '강화', heal: '회복', hot: '지속 회복',
-  stealth: '은신', convert: '전환', guardian: '부활', sacrifice: '결사', leap: '도약', passive: '패시브',
+  stealth: '은신', convert: '전환', guardian: '부활', sacrifice: '결사', leap: '도약', passive: '패시브', screen: '화면 전체',
 };
 
 /** 배우는 데 드는 금전 (1레벨 기술은 무료) */
