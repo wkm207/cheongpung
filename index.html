@@ -86,6 +86,29 @@
     </section>
   </div>
 
+  <!-- 넓은 화면: 오른쪽에 늘 붙어 있는 상태창(캐릭터·장비 칸·탭) -->
+  <aside id="sidebar" hidden>
+    <div class="side-card">
+      <div class="side-who"><b id="side-name"></b><span id="side-title"></span></div>
+      <div class="doll">
+        <button class="doll-slot" data-doll="helmet"></button>
+        <button class="doll-slot" data-doll="weapon"></button>
+        <canvas id="doll-canvas" width="32" height="48"></canvas>
+        <button class="doll-slot" data-doll="armor"></button>
+        <button class="doll-slot" data-doll="necklace"></button>
+        <button class="doll-slot" data-doll="ring"></button>
+      </div>
+    </div>
+    <nav class="side-tabs">
+      <button data-side="character">상태<kbd>C</kbd></button>
+      <button data-side="inventory">가방<kbd>I</kbd></button>
+      <button data-side="spells">마법<kbd>+</kbd></button>
+      <button data-side="skills">기술<kbd>K</kbd></button>
+      <button data-side="quests">퀘스트<kbd>L</kbd></button>
+    </nav>
+    <div id="side-layer"><div id="side-panel" class="panel side"></div></div>
+  </aside>
+
   <div id="panel-layer" hidden><div id="panel" class="panel"></div></div>
   <div id="title" hidden></div>
 

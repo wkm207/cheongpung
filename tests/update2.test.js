@@ -71,7 +71,8 @@ test('배우지 않은 기술은 쓸 수 없고 배운 기술만 슬롯에 넣�
   game.castSkillById('chain');
   assert.equal(game.player.mp, mp);
   const saved = validatePlayer({ ...game.toSave(), skillSlots: ['fire', 'chain', 'nope', null, null] });
-  assert.deepEqual(saved.skillSlots, ['fire', ...Array(19).fill(null)]);
+  assert.equal(saved.skillSlots[0], 'fire');
+  assert.ok(saved.learned.every((id) => saved.skillSlots.includes(id)), '배운 마법은 모두 칸에 들어간다');
 });
 
 test('승급: 조건을 채우면 차수가 오르고 능력치와 기념 무기를 받는다', () => {

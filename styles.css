@@ -1,6 +1,7 @@
 /* 청풍록 — 고전 온라인 RPG풍 화면(오리지널 디자인)
    아래쪽 통합 조작판(상태·대화창·단축키·메뉴), 위쪽 지역 표시줄과 미니맵, 한지 느낌의 창 */
 :root {
+  --side-w: 300px;
   --wood: #2a1b12;
   --wood-2: #3d2819;
   --wood-hi: #6b4a2b;
@@ -614,3 +615,99 @@ summary { padding: 6px 0; cursor: pointer; color: var(--red); font-weight: 700; 
   #minimap { width: 104px; height: 78px; }
   #dpad { transform: scale(0.9); transform-origin: left bottom; }
 }
+
+/* ── 오른쪽 상태창(넓은 화면) ───────── */
+#sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--side-w);
+  padding: calc(var(--safe-t) + 6px) calc(var(--safe-r) + 6px) calc(var(--safe-b) + 6px) 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 9px),
+    linear-gradient(90deg, #2a1b12, #3d2819);
+  border-left: 3px solid var(--gold-dim);
+  box-shadow: inset 1px 0 0 #b8945a, -3px 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 3;
+}
+body.docked #console { right: var(--side-w); }
+body.docked #topbar { right: calc(var(--side-w) + 6px); }
+body.docked .attack-btn { right: calc(var(--side-w) + 16px); }
+.side-card {
+  background: linear-gradient(#f1e6c8, #e1cf9f);
+  border: 2px solid var(--wood);
+  box-shadow: inset 0 0 0 1px var(--gold-dim);
+  border-radius: 4px;
+  padding: 6px;
+  color: var(--ink);
+}
+.side-who { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; padding: 0 2px 4px; border-bottom: 1px solid #c9b07a; }
+.side-who span { font-size: 12px; color: var(--red); }
+.doll {
+  display: grid;
+  grid-template-columns: 1fr 96px 1fr;
+  grid-template-rows: repeat(3, auto);
+  gap: 4px;
+  align-items: center;
+  justify-items: center;
+  padding-top: 6px;
+}
+#doll-canvas {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  width: 96px;
+  height: 144px;
+  image-rendering: pixelated;
+  background: radial-gradient(ellipse at 50% 85%, rgba(0, 0, 0, 0.18), transparent 60%);
+}
+.doll-slot {
+  position: relative;
+  width: 72px;
+  min-height: 44px;
+  padding: 2px;
+  font-size: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+.doll-slot span { font-size: 9px; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ink-soft); }
+.doll-slot.empty { opacity: 0.55; }
+.doll-slot .plus { position: absolute; top: 1px; right: 3px; font-size: 9px; color: var(--green); font-weight: 800; }
+.doll-slot[data-doll="helmet"] { grid-column: 1; grid-row: 1; }
+.doll-slot[data-doll="weapon"] { grid-column: 1; grid-row: 2; }
+.doll-slot[data-doll="armor"] { grid-column: 1; grid-row: 3; }
+.doll-slot[data-doll="necklace"] { grid-column: 3; grid-row: 1; }
+.doll-slot[data-doll="ring"] { grid-column: 3; grid-row: 2; }
+.side-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+.side-tabs button {
+  padding: 5px 0;
+  font-size: 11px;
+  color: #f5e6c4;
+  background: linear-gradient(var(--wood-hi), var(--wood-2));
+  border: 1px solid var(--gold-dim);
+  box-shadow: inset 1px 1px 0 #8a6a3a;
+  position: relative;
+}
+.side-tabs button.on { color: var(--ink); background: linear-gradient(#f3e7c6, #dcc795); }
+.side-tabs kbd { position: absolute; top: 0; right: 0; font-size: 7px; padding: 1px 2px; margin: 0; }
+#side-layer { flex: 1; min-height: 0; display: flex; }
+.panel.side { width: 100%; max-height: none; flex: 1; }
+.panel.side header { padding: 4px 8px; }
+.panel.side header h2 { font-size: 13px; }
+.panel.side header .close, .panel.side header kbd { display: none; }
+.panel.side .body { padding: 6px; font-size: 12px; }
+.panel.side .list-row { padding: 5px 3px; gap: 5px; }
+.panel.side .list-row .line1 b { font-size: 12px; }
+.panel.side .list-row .line2 { font-size: 11px; }
+.panel.side .detail { margin-left: 8px; }
+.panel.side .equip-row { display: none; }
+.panel.side .stat-grid { grid-template-columns: 1fr 1fr; font-size: 11px; }
+.panel.side .tag { font-size: 16px; min-width: 22px; }
+.panel.side .price { display: none; }
+.panel.side .cmp { grid-template-columns: 1fr; }
+.alloc-row button { padding: 3px 7px; font-size: 11px; }

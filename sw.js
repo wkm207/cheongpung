@@ -47,6 +47,7 @@ const ASSETS = [
   './src/ui/panels.js',
   './src/ui/settings.js',
   './src/ui/sfx.js',
+  './src/ui/sidebar.js',
   './src/ui/title.js',
   './src/ui/views.js',
   './src/world/dirs.js',

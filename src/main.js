@@ -5,6 +5,7 @@ import { Hud } from './ui/hud.js';
 import { Panels } from './ui/panels.js';
 import { Title } from './ui/title.js';
 import { Minimap } from './ui/minimap.js';
+import { Sidebar, SIDE_TABS } from './ui/sidebar.js';
 import { $, $$ } from './ui/dom.js';
 import { getSettings, updateSettings } from './ui/settings.js';
 import { playSfx, unlockAudio } from './ui/sfx.js';
@@ -100,6 +101,17 @@ const panels = new Panels($('#panel-layer'), $('#panel'), {
   },
 });
 
+const sidebar = new Sidebar({
+  getGame: () => game,
+  getSettings,
+  onSave: saveNow,
+  onLoadPlayer: (player) => startGame(player, slot),
+  onTitle: () => backToTitle(),
+  onClick: () => playSfx('click'),
+  onCast: (id) => game?.castSkillById(id),
+  onSetting: () => {},
+});
+
 const title = new Title($('#title'), {
   listSaves: () => listSaves(),
   isCorrupt: (i) => isCorrupt(i),
@@ -124,11 +136,7 @@ const input = new Input({
       const t = renderer.screenToTile(x, y);
       game.tapTile(t.x, t.y);
     },
-    openPanel: (kind) => {
-      if (!game) return;
-      if (panels.kind === kind) panels.close();
-      else panels.open(kind);
-    },
+    openPanel: (kind) => openPanel(kind),
     closePanel: () => panels.close(),
     panelAdvance: () => panels.advanceKey(),
     isPaused: () => !game || panels.isOpen,
@@ -139,25 +147,50 @@ const input = new Input({
     },
     toggleMinimap,
     toggleRide: () => game?.toggleRide(),
-    spellLetter: (letter) => panels.kind === 'spells' && panels.spellLetter('abcdefghijklmnopqrst'.indexOf(letter)),
+    spellLetter: (letter) => {
+      const target = panels.kind === 'spells' ? panels : sidebar.active && sidebar.panels.kind === 'spells' ? sidebar.panels : null;
+      return !!target && target.spellLetter('abcdefghijklmnopqrst'.indexOf(letter));
+    },
   },
 });
 
+/** 넓은 화면이면 상태·가방·마법·기술·퀘스트는 오른쪽 상태창 탭으로, 나머지는 가운데 창으로 */
+function openPanel(kind) {
+  if (!game) return;
+  if (sidebar.active && SIDE_TABS.has(kind)) {
+    panels.close();
+    sidebar.open(kind);
+    return;
+  }
+  if (panels.kind === kind) panels.close();
+  else panels.open(kind);
+}
+
+function updateLayout() {
+  sidebar.setActive(sidebar.fits(), game);
+  updateInsets();
+}
+
 function onGameEvent(type, data) {
   if (type === 'talk') panels.open('dialog', data);
-  else if (type === 'openPanel') panels.open(data);
+  else if (type === 'openPanel') openPanel(data);
   else if (type === 'sfx') playSfx(data);
-  else if (type === 'inventory' || type === 'quest') panels.refresh();
+  else if (type === 'inventory' || type === 'quest' || type === 'levelup') {
+    panels.refresh();
+    sidebar.refresh();
+  }
   else if (type === 'levelup' || type === 'map') saveNow();
 }
 
 function setPlaying(playing) {
   for (const id of ['#topbar', '#controls', '#console']) $(id).hidden = !playing;
+  sidebar.setActive(playing && sidebar.fits(), playing ? game : null);
   updateInsets();
 }
 
 function updateInsets() {
   renderer.bottomInset = $('#console').hidden ? 0 : $('#console').offsetHeight;
+  renderer.rightInset = sidebar.active ? $('#sidebar').offsetWidth : 0;
 }
 
 function startGame(player, i) {
@@ -194,7 +227,7 @@ for (const btn of $$('[data-quick]')) {
 for (const btn of $$('[data-open]')) {
   btn.addEventListener('click', () => {
     playSfx('click');
-    panels.open(btn.dataset.open);
+    openPanel(btn.dataset.open);
   });
 }
 
@@ -212,6 +245,7 @@ function frame(ts) {
     }
     hud.update(game, ts);
     minimap.update(game, ts);
+    sidebar.update(game);
     if (ts - lastSaveAt > AUTOSAVE_MS) {
       saveNow();
       lastSaveAt = ts;
@@ -230,7 +264,7 @@ function musicFor(g) {
 
 window.addEventListener('resize', () => {
   renderer.resize();
-  updateInsets();
+  updateLayout();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'hidden') return;

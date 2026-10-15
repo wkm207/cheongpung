@@ -1,5 +1,5 @@
 export const TILE = 32;
-export const VIEW_TILES = 12;            // 화면의 짧은 변에 보이는 타일 수
+export const VIEW_TILES = 15;            // 화면의 짧은 변에 보이는 타일 수
 export const PLAYER_STEP_MS = 170;
 export const INVENTORY_SIZE = 24;
 export const STACK_MAX = 99;

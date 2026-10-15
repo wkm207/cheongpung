@@ -146,7 +146,7 @@ function skillRow(game, id) {
   if (learned) {
     const at = p.skillSlots.indexOf(id);
     const pos = at >= 0 ? `<span class="letter">${SPELL_LETTERS[at]}</span>${hotkeyLabel(at) ? `<small class="muted">${hotkeyLabel(at)}번 키</small>` : ''}` : '';
-    right = `${pos}<button data-act="castNow" data-id="${id}">사용</button>`;
+    right = `${pos}${at >= 0 ? `<button data-act="moveSpell" data-i="${at}">칸 바꾸기</button>` : ''}<button data-act="castNow" data-id="${id}">사용</button>`;
   } else if (check.ok) {
     const cost = learnCost(sk);
     right = `<button class="green" data-act="learn" data-id="${id}">배우기${cost ? ` ${cost.toLocaleString()}전` : ''}</button>`;
@@ -215,10 +215,21 @@ export function characterView(game) {
     const body = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b>${plus} <small class="muted">${esc(itemStatText(id))}</small>` : '<span class="muted">없음</span>';
     return `<div class="list-row"><span class="badge eq">${SLOT_LABELS[slot]}</span><span class="grow">${body}</span></div>`;
   }).join('');
+  const a = p.alloc ?? {};
+  const pts = p.statPoints ?? 0;
+  const statRow = (key, label, effect) => `<div class="list-row alloc-row"><b class="grow">${label} <span class="good">${a[key] ?? 0}</span> <small class="muted">${effect}</small></b>
+    <button data-act="alloc" data-stat="${key}" data-n="1" ${pts ? '' : 'disabled'}>+1</button><button data-act="alloc" data-stat="${key}" data-n="5" ${pts >= 5 ? '' : 'disabled'}>+5</button></div>`;
+  const used = Object.values(a).reduce((x, y) => x + y, 0);
   return `${header('정보', 'character')}
     <div class="body">
       <div class="char-head"><b>${esc(p.name)}</b> · ${game.title()} · Lv.${p.level}</div>
       <div class="stat-grid">${rows}</div>
+      <h3>능력치 분배 <small class="muted">남은 점수 <b class="${pts ? 'warn' : ''}">${pts}</b> · 레벨업마다 3점</small></h3>
+      ${statRow('str', '힘', '공격 +2')}
+      ${statRow('dex', '민첩', '치명 +0.4% · 방어 +1')}
+      ${statRow('int', '지력', '술력 +2 · 마력 +4')}
+      ${statRow('con', '체력', '체력 +14 · 방어 +0.5')}
+      ${used ? `<div class="row" style="justify-content:flex-end;margin-top:4px"><button data-act="resetStats">능력치 초기화 (${game.resetStatsCost().toLocaleString()}전)</button></div>` : ''}
       <h3>착용 장비 <small class="muted">(바꾸려면 가방에서)</small></h3>${equip}
     </div>`;
 }

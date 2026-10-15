@@ -127,7 +127,7 @@ function castArms(rows, dir) {
 
 export function charPalette(look, trim) {
   return {
-    k: '#1a1110', h: look.hair, s: look.skin ?? '#f5cba7', e: '#1a1110', m: '#c0715a', y: '#f4d03f',
+    k: '#3a2418', h: look.hair, s: look.skin ?? '#f5cba7', e: '#1a1110', m: '#c0715a', y: '#f4d03f',
     b: look.body, d: trim?.d ?? look.dark, w: trim?.w ?? '#ecf0f1', l: '#3e2723', f: '#1b1b1b',
   };
 }

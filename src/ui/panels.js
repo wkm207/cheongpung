@@ -53,11 +53,15 @@ export class Panels {
     this.backdropDown = false;
     this.panelDown = false;
     this.layer.hidden = false;
-    this.hooks.onOpen();
+    this.hooks.onOpen?.();
     this.render();
   }
 
   close() {
+    if (this.docked) {
+      this.open('character');
+      return;
+    }
     this.kind = null;
     this.layer.hidden = true;
   }
@@ -148,6 +152,8 @@ export class Panels {
       case 'unequip': game.unequip(el.dataset.slot); s.selEquip = null; break;
       case 'enhance': game.enhance(el.dataset.slot); break;
       case 'rest': game.rest(); break;
+      case 'alloc': game.allocate(el.dataset.stat, n); break;
+      case 'resetStats': game.resetStats(); break;
       case 'claimDragon': game.claimDragonWeapon(); break;
       case 'awaken': game.awaken(); break;
       case 'voyage': if (game.voyage(s.data.travel[i])) { this.close(); return; } break;
@@ -155,6 +161,7 @@ export class Panels {
       case 'slot': game.assignSkill(i, el.dataset.id); break;
       case 'spellPick': this.spellLetter(i); return;
       case 'spellMove': this.moveSpell(i); return;
+      case 'moveSpell': this.open('spells'); this.state.pickedLetter = i; this.render(); return;
       case 'castNow': this.close(); this.hooks.onCast(el.dataset.id); return;
       case 'tab': s.tab = el.dataset.tab; break;
       case 'buy': game.buy(el.dataset.id, n); break;

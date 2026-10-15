@@ -43,10 +43,13 @@ export function sanitizeLearned(raw, cls, level, tier) {
 export function sanitizeSlots(raw, learned) {
   if (!Array.isArray(raw)) return defaultSlots(learned);
   const seen = new Set();
-  return Array.from({ length: SKILL_SLOTS }, (_, i) => {
+  let slots = Array.from({ length: SKILL_SLOTS }, (_, i) => {
     const id = raw[i];
     if (typeof id !== 'string' || !learned.includes(id) || seen.has(id)) return null;
     seen.add(id);
     return id;
   });
+  // 배웠는데 칸이 없는 마법은 빈 칸에 차례로 넣는다
+  for (const id of learned) slots = slotNewSkill(slots, id);
+  return slots;
 }

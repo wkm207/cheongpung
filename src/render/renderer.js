@@ -94,6 +94,7 @@ export class Renderer {
     this.camY = 0;
     this.lastTs = 0;
     this.bottomInset = 0; // 아래 상태 막대에 가려지는 높이(css px)
+    this.rightInset = 0; // 오른쪽 상태창에 가려지는 폭(css px)
     this.ambient = new Ambient();
     this.resize();
   }
@@ -138,7 +139,8 @@ export class Renderer {
     // 아래 상태 막대를 뺀 영역의 가운데에 캐릭터가 오도록, 맵 끝도 막대 위로 보이게 한다
     const inset = this.bottomInset / this.scale;
     const visibleH = viewH - inset;
-    let camX = mapW <= viewW ? (mapW - viewW) / 2 : clamp(pp.x * TILE + TILE / 2 - viewW / 2, 0, mapW - viewW);
+    const visibleW = viewW - this.rightInset / this.scale;
+    let camX = mapW <= visibleW ? (mapW - visibleW) / 2 : clamp(pp.x * TILE + TILE / 2 - visibleW / 2, 0, mapW - visibleW);
     let camY = mapH <= visibleH ? (mapH - visibleH) / 2 : clamp(pp.y * TILE + TILE / 2 - visibleH / 2, 0, mapH - visibleH);
     if (game.shakeUntil > game.now) {
       camX += (Math.random() - 0.5) * 6;

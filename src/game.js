@@ -1050,6 +1050,7 @@ export class Game {
     for (const id of ids) slots = slotNewSkill(slots, id);
     this.setPlayer({ learned: [...this.player.learned, ...ids], skillSlots: slots });
     this.emit('inventory');
+    this.emit('inventory');
     return ids.length;
   }
 
