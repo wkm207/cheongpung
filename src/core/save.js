@@ -1,6 +1,6 @@
 import { SAVE_KEY, INVENTORY_SIZE, STACK_MAX, MAX_LEVEL, RESPAWN_POINT } from '../config.js';
 import { CLASSES } from '../data/classes.js';
-import { ITEMS, EQUIP_SLOTS, isStackable } from '../data/items.js';
+import { ITEMS, EQUIP_SLOTS, isStackable, slotType } from '../data/items.js';
 import { MAP_DEFS } from '../data/maps.js';
 import { QUEST_CHAINS, newQuestState } from '../data/quests.js';
 import { sanitizeSlots, sanitizeLearned } from './skillslots.js';
@@ -43,7 +43,7 @@ export function validatePlayer(raw) {
   const equip = {};
   for (const slot of EQUIP_SLOTS) {
     const id = raw.equip?.[slot];
-    equip[slot] = has(ITEMS, id) && ITEMS[id].type === slot ? id : null;
+    equip[slot] = has(ITEMS, id) && ITEMS[id].type === slotType(slot) ? id : null;
   }
 
   const onValidMap = has(MAP_DEFS, raw.mapId) && isInt(raw.x) && isInt(raw.y);

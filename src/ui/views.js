@@ -37,8 +37,8 @@ export function compareHtml(rows, emptyText = '능력치 변화 없음') {
 const shortCompare = (rows) => rows.slice(0, 3).map((r) => `<span class="${r.diff > 0 ? 'good' : 'warn'}">${r.label}${signed(r)}</span>`).join(' ');
 
 // ── 가방 ──────────────────────────────────────────────
-const INV_GROUPS = [['consume', '🍙 소모품'], ['weapon', '⚔️ 무기'], ['helmet', '🎩 투구'], ['armor', '👘 옷'], ['necklace', '📿 목걸이'], ['ring', '💍 반지'], ['loot', '📦 기타']];
-const INV_FILTER = { consume: ['consume'], gear: ['weapon', 'helmet', 'armor', 'necklace', 'ring'], loot: ['loot'] };
+const INV_GROUPS = [['consume', '🍙 소모품'], ['weapon', '⚔️ 무기'], ['helmet', '🎩 투구'], ['armor', '👘 옷'], ['shield', '🛡️ 방패'], ['necklace', '📿 목걸이'], ['ring', '💍 반지'], ['aux', '🧧 보조'], ['loot', '📦 기타']];
+const INV_FILTER = { consume: ['consume'], gear: ['weapon', 'helmet', 'armor', 'shield', 'necklace', 'ring', 'aux'], loot: ['loot'] };
 const INV_FILTER_LABELS = { all: '전체', consume: '소모품', gear: '장비', loot: '기타' };
 export function inventoryView(game, state) {
   const p = game.player;
@@ -512,7 +512,7 @@ export function gmView(game, state) {
   const maps = Object.entries(MAP_DEFS).map(([id, m]) => btn(`/이동 ${id}`, m.name, id === game.mapId ? 'on' : '')).join('');
   const mobs = Object.entries(MONSTERS).map(([id, m]) => btn(`/소환 ${id} 1`, `${m.name} Lv${m.level}${m.boss ? '(보스)' : ''}`)).join('');
   const classes = Object.entries(CLASSES).map(([id, c]) => btn(`/직업 ${id}`, c.name, id === p.cls ? 'on' : '')).join('');
-  const groups = [['consume', '소모품'], ['weapon', '무기'], ['armor', '갑옷'], ['helmet', '투구'], ['necklace', '목걸이'], ['ring', '반지'], ['loot', '전리품']];
+  const groups = [['consume', '소모품'], ['weapon', '무기'], ['armor', '갑옷'], ['helmet', '투구'], ['shield', '방패'], ['necklace', '목걸이'], ['ring', '반지'], ['aux', '보조'], ['loot', '전리품']];
   const itemRow = ([id, it]) => {
     const ten = isStackable(id) ? btn(`/아이템 ${id} 10`, '+10') : '';
     return `<div class="list-row"><span class="tag">${it.icon}</span><span class="grow">${esc(it.name)} <small class="muted">${esc(itemStatText(id))}</small></span>${btn(`/아이템 ${id} 1`, '+1')}${ten}</div>`;

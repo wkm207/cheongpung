@@ -1,4 +1,4 @@
-import { ITEMS, isEquipment, WEAPON_CLASS } from '../data/items.js';
+import { ITEMS, isEquipment, WEAPON_CLASS, slotsFor } from '../data/items.js';
 import { CLASSES } from '../data/classes.js';
 import { computeStats } from './stats.js';
 import { addItem, removeAt } from './inventory.js';
@@ -42,9 +42,20 @@ export function withEquip(player, slot, id) {
   return { ...player, equip: { ...player.equip, [slot]: id } };
 }
 
+/**
+ * id를 낄 칸: 같은 종류 칸(반지·보조는 두 칸) 가운데 빈 칸 먼저, 다 찼으면 바꿨을 때 가장 좋아지는 칸
+ */
+export function targetSlot(player, id) {
+  const slots = slotsFor(ITEMS[id].type);
+  const empty = slots.find((s) => !player.equip[s]);
+  if (empty || slots.length === 1) return empty ?? slots[0];
+  const gain = (s) => score(player.cls, computeStats(withEquip(player, s, id)));
+  return slots.reduce((best, s) => (gain(s) > gain(best) ? s : best));
+}
+
 /** id를 끼면 능력치가 어떻게 바뀌는지 */
 export function compareEquip(player, id) {
-  const slot = ITEMS[id].type;
+  const slot = targetSlot(player, id);
   return {
     slot,
     current: player.equip[slot],
@@ -66,8 +77,7 @@ function score(cls, s) {
 /** 지금 장비 대비 얼마나 좋아지는지(0 이하면 좋아지지 않음). 착용할 수 없으면 0. */
 export function upgradeGain(player, id) {
   if (!canEquip(player, id).ok) return 0;
-  const slot = ITEMS[id].type;
-  if (player.equip[slot] === id) return 0;
+  const slot = targetSlot(player, id);
   return score(player.cls, computeStats(withEquip(player, slot, id))) - score(player.cls, computeStats(player));
 }
 
@@ -76,7 +86,7 @@ export const isUpgrade = (player, id) => upgradeGain(player, id) > 1e-6;
 /** 가방 index의 장비를 낀 새 플레이어(벗은 장비는 가방으로) */
 export function equipFromInventory(player, index) {
   const slotItem = player.inv[index];
-  const slot = ITEMS[slotItem.id].type;
+  const slot = targetSlot(player, slotItem.id);
   const prev = player.equip[slot];
   let inv = removeAt(player.inv, index);
   if (prev) inv = addItem(inv, prev, 1).inv;
@@ -87,7 +97,7 @@ export function equipFromInventory(player, index) {
 export function autoEquip(player) {
   let p = player;
   const equipped = [];
-  for (let guard = 0; guard < 12; guard++) {
+  for (let guard = 0; guard < 20; guard++) {
     let best = null;
     p.inv.forEach((s, i) => {
       const gain = upgradeGain(p, s.id);

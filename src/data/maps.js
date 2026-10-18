@@ -99,7 +99,8 @@ export const MAP_DEFS = {
       {
         id: 'peddler', name: '방물장수 꽃분이', x: 23, y: 12, look: 'peddler',
         lines: ['어머, 손님! 고운 장신구 구경하고 가세요~', '목걸이 하나, 가락지 하나면 몸도 마음도 든든하답니다.'],
-        shop: ['beadNecklace', 'amberNecklace', 'pearlNecklace', 'copperRing', 'jadeRing', 'silverRing'],
+        shop: ['beadNecklace', 'boneNecklace', 'amberNecklace', 'pearlNecklace', 'copperRing', 'ironRing', 'jadeRing', 'silverRing',
+          'luckyPouch', 'paperCharm', 'gourdBottle', 'spiritBell', 'incensePouch'],
       },
       {
         id: 'forger', name: '명장 해림', x: 12, y: 13, look: 'forger', forge: true,
@@ -107,7 +108,8 @@ export const MAP_DEFS = {
         shop: ['highSword55', 'highDagger55', 'highStaff55', 'highFan55', 'highArmor55', 'highHelm55', 'highNeck55', 'highRing55',
           'highSword65', 'highDagger65', 'highStaff65', 'highFan65', 'highArmor65', 'highHelm65', 'highNeck65', 'highRing65',
           'highSword75', 'highDagger75', 'highStaff75', 'highFan75', 'highArmor75', 'highHelm75', 'highNeck75', 'highRing75',
-          'highSword85', 'highDagger85', 'highStaff85', 'highFan85', 'highArmor85', 'highHelm85', 'highNeck85', 'highRing85'],
+          'highSword85', 'highDagger85', 'highStaff85', 'highFan85', 'highArmor85', 'highHelm85', 'highNeck85', 'highRing85',
+          'highShield55', 'highAux55', 'highShield65', 'highAux65', 'highShield75', 'highAux75', 'highShield85', 'highAux85'],
       },
       {
         id: 'master', name: '사범 청운', x: 22, y: 17, look: 'master', advance: true,
@@ -139,7 +141,9 @@ export const MAP_DEFS = {
         {
           id: 'smith', name: '대장장이 무쇠', x: 6, y: 3, look: 'smith',
           lines: ['어서 오게! 쇠는 두드릴수록 단단해지는 법이지.', '좋은 무기가 있어야 사냥도 수월하다네. 하나 골라 보게.'],
-          shop: ['woodSword', 'ironSword', 'steelSword', 'dagger', 'ironDagger', 'nightBlade', 'steelDagger', 'blackCloudBlade', 'woodStaff', 'jadeStaff', 'spiritStaff', 'paperFan', 'craneFan', 'cloudFan'],
+          shop: ['woodSword', 'bronzeSword', 'ironSword', 'steelSword', 'hwando', 'dagger', 'boneDagger', 'ironDagger', 'nightBlade', 'steelDagger', 'poisonDagger', 'blackCloudBlade',
+            'woodStaff', 'pineStaff', 'jadeStaff', 'spiritStaff', 'skullStaff', 'paperFan', 'bambooFan', 'craneFan', 'cloudFan', 'peacockFan',
+            'woodShield', 'leatherShield', 'ironShield', 'mirrorShield'],
         },
     ],
     spawns: [],
@@ -154,7 +158,8 @@ export const MAP_DEFS = {
         {
           id: 'tailor', name: '포목점 비단', x: 6, y: 3, look: 'tailor',
           lines: ['곱게 지은 옷 한 벌이 목숨을 살리기도 한답니다.', '갑옷과 투구를 보고 가세요.'],
-          shop: ['cottonRobe', 'leatherArmor', 'blueRobe', 'pinkJeogori', 'chainArmor', 'blackPlate', 'silverPlate', 'ironArmor', 'dragonRobe', 'phoenixDress', 'strawHat', 'leatherCap', 'ironHelm'],
+          shop: ['cottonRobe', 'leatherArmor', 'hunterVest', 'blueRobe', 'pinkJeogori', 'chainArmor', 'monkRobe', 'scaleArmor', 'blackPlate', 'silverPlate', 'ironArmor', 'dragonRobe', 'phoenixDress',
+            'strawHat', 'headband', 'leatherCap', 'paeraengi', 'ironHelm', 'jeonrip', 'heukrip'],
         },
     ],
     spawns: [],

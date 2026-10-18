@@ -1,4 +1,6 @@
-// type: consume | weapon | armor | helmet | necklace | ring | loot
+import { MORE_GEAR } from './gear.js';
+
+// type: consume | weapon | armor | helmet | shield | necklace | ring | aux | loot
 // tint: 무기 날/보주 색, trim: 갑옷을 입었을 때 옷 테두리 색, gem: 목걸이 구슬 색 (캐릭터 그림에 반영)
 export const ITEMS = {
   herb: { name: '약초', icon: '🌿', type: 'consume', restore: { hp: 50 }, price: 12, desc: '체력을 50 회복한다.' },
@@ -115,6 +117,8 @@ export const ITEMS = {
   foxBead: { name: '여우구슬', icon: '🔮', type: 'loot', price: 3000, desc: '구미호가 품고 있던 신비한 구슬.' },
 };
 
+Object.assign(ITEMS, MORE_GEAR);
+
 // ── 3차 이후 고급 장비(Lv55·65·75·85): 이름만 정하고 능력치는 Lv45 장비를 기준으로 키운다 ──
 const HIGH_TIERS = [
   { level: 55, mult: 1.35, price: 300000, tint: '#ff7b6b' },
@@ -131,6 +135,8 @@ const HIGH_SETS = [
   { base: 'phoenixCrown', key: 'Helm', icon: '👑', names: ['금관', '현무관', '일월관', '천신관'] },
   { base: 'yeouiNorigae', key: 'Neck', icon: '📿', names: ['산호 노리개', '비취 노리개', '일월 노리개', '천신 노리개'] },
   { base: 'heavenRing', key: 'Ring', icon: '💍', names: ['산호 가락지', '비취 가락지', '일월 가락지', '천신 가락지'] },
+  { base: 'blackTortoiseShield', key: 'Shield', icon: '🛡️', names: ['적룡 방패', '태산 방패', '일월 방패', '천신 방패'] },
+  { base: 'foxTailCharm', key: 'Aux', icon: '🧿', names: ['산호 패옥', '비취 패옥', '일월 패옥', '천신 패옥'] },
 ];
 const STAT_FIELDS = ['atk', 'def', 'mag', 'hp', 'mp'];
 for (const set of HIGH_SETS) {
@@ -175,9 +181,18 @@ for (const [id, name, key, opts] of MYTHIC) {
   ITEMS[id] = item;
 }
 
-export const EQUIP_SLOTS = ['weapon', 'helmet', 'armor', 'necklace', 'ring'];
-export const SLOT_LABELS = { weapon: '무기', helmet: '투구', armor: '갑옷', necklace: '목걸이', ring: '반지' };
-export const SLOT_ICONS = { weapon: '⚔️', helmet: '🎩', armor: '👕', necklace: '📿', ring: '💍' };
+// 장비 칸. 반지·보조는 두 칸이라 칸 이름(ring2·aux2)과 아이템 종류(ring·aux)가 다르다
+export const EQUIP_SLOTS = ['weapon', 'helmet', 'armor', 'shield', 'necklace', 'ring', 'ring2', 'aux', 'aux2'];
+const SLOT_TYPE = { ring2: 'ring', aux2: 'aux' };
+/** 칸에 낄 수 있는 아이템 종류 */
+export const slotType = (slot) => SLOT_TYPE[slot] ?? slot;
+/** 이 종류의 아이템을 낄 수 있는 칸들 */
+export const slotsFor = (type) => EQUIP_SLOTS.filter((s) => slotType(s) === type);
+export const SLOT_LABELS = {
+  weapon: '무기', helmet: '투구', armor: '갑옷', shield: '방패', necklace: '목걸이',
+  ring: '오른손 반지', ring2: '왼손 반지', aux: '보조 1', aux2: '보조 2',
+};
+export const SLOT_ICONS = { weapon: '⚔️', helmet: '🎩', armor: '👕', shield: '🛡️', necklace: '📿', ring: '💍', ring2: '💍', aux: '🧧', aux2: '🧧' };
 export const STAT_LABELS = {
   atk: '공격', def: '방어', mag: '술력', hp: '체력', mp: '마력', crit: '치명',
   magPct: '술력증가', dmgPct: '피해증가', pen: '방어무시', mcrit: '마법치명', cdr: '쿨감',
@@ -187,7 +202,7 @@ export const PCT_STATS = ['crit', 'magPct', 'dmgPct', 'pen', 'mcrit', 'cdr'];
 export const WEAPON_CLASS = { sword: '전사', dagger: '도적', staff: '주술사', fan: '도사' };
 
 export const isStackable = (id) => ['consume', 'loot'].includes(ITEMS[id]?.type);
-export const isEquipment = (id) => EQUIP_SLOTS.includes(ITEMS[id]?.type);
+export const isEquipment = (id) => slotsFor(ITEMS[id]?.type).length > 0;
 export const sellPrice = (id) => Math.floor((ITEMS[id]?.price ?? 0) / 2);
 
 const statValue = (key, v) => (PCT_STATS.includes(key) ? `${Math.round(v * 100)}%` : v);

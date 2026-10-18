@@ -38,7 +38,7 @@ export function createPlayer(name, cls, gender = 'm') {
   const player = {
     name, cls, gender, level: 1, exp: 0, gold: 100, hp: 1, mp: 0, inv,
     statPoints: 0, alloc: { str: 0, dex: 0, int: 0, con: 0 },
-    equip: { weapon: c.startWeapon, helmet: null, armor: 'cottonRobe', necklace: null, ring: null },
+    equip: { weapon: c.startWeapon, helmet: null, armor: 'cottonRobe', shield: null, necklace: null, ring: null, ring2: null, aux: null, aux2: null },
     mapId: RESPAWN_POINT.mapId, x: RESPAWN_POINT.x, y: RESPAWN_POINT.y, dir: 'down',
     playMs: 0, gm: { god: false, speed: 1 },
     quests: newQuestState(),

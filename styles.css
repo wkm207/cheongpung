@@ -670,15 +670,15 @@ body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 .doll {
   display: grid;
   grid-template-columns: 1fr 96px 1fr;
-  grid-template-rows: repeat(3, auto);
-  gap: 4px;
+  grid-template-rows: repeat(5, auto);
+  gap: 3px;
   align-items: center;
   justify-items: center;
   padding-top: 6px;
 }
 #doll-canvas {
   grid-column: 2;
-  grid-row: 1 / span 3;
+  grid-row: 1 / span 5;
   width: 96px;
   height: 144px;
   image-rendering: auto;
@@ -687,9 +687,9 @@ body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 .doll-slot {
   position: relative;
   width: 72px;
-  min-height: 44px;
-  padding: 2px;
-  font-size: 18px;
+  min-height: 34px;
+  padding: 1px 2px;
+  font-size: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -702,8 +702,12 @@ body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 .doll-slot[data-doll="helmet"] { grid-column: 1; grid-row: 1; }
 .doll-slot[data-doll="weapon"] { grid-column: 1; grid-row: 2; }
 .doll-slot[data-doll="armor"] { grid-column: 1; grid-row: 3; }
+.doll-slot[data-doll="shield"] { grid-column: 1; grid-row: 4; }
+.doll-slot[data-doll="aux"] { grid-column: 1; grid-row: 5; }
 .doll-slot[data-doll="necklace"] { grid-column: 3; grid-row: 1; }
 .doll-slot[data-doll="ring"] { grid-column: 3; grid-row: 2; }
+.doll-slot[data-doll="ring2"] { grid-column: 3; grid-row: 3; }
+.doll-slot[data-doll="aux2"] { grid-column: 3; grid-row: 5; }
 .side-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
 .side-tabs button {
   padding: 5px 0;
