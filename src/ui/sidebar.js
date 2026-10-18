@@ -3,6 +3,7 @@
 import { $, $$, esc } from './dom.js';
 import { ITEMS, SLOT_ICONS, SLOT_LABELS } from '../data/items.js';
 import { portraitSprite } from '../render/sprites.js';
+import { awakenLabel } from '../core/dragon.js';
 import { Panels } from './panels.js';
 
 export const SIDE_TABS = new Set(['character', 'inventory', 'spells', 'skills', 'quests']);
@@ -80,7 +81,7 @@ export class Sidebar {
       this.sig = sig;
       if (sig) this.panels.render();
     }
-    const dk = `${p.cls}:${p.gender}:${Object.values(p.equip).join(',')}:${Object.values(p.enhance ?? {}).join(',')}`;
+    const dk = `${p.cls}:${p.gender}:${Object.values(p.equip).join(',')}:${Object.values(p.enhance ?? {}).join(',')}:${p.dragonStage ?? 0}`;
     if (dk === this.dollKey) return;
     this.dollKey = dk;
     const ctx = this.doll.getContext('2d');
@@ -91,9 +92,10 @@ export class Sidebar {
     for (const s of this.slots) {
       const slot = s.dataset.doll;
       const id = p.equip[slot];
-      const plus = p.enhance?.[slot] ? `<small class="plus">+${p.enhance[slot]}</small>` : '';
+      const awaken = awakenLabel(p, slot);
+      const plus = `${p.enhance?.[slot] ? `<small class="plus">+${p.enhance[slot]}</small>` : ''}${awaken ? `<small class="awk">🐲${p.dragonStage}</small>` : ''}`;
       s.classList.toggle('empty', !id);
-      s.title = id ? ITEMS[id].name : SLOT_LABELS[slot];
+      s.title = id ? `${ITEMS[id].name}${awaken ? ` ${awaken}` : ''}` : SLOT_LABELS[slot];
       s.innerHTML = `${id ? ITEMS[id].icon : SLOT_ICONS[slot]}${plus}<span>${esc(id ? ITEMS[id].name : SLOT_LABELS[slot])}</span>`;
     }
   }

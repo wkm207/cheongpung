@@ -192,11 +192,13 @@ export const sellPrice = (id) => Math.floor((ITEMS[id]?.price ?? 0) / 2);
 
 const statValue = (key, v) => (PCT_STATS.includes(key) ? `${Math.round(v * 100)}%` : v);
 
-export function itemStatText(id) {
+/** 장비 설명. mult 는 끼고 있는 칸의 강화·각성 배율(퍼센트 수치에는 곱하지 않는다) */
+export function itemStatText(id, mult = 1) {
   const it = ITEMS[id];
   if (!it) return '';
   if (it.desc) return it.desc;
-  const parts = Object.keys(STAT_LABELS).filter((k) => it[k]).map((k) => `${STAT_LABELS[k]} +${statValue(k, it[k])}`);
+  const scaled = (k) => (PCT_STATS.includes(k) ? it[k] : Math.round(it[k] * mult));
+  const parts = Object.keys(STAT_LABELS).filter((k) => it[k]).map((k) => `${STAT_LABELS[k]} +${statValue(k, scaled(k))}`);
   const who = it.wtype ? ` · ${WEAPON_CLASS[it.wtype]} 전용` : it.gender ? ` · ${it.gender === 'f' ? '여성' : '남성'} 전용` : '';
   const tier = it.tier ? ` · ${it.tier}차` : '';
   const dragon = it.dragon ? ' · 🐲용 무기(각성 가능)' : '';

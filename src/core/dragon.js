@@ -7,6 +7,10 @@ export const DRAGON_WEAPONS = { warrior: 'dragonFangSword', rogue: 'dragonScaleD
 
 export const awakenMult = (stage) => 1 + AWAKEN_STEP * (stage ?? 0);
 
+/** 장비 칸 이름 옆에 붙일 각성 표시(용 무기를 끼고 1단계 이상일 때만) */
+export const awakenLabel = (player, slot) =>
+  slot === 'weapon' && ITEMS[player.equip.weapon]?.dragon && player.dragonStage ? `🐲각성${player.dragonStage}` : '';
+
 /** 다음 각성에 드는 재료·금전. 용 무기를 끼고 있지 않거나 최대면 null */
 export function awakenInfo(player) {
   const id = player.equip.weapon;

@@ -18,13 +18,19 @@ export function baseStats(cls, level, tier = 0) {
   return Object.fromEntries(STAT_KEYS.map((k) => [k, Math.round((c.base[k] + c.growth[k] * (level - 1)) * mult)]));
 }
 
+/** 장비 칸의 능력치 배율: 강화 × (용 무기면) 각성 */
+export function slotMult(player, slot) {
+  const it = ITEMS[player.equip[slot]];
+  return enhanceMult(player.enhance?.[slot]) * (slot === 'weapon' && it?.dragon ? awakenMult(player.dragonStage) : 1);
+}
+
 export function equipBonus(equip, enhance = {}, dragonStage = 0) {
   const keys = [...STAT_KEYS, ...PCT_STATS];
   const bonus = Object.fromEntries(keys.map((k) => [k, 0]));
   for (const [slot, id] of Object.entries(equip)) {
     const it = id && ITEMS[id];
     if (!it) continue;
-    const mult = enhanceMult(enhance[slot]) * (slot === 'weapon' && it.dragon ? awakenMult(dragonStage) : 1);
+    const mult = slotMult({ equip, enhance, dragonStage }, slot);
     for (const k of keys) bonus[k] += PCT_STATS.includes(k) ? (it[k] ?? 0) : Math.round((it[k] ?? 0) * mult);
   }
   return bonus;

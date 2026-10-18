@@ -11,10 +11,10 @@ import { TIER_TITLES } from '../data/tiers.js';
 import { MAX_LEVEL, GAME_VERSION } from '../config.js';
 import { ROYAL_COUNT, ROYAL_EXP_MULT, royalReward } from '../core/royal.js';
 import { sourcesText } from '../data/sources.js';
-import { expToNext } from '../core/stats.js';
+import { expToNext, slotMult } from '../core/stats.js';
 import { canEquip, compareEquip, compareUnequip, isUpgrade, formatStat } from '../core/equip.js';
 import { enhanceInfo, MAX_ENHANCE, ENHANCE_STEP } from '../core/enhance.js';
-import { awakenInfo, MAX_AWAKEN, AWAKEN_STEP } from '../core/dragon.js';
+import { awakenInfo, awakenLabel, MAX_AWAKEN, AWAKEN_STEP } from '../core/dragon.js';
 import { countOf } from '../core/inventory.js';
 import { exportText } from '../core/save.js';
 import { KEY_PANELS } from './input.js';
@@ -47,7 +47,7 @@ export function inventoryView(game, state) {
     const id = p.equip[slot];
     const sel = state.selEquip === slot ? ' sel' : '';
     return `<button class="eq-slot${id ? '' : ' empty'}${sel}" data-act="selEquip" data-slot="${slot}">
-      <span class="eq-icon">${id ? ITEMS[id].icon : SLOT_ICONS[slot]}</span><small>${id ? esc(ITEMS[id].name) : SLOT_LABELS[slot]}${p.enhance?.[slot] ? ` +${p.enhance[slot]}` : ''}</small></button>`;
+      <span class="eq-icon">${id ? ITEMS[id].icon : SLOT_ICONS[slot]}</span><small>${id ? esc(ITEMS[id].name) : SLOT_LABELS[slot]}${p.enhance?.[slot] ? ` +${p.enhance[slot]}` : ''}${awakenLabel(p, slot) ? ` ${awakenLabel(p, slot)}` : ''}</small></button>`;
   }).join('');
   const recent = game.lastDiff && game.now - game.lastDiff.at < 8000
     ? `<div class="banner">✨ ${esc(game.lastDiff.title)} ${shortCompare(game.lastDiff.rows) || ''}</div>` : '';
@@ -117,11 +117,18 @@ function itemDetail(game, slot, i, state) {
   return `<div class="detail"><p>${esc(it.desc ?? '')}</p>${it.type === 'loot' ? whereHint(slot.id) : ''}<div class="row">${use}${discard}</div></div>`;
 }
 
+/** 낀 장비 이름 옆 강화(+N)·각성 표시 */
+function equipTags(p, slot) {
+  const plus = p.enhance?.[slot] ? ` <span class="good">+${p.enhance[slot]}</span>` : '';
+  const awaken = awakenLabel(p, slot);
+  return `${plus}${awaken ? ` <span class="good">${awaken}</span>` : ''}`;
+}
+
 function equippedDetail(game, slot) {
   const id = game.player.equip[slot];
   if (!id) return `<div class="detail" style="margin-left:0"><p class="hint">${SLOT_LABELS[slot]} 칸이 비어 있습니다. 아래 소지품에서 장비를 눌러 착용하세요.</p></div>`;
   return `<div class="detail" style="margin-left:0">
-    <b>${ITEMS[id].icon} ${esc(ITEMS[id].name)}</b> <span class="muted">${esc(itemStatText(id))}</span>
+    <b>${ITEMS[id].icon} ${esc(ITEMS[id].name)}</b>${equipTags(game.player, slot)} <span class="muted">${esc(itemStatText(id, slotMult(game.player, slot)))}</span>
     <div class="muted" style="margin-top:4px">벗으면:</div>
     ${compareHtml(compareUnequip(game.player, slot))}
     <div class="row"><button data-act="unequip" data-slot="${slot}">벗기</button></div>
@@ -229,8 +236,7 @@ export function characterView(game) {
   ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   const equip = EQUIP_SLOTS.map((slot) => {
     const id = p.equip[slot];
-    const plus = p.enhance?.[slot] ? ` <span class="good">+${p.enhance[slot]}</span>` : '';
-    const body = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b>${plus} <small class="muted">${esc(itemStatText(id))}</small>` : '<span class="muted">없음</span>';
+    const body = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b>${equipTags(p, slot)} <small class="muted">${esc(itemStatText(id, slotMult(p, slot)))}</small>` : '<span class="muted">없음</span>';
     return `<div class="list-row"><span class="badge eq">${SLOT_LABELS[slot]}</span><span class="grow">${body}</span></div>`;
   }).join('');
   const a = p.alloc ?? {};

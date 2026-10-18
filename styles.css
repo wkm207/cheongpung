@@ -698,6 +698,7 @@ body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 .doll-slot span { font-size: 9px; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ink-soft); }
 .doll-slot.empty { opacity: 0.55; }
 .doll-slot .plus { position: absolute; top: 1px; right: 3px; font-size: 9px; color: var(--green); font-weight: 800; }
+.doll-slot .awk { position: absolute; top: 1px; left: 3px; font-size: 9px; color: #4fe0b0; font-weight: 800; }
 .doll-slot[data-doll="helmet"] { grid-column: 1; grid-row: 1; }
 .doll-slot[data-doll="weapon"] { grid-column: 1; grid-row: 2; }
 .doll-slot[data-doll="armor"] { grid-column: 1; grid-row: 3; }
