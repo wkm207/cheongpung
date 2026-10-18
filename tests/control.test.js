@@ -217,3 +217,12 @@ test('불러낸 졸개는 잡아도 다시 나오지 않고, 여우는 체력이
   assert.ok(after >= before, '멀어진다');
   assert.equal(game.player.hp, hp, '도망치는 동안 공격하지 않는다');
 });
+
+test('떨굼 확률이 1 이상이면 그 수만큼 확정으로 떨군다, 구하는 곳을 알려 준다', async () => {
+  const { rollDrops } = await import('../src/core/combat.js');
+  const { sourcesText } = await import('../src/data/sources.js');
+  assert.equal(rollDrops([['dragonBreath', 3]], () => 0.99).length, 3);
+  assert.equal(rollDrops([['a', 1.5]], () => 0.2).length, 2);
+  assert.ok(sourcesText('whiteFur').includes('장산범'));
+  assert.ok(sourcesText('dragonBreath').startsWith('구미호 굴'));
+});

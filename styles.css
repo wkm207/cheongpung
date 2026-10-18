@@ -847,3 +847,4 @@ body.classic #portrait { image-rendering: pixelated; }
 /* 구슬이 있으니 상태칸의 체력·마력 막대는 숨기고 경험치 막대만 남긴다 */
 #console .stat-row:has(.bar.hp), #console .stat-row:has(.bar.mp) { display: none; }
 @media (max-width: 700px) { .orb { width: 40px; height: 40px; } .orb-num { font-size: 9px; } .orb-lbl { display: none; } }
+.where-hint { font-size: 11px; color: #7a5a2a; margin: 0 0 3px 16px; line-height: 1.35; }

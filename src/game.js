@@ -592,7 +592,7 @@ export class Game {
     if (!next) return { next: null, title: this.title(), checks: [], ok: false };
     const checks = [
       { label: `레벨 ${next.level} 이상 (지금 ${this.player.level})`, ok: this.player.level >= next.level },
-      ...next.items.map(([id, qty]) => ({ label: `${ITEMS[id].name} ${qty}개 (가진 것 ${countOf(this.player.inv, id)})`, ok: countOf(this.player.inv, id) >= qty })),
+      ...next.items.map(([id, qty]) => ({ label: `${ITEMS[id].name} ${qty}개 (가진 것 ${countOf(this.player.inv, id)})`, ok: countOf(this.player.inv, id) >= qty, item: id })),
       { label: `금전 ${next.gold.toLocaleString()}전`, ok: this.player.gold >= next.gold },
     ];
     return { next, title: titleOf(this.player.cls, next.tier), checks, ok: checks.every((c) => c.ok) };

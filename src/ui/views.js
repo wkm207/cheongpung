@@ -10,6 +10,7 @@ import { QUEST_CHAINS, QUEST_GIVERS, rewardItems } from '../data/quests.js';
 import { TIER_TITLES } from '../data/tiers.js';
 import { MAX_LEVEL, GAME_VERSION } from '../config.js';
 import { ROYAL_COUNT, ROYAL_EXP_MULT, royalReward } from '../core/royal.js';
+import { sourcesText } from '../data/sources.js';
 import { expToNext } from '../core/stats.js';
 import { canEquip, compareEquip, compareUnequip, isUpgrade, formatStat } from '../core/equip.js';
 import { enhanceInfo, MAX_ENHANCE, ENHANCE_STEP } from '../core/enhance.js';
@@ -113,7 +114,7 @@ function itemDetail(game, slot, i, state) {
     </div>`;
   }
   const use = it.type === 'consume' ? '<button class="primary" data-act="use">사용하기</button>' : '';
-  return `<div class="detail"><p>${esc(it.desc ?? '')}</p><div class="row">${use}${discard}</div></div>`;
+  return `<div class="detail"><p>${esc(it.desc ?? '')}</p>${it.type === 'loot' ? whereHint(slot.id) : ''}<div class="row">${use}${discard}</div></div>`;
 }
 
 function equippedDetail(game, slot) {
@@ -313,7 +314,7 @@ export function advancePage(game, npc, state) {
   const info = game.advanceInfo();
   if (state.advanced) return `<p class="dialog-text">${esc(state.advanced)}</p><div class="row end" style="margin:8px -10px -10px"><button data-act="close">닫기</button></div>`;
   if (!info.next) return `<p class="dialog-text">그대는 이미 최고의 경지에 올랐다. 더 가르칠 것이 없구나.</p>${dragonBox(game)}<div class="row end" style="margin:8px -10px -10px"><button data-act="close">닫기</button></div>`;
-  const checks = info.checks.map((c) => `<div class="check ${c.ok ? 'ok' : 'no'}">${c.ok ? '✔' : '✘'} ${esc(c.label)}</div>`).join('');
+  const checks = info.checks.map((c) => `<div class="check ${c.ok ? 'ok' : 'no'}">${c.ok ? '✔' : '✘'} ${esc(c.label)}</div>${!c.ok && c.item ? whereHint(c.item) : ''}`).join('');
   const reward = info.next.reward[game.player.cls];
   return `<p class="dialog-text">${esc(npc.lines[0])}</p>
     ${dragonBox(game)}
@@ -324,6 +325,12 @@ export function advancePage(game, npc, state) {
       <div class="muted" style="margin-top:4px">승급 기념 선물: ${ITEMS[reward].icon} ${esc(ITEMS[reward].name)}</div>
     </div>
     <div class="row end" style="margin:8px -10px -10px"><button class="primary" data-act="advance" ${info.ok ? '' : 'disabled'}>승급하기</button><button data-act="close">닫기</button></div>`;
+}
+
+/** 재료를 구하는 곳 한 줄 */
+function whereHint(itemId) {
+  const t = sourcesText(itemId);
+  return t ? `<div class="where-hint">📍 구하는 곳: ${esc(t)}</div>` : '';
 }
 
 /** 사범의 용 무기 상자: 받기(1차 승급 후) · 각성 */
@@ -341,7 +348,7 @@ function dragonBox(game) {
   }
   const have = countOf(p.inv, 'dragonBreath');
   return `<div class="quest-box"><b>🐲 용 무기 각성 ${stage} → ${info.next}단계</b> <span class="muted">(무기 능력치 +${Math.round(AWAKEN_STEP * 100)}%)</span>
-    <div class="check ${have >= info.breath ? 'ok' : 'no'}">${have >= info.breath ? '✔' : '✘'} 용의 숨결 ${info.breath}개 (가진 것 ${have})</div>
+    <div class="check ${have >= info.breath ? 'ok' : 'no'}">${have >= info.breath ? '✔' : '✘'} 용의 숨결 ${info.breath}개 (가진 것 ${have})</div>${have >= info.breath ? '' : whereHint('dragonBreath')}
     <div class="check ${p.gold >= info.gold ? 'ok' : 'no'}">${p.gold >= info.gold ? '✔' : '✘'} 금전 ${info.gold.toLocaleString()}전</div>
     <button class="primary" data-act="awaken">각성하기</button></div>`;
 }

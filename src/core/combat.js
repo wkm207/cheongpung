@@ -17,8 +17,16 @@ export function monsterDamage(atk, defense, power = 1, rng = Math.random) {
   return Math.max(1, Math.round(atk * power * variance - defense * 0.4));
 }
 
+/** 떨굼 목록 [[id, 확률]]: 확률이 1 이상이면 그 정수만큼 확정, 소수 부분은 한 개 더 나올 확률 */
 export function rollDrops(drops, rng = Math.random) {
-  return drops.filter(([, chance]) => rng() < chance).map(([id]) => id);
+  const out = [];
+  for (const [id, chance] of drops) {
+    const sure = Math.floor(chance);
+    for (let i = 0; i < sure; i++) out.push(id);
+    const rest = chance - sure;
+    if (rest > 0 && rng() < rest) out.push(id);
+  }
+  return out;
 }
 
 export function rollGold([min, max], rng = Math.random) {
