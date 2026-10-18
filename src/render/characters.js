@@ -1,5 +1,5 @@
 // 사람 캐릭터 그림(32×48 논리 크기): 도트 대신 곡선·그라데이션으로 그린 고해상도 오리지널 디자인.
-// 빛은 왼쪽 위에서 들어온다. 3등신 귀여운 체형, 한복풍 옷.
+// 빛은 왼쪽 위에서 들어온다. 원작풍 4등신 체형, 한복풍 옷.
 // pose: 'stand' | 'walk' | 'cast'(손을 가슴 앞에 모으고 눈을 감음) | 'attack'(무기를 앞으로 내지름)
 // dir: 'down'(정면) | 'up'(뒷모습) | 'side'(왼쪽을 보는 옆모습, 오른쪽은 좌우 뒤집어 씀)
 export const CHAR_W = 32;
@@ -513,6 +513,41 @@ function weaponPose(dir, pose, wtype) {
 }
 
 /** 캐릭터 한 장을 그린다. ctx는 32×48 논리 좌표(배율은 호출하는 쪽에서 미리 걸어 둔다). */
+// 원작풍 체형(약 4등신): 머리는 작게, 몸통은 위로, 다리는 길게. 각 부분을 그릴 때 좌표를 옮긴다.
+const HEAD = { cx: 16, cy: 10.5, scale: 0.68, from: 13 };
+const BODY_UP = 4;
+const LEG_TOP = 31;
+const LEG_STRETCH = 1.5;
+
+function withHead(ctx, draw) {
+  ctx.save();
+  ctx.translate(HEAD.cx, HEAD.cy);
+  ctx.scale(HEAD.scale, HEAD.scale);
+  ctx.translate(-HEAD.cx, -HEAD.from);
+  draw();
+  ctx.restore();
+}
+
+function withBody(ctx, draw) {
+  ctx.save();
+  ctx.translate(0, -BODY_UP);
+  draw();
+  ctx.restore();
+}
+
+function withLegs(ctx, seated, draw) {
+  ctx.save();
+  if (seated) ctx.translate(0, -BODY_UP);
+  else {
+    ctx.translate(0, LEG_TOP);
+    ctx.scale(1, LEG_STRETCH);
+    ctx.translate(0, -(LEG_TOP + BODY_UP));
+  }
+  draw();
+  ctx.restore();
+}
+
+/** 캐릭터 한 장을 그린다. ctx는 32×48 논리 좌표(배율은 호출하는 쪽에서 미리 걸어 둔다). */
 export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 'stand', blink = false, equip = {}, items, seated = false }) {
   const armor = equip.armor && items[equip.armor];
   const neck = equip.necklace && items[equip.necklace];
@@ -525,33 +560,32 @@ export function drawCharacter(ctx, { look, gender = 'm', dir = 'down', pose = 's
   ctx.lineJoin = 'round';
   const holdBehind = dir === 'up';
   const wp = wpn ? (seated && dir === 'side' && pose !== 'attack' && pose !== 'cast' ? [10.5, 29, wpn.wtype === 'staff' ? -Math.PI / 2 : -Math.PI * 0.62] : weaponPose(dir, pose, wpn.wtype)) : null;
-  if (wpn && holdBehind) weapon(ctx, wpn.wtype, wpn.tint, 23.5, 31, -Math.PI * 0.6, wpn.tier);
+  if (wpn && holdBehind) withBody(ctx, () => weapon(ctx, wpn.wtype, wpn.tint, 23.5, 31, -Math.PI * 0.6, wpn.tier));
   if (female && dir === 'down') {
     // 등 뒤로 늘어진 긴 머리
-    shape(ctx, [[9, 12], [23, 12], [22.5, 30, 24.5, 24], [9.5, 30, 16, 32], [9, 12, 7.5, 24]], tone(c.hair, -0.15), null);
+    withHead(ctx, () => shape(ctx, [[9, 12], [23, 12], [22.5, 30, 24.5, 24], [9.5, 30, 16, 32], [9, 12, 7.5, 24]], tone(c.hair, -0.15), null));
   }
-  legs(ctx, dir, pose, c, seated);
-  body(ctx, dir, c, female, seated);
-  if (neck && dir !== 'up') {
-    ctx.beginPath();
-    ctx.arc(16, 20, 3.2, 0.15 * Math.PI, 0.85 * Math.PI);
-    ctx.strokeStyle = 'rgba(80, 50, 20, 0.7)';
-    ctx.lineWidth = 0.4;
-    ctx.stroke();
-    ellipse(ctx, dir === 'side' ? 13.5 : 16, 23.2, 1.1, 1.1, neck.gem ?? '#fdfefe', 'rgba(0,0,0,0.4)', 0.3);
-  }
-  head(ctx, dir, c, female, (blink || pose === 'cast') && dir !== 'up');
-  hat(ctx, equip.helmet ?? look.hat, items);
-  arms(ctx, dir, pose, c, seated);
-  if (wpn && !holdBehind && pose !== 'cast') weapon(ctx, wpn.wtype, wpn.tint, wp[0], wp[1], wp[2], wpn.tier);
-  if (pose === 'cast' && dir !== 'up') {
-    // 모은 손끝에 맺히는 빛
-    const gx = dir === 'side' ? 11 : 16;
-    const g = ctx.createRadialGradient(gx, 26.5, 0.2, gx, 26.5, 5);
-    g.addColorStop(0, 'rgba(255, 250, 210, 0.95)');
-    g.addColorStop(0.35, 'rgba(255, 220, 120, 0.55)');
-    g.addColorStop(1, 'rgba(255, 200, 80, 0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(gx - 5, 21.5, 10, 10);
-  }
+  withLegs(ctx, seated, () => legs(ctx, dir, pose, c, seated));
+  withBody(ctx, () => {
+    body(ctx, dir, c, female, seated);
+    if (neck && dir !== 'up') ellipse(ctx, dir === 'side' ? 13.5 : 16, 23.2, 1.1, 1.1, neck.gem ?? '#fdfefe', 'rgba(0,0,0,0.4)', 0.3);
+  });
+  withHead(ctx, () => {
+    head(ctx, dir, c, female, (blink || pose === 'cast') && dir !== 'up');
+    hat(ctx, equip.helmet ?? look.hat, items);
+  });
+  withBody(ctx, () => {
+    arms(ctx, dir, pose, c, seated);
+    if (wpn && !holdBehind && pose !== 'cast') weapon(ctx, wpn.wtype, wpn.tint, wp[0], wp[1], wp[2], wpn.tier);
+    if (pose === 'cast' && dir !== 'up') {
+      // 모은 손끝에 맺히는 빛
+      const gx = dir === 'side' ? 11 : 16;
+      const g = ctx.createRadialGradient(gx, 26.5, 0.2, gx, 26.5, 5);
+      g.addColorStop(0, 'rgba(255, 250, 210, 0.95)');
+      g.addColorStop(0.35, 'rgba(255, 220, 120, 0.55)');
+      g.addColorStop(1, 'rgba(255, 200, 80, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(gx - 5, 21.5, 10, 10);
+    }
+  });
 }

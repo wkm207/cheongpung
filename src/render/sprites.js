@@ -153,22 +153,25 @@ function drawTails(ctx, size, pal) {
   }
 }
 
+// 원작처럼 몬스터는 사람보다 크게: 작은 짐승(쥐·토끼·다람쥐·고양이)만 제 크기
+const SMALL_ARTS = new Set(['squirrel', 'rabbit', 'rat', 'cat', 'bat']);
+export function monsterScale(type) {
+  const look = MONSTER_LOOK[type];
+  return look.scale ?? (SMALL_ARTS.has(look.art) ? 1 : 1.3);
+}
+
 /** 몬스터 스프라이트(왼쪽을 보는 그림). 보스는 크게 그린다. */
 export function monsterSprite(type) {
   const look = MONSTER_LOOK[type];
-  const scale = look.scale ?? 1;
-  const size = 32 * scale;
+  const scale = monsterScale(type);
+  const size = Math.round(32 * scale);
   return cachedVector(`m-${type}`, size, size, CHAR_RES, (ctx) => {
-    ctx.scale(scale, scale);
+    ctx.scale(size / 32, size / 32);
     ctx.lineJoin = 'round';
     if (look.tails) drawTails(ctx, 32, look.pal);
     ctx.globalAlpha = look.alpha ?? 1;
     BEAST_ART[look.art](ctx, look.pal);
   });
-}
-
-export function monsterScale(type) {
-  return MONSTER_LOOK[type].scale ?? 1;
 }
 
 /** 캐릭터 고르는 화면·초상화용 정면 그림 */

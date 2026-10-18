@@ -395,9 +395,9 @@ export class Renderer {
       ctx.restore();
     } else {
       const bounce = riding && pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
-      if (riding && rideView === 'side') drawSprite(ctx, img, x + (faceRight ? 1 : -1), y - 22 - bounce, faceRight);
+      if (riding && rideView === 'side') drawSprite(ctx, img, x + (faceRight ? 1 : -1), y - 18 - bounce, faceRight);
       else if (riding) {
-        drawSprite(ctx, img, x, y - 22 - bounce, false);
+        drawSprite(ctx, img, x, y - 18 - bounce, false);
         this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front');
       }
       else drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge, pe.dir === 'right');
@@ -731,7 +731,7 @@ export class Renderer {
     const d = MONSTERS[m.type];
     const scale = monsterScale(m.type);
     const img = monsterSprite(m.type);
-    const size = 32 * scale;
+    const size = Math.round(32 * scale);
     const stunned = game.now < m.stunUntil;
     const telegraph = m.strikeAt > game.now;
     let bob = 0;
