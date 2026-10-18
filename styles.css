@@ -801,3 +801,49 @@ body.classic .save-slot canvas,
 body.classic .class-card canvas,
 body.classic #doll-canvas,
 body.classic #portrait { image-rendering: pixelated; }
+
+/* ── 체력·마력 구슬(원작풍): 유리구슬 안에 물이 남은 만큼 차오르고 출렁인다 ── */
+.orbs { display: flex; gap: 6px; flex: none; align-items: center; }
+.orb {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 60%, #1a0e08, #000);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 0 2px #c08a3a, 0 0 0 3px #4a2a10, inset 0 -4px 8px rgba(0, 0, 0, 0.7), 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+.orb i { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; transition: height 0.25s; }
+.orb.hp i { background: radial-gradient(circle at 40% 30%, #ff8a7a, #d42a1e 45%, #6a0a06); }
+.orb.mp i { background: radial-gradient(circle at 40% 30%, #8ac8ff, #2a6ae0 45%, #0a1e6a); }
+/* 물결 */
+.orb i::before {
+  content: '';
+  position: absolute;
+  left: -50%;
+  top: -5px;
+  width: 200%;
+  height: 10px;
+  background: radial-gradient(ellipse at 25% 100%, transparent 60%, rgba(255, 255, 255, 0.35) 62%, transparent 70%) 0 0 / 50% 100% repeat-x;
+  animation: orb-wave 2.4s linear infinite;
+}
+@keyframes orb-wave { to { transform: translateX(25%); } }
+/* 유리 광택 */
+.orb::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  top: 9%;
+  width: 40%;
+  height: 26%;
+  border-radius: 50%;
+  background: linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.orb-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000, 0 0 3px #000; z-index: 1; }
+.orb-lbl { position: absolute; left: 0; right: 0; bottom: 3px; text-align: center; font-size: 8px; color: rgba(255, 255, 255, 0.85); text-shadow: 0 1px 1px #000; z-index: 1; }
+/* 구슬이 있으니 상태칸의 체력·마력 막대는 숨기고 경험치 막대만 남긴다 */
+#console .stat-row:has(.bar.hp), #console .stat-row:has(.bar.mp) { display: none; }
+@media (max-width: 700px) { .orb { width: 40px; height: 40px; } .orb-num { font-size: 9px; } .orb-lbl { display: none; } }

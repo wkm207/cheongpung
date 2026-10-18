@@ -10,6 +10,12 @@ import { portraitSprite } from '../render/sprites.js';
 const LOG_LINES = 40;
 const SLOW_UPDATE_MS = 400;
 
+/** 체력·마력 구슬: 남은 양만큼 물이 차오른다 */
+function setOrb(orb, num, value, max) {
+  setStyle(orb.querySelector('i'), 'height', `${Math.max(0, Math.min(100, (value / max) * 100))}%`);
+  setText(num, value >= 10000 ? `${Math.floor(value / 1000)}k` : String(value));
+}
+
 function setBar(bar, num, value, max, text) {
   setStyle(bar.querySelector('i'), 'width', `${Math.max(0, Math.min(100, (value / max) * 100))}%`);
   setText(num, text);
@@ -29,6 +35,10 @@ export class Hud {
     this.mp = $('#console .bar.mp');
     this.exp = $('#console .bar.exp');
     this.hpNum = $('#hp-num');
+    this.hpOrb = $('#console .orb.hp');
+    this.mpOrb = $('#console .orb.mp');
+    this.hpOrbNum = $('#hp-orb');
+    this.mpOrbNum = $('#mp-orb');
     this.mpNum = $('#mp-num');
     this.expNum = $('#exp-num');
     this.portrait = $('#portrait');
@@ -55,6 +65,8 @@ export class Hud {
     setText(this.coord, `${game.pe.x}, ${game.pe.y}`);
     setBar(this.hp, this.hpNum, p.hp, s.maxHp, `${p.hp}/${s.maxHp}`);
     setBar(this.mp, this.mpNum, p.mp, s.maxMp, `${p.mp}/${s.maxMp}`);
+    setOrb(this.hpOrb, this.hpOrbNum, p.hp, s.maxHp);
+    setOrb(this.mpOrb, this.mpOrbNum, p.mp, s.maxMp);
     if (p.level >= MAX_LEVEL) setBar(this.exp, this.expNum, 1, 1, '최고');
     else {
       const need = expToNext(p.level);
