@@ -1,3 +1,4 @@
+import { isClassic, setClassic } from './render/artmode.js';
 import { Game, createPlayer } from './game.js';
 import { Renderer } from './render/renderer.js';
 import { Input } from './ui/input.js';
@@ -29,6 +30,14 @@ let lastSaveAt = 0;
 const saveNow = () => (game ? writeSave(game.toSave(), slot) : false);
 
 function applySettings(settings) {
+  const classic = settings.graphics !== 'smooth';
+  if (classic !== isClassic()) {
+    setClassic(classic);
+    renderer.resize();
+    hud.portraitKey = '';
+    sidebar.dollKey = '';
+  }
+  document.body.classList.toggle('classic', classic);
   document.body.classList.toggle('control-dpad', settings.control === 'dpad');
   document.body.classList.toggle('control-joystick', settings.control === 'joystick');
   document.body.classList.toggle('minimap-off', !settings.minimap);
@@ -182,6 +191,7 @@ function onGameEvent(type, data) {
 
 function setPlaying(playing) {
   for (const id of ['#topbar', '#controls', '#console']) $(id).hidden = !playing;
+  document.body.classList.toggle('playing', playing);
   sidebar.setActive(playing && sidebar.fits(), playing ? game : null);
   updateInsets();
 }

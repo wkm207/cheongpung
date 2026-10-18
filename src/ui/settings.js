@@ -1,6 +1,6 @@
 // 기기별 설정(조작 방식·효과음). 저장소를 못 쓰면 기본값으로 동작한다.
 const KEY = 'cheongpung-settings';
-const DEFAULTS = { control: 'dpad', sound: true, music: true, minimap: true };
+const DEFAULTS = { control: 'dpad', sound: true, music: true, minimap: true, graphics: 'classic' };
 
 function read() {
   try {
@@ -10,6 +10,7 @@ function read() {
       sound: typeof raw.sound === 'boolean' ? raw.sound : DEFAULTS.sound,
       minimap: typeof raw.minimap === 'boolean' ? raw.minimap : DEFAULTS.minimap,
       music: typeof raw.music === 'boolean' ? raw.music : DEFAULTS.music,
+      graphics: ['classic', 'smooth'].includes(raw.graphics) ? raw.graphics : DEFAULTS.graphics,
     };
   } catch {
     return { ...DEFAULTS };

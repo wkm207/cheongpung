@@ -452,6 +452,11 @@ export function menuView(game, state, settings) {
         <button class="${settings.control === 'joystick' ? 'on' : ''}" data-act="setting" data-key="control" data-value="joystick">조이스틱</button>
       </div>
       <div class="row">
+        <span class="grow">그래픽</span>
+        <button class="${settings.graphics === 'classic' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="classic">원작풍 도트</button>
+        <button class="${settings.graphics === 'smooth' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="smooth">매끈한 그림</button>
+      </div>
+      <div class="row">
         <span class="grow">배경음악</span>
         <button class="${settings.music ? 'on' : ''}" data-act="setting" data-key="music" data-value="true">켜기</button>
         <button class="${settings.music ? '' : 'on'}" data-act="setting" data-key="music" data-value="false">끄기</button>

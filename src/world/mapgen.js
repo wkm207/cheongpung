@@ -203,7 +203,18 @@ function house(g, x, y, roof = 'R') {
 
 export function buildVillage({ w, h, seed, portals, npcs }) {
   const rng = mulberry32(seed);
-  const g = grid(w, h, '.');
+  // 바닥은 주황빛 흙, 그 위에 풀밭이 군데군데(원작 마을 느낌)
+  const g = grid(w, h, 'u');
+  for (let i = 0; i < 16; i++) {
+    const cx = 2 + Math.floor(rng() * (w - 4));
+    const cy = 2 + Math.floor(rng() * (h - 4));
+    const r = 2 + Math.floor(rng() * 3);
+    for (let y = cy - r; y <= cy + r; y++) {
+      for (let x = cx - r; x <= cx + r; x++) {
+        if (y > 0 && x > 0 && y < h - 1 && x < w - 1 && (x - cx) ** 2 + (y - cy) ** 2 <= r * r + rng() * 2) g[y][x] = '.';
+      }
+    }
+  }
   fillRect(g, 1, 14, w - 2, 2, '=');
   fillRect(g, 19, 1, 2, 13, '=');
   fillRect(g, 14, 11, 12, 8, 'S');
@@ -224,10 +235,10 @@ export function buildVillage({ w, h, seed, portals, npcs }) {
   const nearNpc = (x, y) => keepClear.some((n) => Math.abs(n.x - x) + Math.abs(n.y - y) <= 2);
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
-      if (g[y][x] !== '.' || nearNpc(x, y)) continue;
+      if ((g[y][x] !== '.' && g[y][x] !== 'u') || nearNpc(x, y)) continue;
       const r = rng();
-      if (r < 0.03) g[y][x] = 'T';
-      else if (r < 0.09) g[y][x] = ',';
+      if (r < 0.03 && g[y][x] === '.') g[y][x] = 'T';
+      else if (r < 0.06 && g[y][x] === '.') g[y][x] = ',';
     }
   }
   border(g, 'Q');

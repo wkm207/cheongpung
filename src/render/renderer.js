@@ -1,10 +1,11 @@
-import { TILE, VIEW_TILES } from '../config.js';
+import { TILE, VIEW_TILES, CLASSIC_VIEW_TILES } from '../config.js';
 import { renderMapCanvas } from './tiles.js';
 import { playerSprite, npcSprite, monsterSprite, monsterScale } from './sprites.js';
 import { drawEffect } from './effects.js';
 import { Ambient } from './ambient.js';
 import { treeSprite } from './trees.js';
 import { smoothMap } from './smooth.js';
+import { isClassic, dotify } from './artmode.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -112,7 +113,8 @@ export class Renderer {
     this.dpr = dpr;
     this.canvas.width = Math.round(this.cssW * dpr);
     this.canvas.height = Math.round(this.cssH * dpr);
-    this.scale = Math.min(this.cssW, this.cssH) / (VIEW_TILES * TILE);
+    // 원작풍은 더 멀리서 내려다본다(한 화면에 더 많은 칸)
+    this.scale = Math.min(this.cssW, this.cssH) / ((isClassic() ? CLASSIC_VIEW_TILES : VIEW_TILES) * TILE);
   }
 
   screenToTile(cssX, cssY) {
@@ -131,9 +133,11 @@ export class Renderer {
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     if (!game) return;
 
-    if (game.mapId !== this.mapId) {
-      this.mapCanvas = smoothMap(renderMapCanvas(game.map.tiles));
-      this.mapId = game.mapId;
+    const mapKey = `${game.mapId}:${isClassic()}`;
+    if (mapKey !== this.mapId) {
+      // 원작풍은 도트를 그대로, 매끈한 방식은 계단을 둥글리고 살짝 번지게
+      this.mapCanvas = isClassic() ? renderMapCanvas(game.map.tiles) : smoothMap(renderMapCanvas(game.map.tiles));
+      this.mapId = mapKey;
       this.trees = this.findTrees(game.map.tiles);
     }
     const k = this.scale * this.dpr;
@@ -155,7 +159,7 @@ export class Renderer {
     this.camX = Math.round(camX * k) / k;
     this.camY = Math.round(camY * k) / k;
 
-    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingEnabled = !isClassic();
     ctx.imageSmoothingQuality = 'high';
     ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
     this.drawMap(ctx, viewW, viewH, mapW, mapH);
@@ -367,12 +371,16 @@ export class Renderer {
     // 말을 타면 늘 옆모습으로 걸터앉는다(위·아래로 갈 때는 마지막으로 본 좌우 방향 유지)
     if (pe.dir === 'left' || pe.dir === 'right') this.rideFace = pe.dir;
     const faceRight = riding ? this.rideFace === 'right' : pe.dir === 'right';
+    // 말을 탈 때 위로 가면 뒷모습, 아래로 가면 앞모습, 옆으로 가면 옆모습
+    const rideView = pe.dir === 'up' ? 'up' : pe.dir === 'down' ? 'down' : 'side';
     const img = playerSprite(game.player.cls, {
-      gender: game.player.gender, dir: riding ? 'side' : spriteDir(pe.dir), pose: riding && pose === 'walk' ? 'stand' : pose,
+      gender: game.player.gender, dir: riding ? rideView : spriteDir(pe.dir), pose: riding && pose === 'walk' ? 'stand' : pose,
       equip: game.player.equip, blink: blinking(game.now, 1), seated: !!riding,
     });
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
-    if (riding) this.drawHorse(ctx, x, y, faceRight, pe.moving ? game.now : 0);
+    const gallop = pe.moving ? game.now : 0;
+    if (riding && rideView === 'side') this.drawHorse(ctx, x, y, faceRight, gallop);
+    else if (riding) this.drawHorseFacing(ctx, x, y, rideView, gallop, 'back');
     ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : game.isDodging() ? 0.75 : 1;
     const rollT = (game.now - (game.rollStart ?? -1e9)) / 330;
     if (rollT < 1) {
@@ -387,7 +395,11 @@ export class Renderer {
       ctx.restore();
     } else {
       const bounce = riding && pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
-      if (riding) drawSprite(ctx, img, x + (faceRight ? 1 : -1), y - 22 - bounce, faceRight);
+      if (riding && rideView === 'side') drawSprite(ctx, img, x + (faceRight ? 1 : -1), y - 22 - bounce, faceRight);
+      else if (riding) {
+        drawSprite(ctx, img, x, y - 22 - bounce, false);
+        this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front');
+      }
       else drawSprite(ctx, img, x + ldx * lunge, y - 18 + breathe + ldy * lunge, pe.dir === 'right');
     }
     ctx.globalAlpha = 1;
@@ -420,8 +432,11 @@ export class Renderer {
 
   /** 말(옆모습, 왼쪽을 본다): 곡선으로 그린 갈색 말, 검은 갈기, 붉은 안장. t = 달리는 시각(멈추면 0) */
   drawHorse(ctx, x, y, flip, t) {
+    this.drawHorseImage(ctx, x, y, `s:${flip ? 1 : 0}`, t, (c, tt) => this.paintHorse(c, flip, tt));
+  }
+
+  paintHorse(ctx, flip, t) {
     ctx.save();
-    ctx.translate(x, y);
     if (flip) {
       ctx.translate(32, 0);
       ctx.scale(-1, 1);
@@ -535,6 +550,138 @@ export class Renderer {
     ctx.moveTo(15.5, 17.5);
     ctx.lineTo(15, 22);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  /**
+   * 앞·뒤를 보는 말. 탄 사람 뒤에 깔 부분(layer 'back')과 앞을 덮는 부분('front')을 나눠 그린다.
+   * view 'down': 말 머리가 나를 본다(머리·목이 사람 앞), 'up': 엉덩이와 꼬리가 보인다(엉덩이가 사람 앞)
+   */
+  drawHorseFacing(ctx, x, y, view, t, layer) {
+    this.drawHorseImage(ctx, x, y, `f:${view}:${layer}`, t, (c, tt) => this.paintHorseFacing(c, view, tt, layer));
+  }
+
+  /**
+   * 말 그림을 걸음 단계(8단계)별로 미리 그려 두고 쓴다. 원작풍이면 도트로.
+   * 그림 범위는 칸 기준 (-4,-4)~(36,32)
+   */
+  drawHorseImage(ctx, x, y, key, t, paint) {
+    const phase = t ? Math.floor((((t / 80) % (Math.PI * 2)) / (Math.PI * 2)) * 8) : -1;
+    const tt = phase < 0 ? 0 : ((phase + 0.5) / 8) * Math.PI * 2 * 80;
+    const full = `${isClassic() ? 'px' : 'hd'}:${key}:${phase}`;
+    this.horseCache ??= new Map();
+    if (!this.horseCache.has(full)) {
+      const draw = (c) => {
+        c.translate(4, 4);
+        paint(c, tt);
+      };
+      let img;
+      if (isClassic()) img = dotify(40, 36, draw);
+      else {
+        img = Object.assign(document.createElement('canvas'), { width: 80, height: 72 });
+        const c = img.getContext('2d');
+        c.scale(2, 2);
+        draw(c);
+      }
+      this.horseCache.set(full, img);
+    }
+    ctx.drawImage(this.horseCache.get(full), x - 4, y - 4, 40, 36);
+  }
+
+  paintHorseFacing(ctx, view, t, layer) {
+    ctx.save();
+    // 앞·뒷모습은 사람에 가려 작아 보이므로 조금 키운다
+    ctx.translate(16, 31);
+    ctx.scale(1.3, 1.25);
+    ctx.translate(-16, -31);
+    ctx.lineJoin = 'round';
+    const ink = 'rgba(40, 22, 10, 0.9)';
+    const fill = (draw, color, stroke = ink) => {
+      ctx.beginPath();
+      draw();
+      ctx.fillStyle = color;
+      ctx.fill();
+      if (stroke) {
+        ctx.lineWidth = 0.7;
+        ctx.strokeStyle = stroke;
+        ctx.stroke();
+      }
+    };
+    const grad = (x0, y0, x1, y1, a, b) => {
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, a);
+      g.addColorStop(1, b);
+      return g;
+    };
+    const step = (phase) => (t ? Math.max(0, Math.sin(t / 80 + phase)) * 2.5 : 0);
+    const leg = (lx, top, phase, color) => {
+      const lift = step(phase);
+      fill(() => {
+        ctx.moveTo(lx - 1.5, top);
+        ctx.lineTo(lx + 1.5, top);
+        ctx.lineTo(lx + 1, 29.5 - lift);
+        ctx.lineTo(lx - 1, 29.5 - lift);
+        ctx.closePath();
+      }, color);
+      fill(() => ctx.ellipse(lx, 30 - lift, 1.5, 0.9, 0, 0, Math.PI * 2), '#1a1110', null);
+    };
+    const saddle = () => fill(() => {
+      ctx.moveTo(9, 12.5);
+      ctx.quadraticCurveTo(16, 10, 23, 12.5);
+      ctx.lineTo(22.5, 18);
+      ctx.quadraticCurveTo(16, 20, 9.5, 18);
+      ctx.closePath();
+    }, grad(9, 11, 23, 19, '#d64a3a', '#8b1a1a'));
+    if (layer === 'back') {
+      if (view === 'down') {
+        // 몸통(앞에서 본 넓은 가슴)과 뒷다리
+        leg(11, 20, Math.PI, '#5e3b1c');
+        leg(21, 20, 0, '#5e3b1c');
+        fill(() => ctx.ellipse(16, 16.5, 9.5, 7, 0, 0, Math.PI * 2), grad(7, 10, 25, 24, '#b07a45', '#5e3b1c'));
+        saddle();
+      } else {
+        // 머리와 귀가 사람 너머로 보인다, 앞다리
+        leg(12, 20, Math.PI / 2, '#5e3b1c');
+        leg(20, 20, Math.PI * 1.5, '#5e3b1c');
+        fill(() => ctx.ellipse(16, 4.5, 3.6, 4.5, 0, 0, Math.PI * 2), grad(12, 0, 20, 9, '#a8743f', '#7a4e25'));
+        fill(() => { ctx.moveTo(12.6, 1.8); ctx.lineTo(13.4, -1.5); ctx.lineTo(14.8, 1.4); ctx.closePath(); }, '#7a4e25');
+        fill(() => { ctx.moveTo(19.4, 1.8); ctx.lineTo(18.6, -1.5); ctx.lineTo(17.2, 1.4); ctx.closePath(); }, '#7a4e25');
+        fill(() => ctx.ellipse(16, 4, 1.4, 4, 0, 0, Math.PI * 2), '#2a1a10', null); // 갈기
+        fill(() => ctx.ellipse(16, 15.5, 9, 7, 0, 0, Math.PI * 2), grad(7, 9, 25, 23, '#b07a45', '#5e3b1c'));
+        saddle();
+      }
+    } else if (view === 'down') {
+      // 앞을 보는 목과 긴 얼굴
+      fill(() => ctx.ellipse(16, 18, 4.5, 5, 0, 0, Math.PI * 2), grad(11, 13, 21, 23, '#a8743f', '#7a4e25'));
+      fill(() => ctx.ellipse(16, 23, 3.4, 5.6, 0, 0, Math.PI * 2), grad(12, 17, 20, 29, '#b8824a', '#7a4e25'));
+      fill(() => ctx.ellipse(16, 27.5, 2.6, 1.8, 0, 0, Math.PI * 2), '#4a2e16', null); // 주둥이
+      fill(() => ctx.arc(14.3, 21.5, 0.7, 0, Math.PI * 2), '#111', null);
+      fill(() => ctx.arc(17.7, 21.5, 0.7, 0, Math.PI * 2), '#111', null);
+      fill(() => { ctx.moveTo(12.8, 17.5); ctx.lineTo(12, 14); ctx.lineTo(14.4, 16.6); ctx.closePath(); }, '#7a4e25');
+      fill(() => { ctx.moveTo(19.2, 17.5); ctx.lineTo(20, 14); ctx.lineTo(17.6, 16.6); ctx.closePath(); }, '#7a4e25');
+      fill(() => ctx.ellipse(16, 18, 1.3, 2.4, 0, 0, Math.PI * 2), '#2a1a10', null); // 앞갈기
+      leg(12.5, 22, 0, '#7a4e25');
+      leg(19.5, 22, Math.PI, '#7a4e25');
+    } else {
+      // 뒷모습: 둥근 엉덩이와 흔들리는 꼬리, 뒷다리
+      leg(12, 22, 0, '#7a4e25');
+      leg(20, 22, Math.PI, '#7a4e25');
+      fill(() => ctx.ellipse(16, 21.5, 8, 5.5, 0, 0, Math.PI * 2), grad(8, 16, 24, 27, '#b07a45', '#5e3b1c'));
+      ctx.beginPath();
+      ctx.moveTo(16, 17);
+      ctx.lineTo(16, 25);
+      ctx.strokeStyle = 'rgba(40,22,10,0.5)';
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+      const sw = t ? Math.sin(t / 90) * 2 : 0;
+      fill(() => {
+        ctx.moveTo(14.8, 19);
+        ctx.quadraticCurveTo(16 + sw, 25, 15 + sw * 1.5, 29);
+        ctx.lineTo(17.5 + sw * 1.5, 29);
+        ctx.quadraticCurveTo(17.5 + sw, 24, 17.2, 19);
+        ctx.closePath();
+      }, '#2a1a10');
+    }
     ctx.restore();
   }
 

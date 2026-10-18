@@ -37,7 +37,13 @@ const snow = (r, tx, ty) => {
   r(0, 0, 16, 16, '#eef3f8');
   speckle(r, tx, ty, 8, ['#dde7f0', '#ffffff', '#cfdbe6']);
 };
-const GROUNDS = { '.': grass, ':': dryGrass, ';': darkGrass, '*': snow };
+// 마을 흙바닥: 주황빛 마른 흙에 잔돌
+const earth = (r, tx, ty) => {
+  r(0, 0, 16, 16, '#c08a52');
+  speckle(r, tx, ty, 9, ['#cf9a62', '#b07a44', '#d8a874', '#a06c3a']);
+  speckle(r, tx, ty, 2, ['#8a5a30'], 50);
+};
+const GROUNDS = { '.': grass, ':': dryGrass, ';': darkGrass, '*': snow, u: earth };
 
 /** 나무·바위 밑에 깔 바닥: 이웃 칸의 바닥을 따라간다 */
 function groundUnder(n) {
@@ -121,6 +127,7 @@ const PAINTERS = {
     if (n(-1, 0) !== '~') r(0, 0, 1, 16, '#5b8fca');
     if (n(1, 0) !== '~') r(15, 0, 1, 16, '#5b8fca');
   },
+  u: earth,
   // 굴 모래 바닥(주황빛 흙)
   d: (r, tx, ty) => {
     r(0, 0, 16, 16, '#c98a4b');
@@ -372,6 +379,22 @@ export function renderMapCanvas(tiles) {
       const ch = tiles[ty][tx];
       const n = (dx, dy) => tiles[ty + dy]?.[tx + dx] ?? ch;
       (PAINTERS[ch] ?? grass)(painter(ctx, tx * TILE, ty * TILE), tx, ty, n);
+    }
+  }
+  // 풀밭과 흙의 경계: 흙 쪽으로 풀이 삐죽삐죽 번져 나오게(네모 경계를 감춘다)
+  for (let ty = 0; ty < h; ty++) {
+    for (let tx = 0; tx < w; tx++) {
+      if (tiles[ty][tx] !== 'u') continue;
+      const r = painter(ctx, tx * TILE, ty * TILE);
+      const near = (dx, dy) => tiles[ty + dy]?.[tx + dx] === '.';
+      for (let i = 0; i < 16; i++) {
+        const depth = 1 + Math.floor(hash2(tx, ty, 90 + i) * 3);
+        const c = hash2(tx, ty, 120 + i) < 0.5 ? '#4e8a3a' : '#5d9c46';
+        if (near(0, -1)) r(i, 0, 1, depth, c);
+        if (near(0, 1)) r(i, 16 - depth, 1, depth, c);
+        if (near(-1, 0)) r(0, i, depth, 1, c);
+        if (near(1, 0)) r(16 - depth, i, depth, 1, c);
+      }
     }
   }
   // 벽·지붕 바로 아래 칸에 그늘을 드리워 높이감을 준다

@@ -1,5 +1,6 @@
 // 키 큰 나무(32×48): 잎 덩어리를 여러 겹으로 칠해 입체감을 낸다. 오리지널 도트.
 import { HI } from './smooth.js';
+import { isClassic, dotify } from './artmode.js';
 
 const cache = new Map();
 
@@ -18,11 +19,22 @@ function blob(ctx, cx, cy, rx, ry, color) {
 }
 
 export function treeSprite(kind = 'green', variant = 0) {
-  const key = `${kind}:${variant}`;
+  const key = `${isClassic() ? 'px' : 'hd'}:${kind}:${variant}`;
   if (cache.has(key)) return cache.get(key);
+  if (isClassic()) {
+    const px = dotify(32, 48, (ctx) => paintTree(ctx, kind, variant));
+    cache.set(key, px);
+    return px;
+  }
   const c = Object.assign(document.createElement('canvas'), { width: 32 * HI, height: 48 * HI, lw: 32, lh: 48 });
   const ctx = c.getContext('2d');
   ctx.scale(HI, HI);
+  paintTree(ctx, kind, variant);
+  cache.set(key, c);
+  return c;
+}
+
+function paintTree(ctx, kind, variant) {
   const p = PALETTES[kind] ?? PALETTES.green;
   if (kind === 'pine' || kind === 'snow') {
     // 소나무: 층층이 쌓인 삼각 잎
@@ -56,6 +68,4 @@ export function treeSprite(kind = 'green', variant = 0) {
     ctx.ellipse(20, 28, 10, 6, 0, 0, Math.PI * 2);
     ctx.fill();
   }
-  cache.set(key, c);
-  return c;
 }

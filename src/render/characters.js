@@ -67,6 +67,17 @@ export function line(ctx, x0, y0, x1, y1, color, w) {
 // ── 몸의 각 부분 ─────────────────────────────────────────
 function legs(ctx, dir, pose, c, seated) {
   const walk = pose === 'walk';
+  if (seated && dir !== 'side') {
+    // 앞·뒷모습으로 말을 탈 때: 두 다리를 말 양옆으로 걸친다
+    const pants = lin(ctx, 8, 34, 24, 42, [[0, tone(c.pants, 0.25)], [1, c.pants]]);
+    for (const s of [-1, 1]) {
+      const x = (v) => 16 + s * v;
+      shape(ctx, [[x(2), 33.5], [x(5.5), 33.5], [x(8.2), 37.5], [x(6), 38.5]], pants);
+      shape(ctx, [[x(6), 37.5], [x(8.4), 37.5], [x(8.6), 42], [x(6.4), 42]], pants);
+      ellipse(ctx, x(7.5), 42.6, 1.8, 1.1, lin(ctx, 0, 41, 0, 44, [[0, '#4a4a4a'], [1, '#141414']]));
+    }
+    return;
+  }
   if (seated) {
     // 말 위에 걸터앉은 다리: 허벅지는 앞으로, 정강이는 아래로(옆모습)
     const pants = lin(ctx, 10, 34, 18, 42, [[0, tone(c.pants, 0.25)], [1, c.pants]]);

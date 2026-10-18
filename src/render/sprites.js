@@ -1,5 +1,6 @@
 // 16x16 도트를 문자열로 정의하고 팔레트로 색을 입힌다. '.'은 투명.
 // 모든 그림은 이 프로젝트에서 새로 그린 오리지널이다.
+import { isClassic, dotify } from './artmode.js';
 import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
 import { drawCharacter, CHAR_W, CHAR_H } from './characters.js';
@@ -90,15 +91,21 @@ function makeCanvas(w, h) {
 
 
 // 벡터로 그리는 그림: 고해상도 캔버스에 배율을 걸고 논리 좌표로 그린다
+// 원작풍이면 1배 크기 도트로, 아니면 고해상도로 그려 둔다(방식마다 따로 저장)
 function cachedVector(key, w, h, res, draw) {
-  if (!cache.has(key)) {
-    const c = Object.assign(makeCanvas(w * res, h * res), { lw: w, lh: h });
-    const ctx = c.getContext('2d');
-    ctx.scale(res, res);
-    draw(ctx);
-    cache.set(key, c);
+  const full = `${isClassic() ? 'px' : 'hd'}:${key}`;
+  if (!cache.has(full)) {
+    if (isClassic()) {
+      cache.set(full, dotify(w, h, draw));
+    } else {
+      const c = Object.assign(makeCanvas(w * res, h * res), { lw: w, lh: h });
+      const ctx = c.getContext('2d');
+      ctx.scale(res, res);
+      draw(ctx);
+      cache.set(full, c);
+    }
   }
-  return cache.get(key);
+  return cache.get(full);
 }
 
 /** 사람 캐릭터(32×48): 성별·자세·장비가 반영된다. pose: stand | walk | cast | attack */

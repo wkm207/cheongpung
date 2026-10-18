@@ -779,3 +779,25 @@ body.docked .roll-btn { right: calc(var(--side-w) + 106px); }
 .char-bars .sbar { height: 17px; }
 .char-bars .sbar span { line-height: 17px; font-size: 11px; }
 .lv-badge { display: inline-block; padding: 1px 7px; border-radius: 9px; background: var(--red, #a8321a); color: #fff; font-size: 12px; font-weight: bold; }
+
+/* ── 원작풍 그래픽 ── */
+#game-frame { display: none; }
+body.classic.playing #game-frame {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: calc(var(--console-h) + var(--safe-b));
+  pointer-events: none;
+  z-index: 1;
+  border: 5px solid transparent;
+  border-image: linear-gradient(135deg, #f2b65a, #a85a1e 30%, #e8953c 55%, #7a3a12 80%, #d98a3a) 1;
+  box-shadow: inset 0 0 0 1px #3a1a08, inset 0 0 18px rgba(60, 20, 0, 0.45);
+}
+body.classic.playing.docked #game-frame { right: var(--side-w); }
+body.classic #game,
+body.classic .save-slot canvas,
+body.classic .class-card canvas,
+body.classic #doll-canvas,
+body.classic #portrait { image-rendering: pixelated; }
