@@ -195,7 +195,7 @@ function startGame(player, i) {
   slot = i;
   game = new Game(player);
   game.on(onGameEvent);
-  game.log(`${player.name}님, 청풍록에 오신 것을 환영합니다.`, '#ffd166');
+  game.log(`${player.name}님, Country of Wind에 오신 것을 환영합니다.`, '#ffd166');
   if (player.level === 1 && player.exp === 0) game.log('촌장(머리 위 !)에게 말을 걸어 첫 부탁을 받아 보세요.', '#ffe9a8');
   title.hide();
   setPlaying(true);

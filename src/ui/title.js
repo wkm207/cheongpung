@@ -77,8 +77,7 @@ export class Title {
       </div>`;
     }).join('');
     return `
-      <h1>청풍록</h1>
-      <p class="hanja">淸風錄</p>
+      <h1>Country of Wind</h1>
       <p class="sub">바람이 머무는 고을, 나만의 오프라인 모험</p>
       <div class="slot-grid">${slots}</div>
       <div class="title-buttons"><button data-act="import">백업 불러오기</button></div>

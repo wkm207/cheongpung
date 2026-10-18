@@ -126,7 +126,7 @@ export function importText(text) {
   } catch {
     throw new Error('백업 내용을 읽을 수 없습니다. 복사한 글자가 모두 붙여넣어졌는지 확인해 주세요.');
   }
-  if (data?.format !== SAVE_FORMAT) throw new Error('청풍록 백업 데이터가 아닙니다.');
+  if (data?.format !== SAVE_FORMAT) throw new Error('Country of Wind 백업 데이터가 아닙니다.');
   return validatePlayer(data.player);
 }
 

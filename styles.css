@@ -552,8 +552,7 @@ summary { padding: 6px 0; cursor: pointer; color: var(--red); font-weight: 700; 
   gap: 10px;
   text-align: center;
 }
-.title-wrap h1 { margin: 0; font-size: clamp(44px, 12vw, 76px); letter-spacing: 0.25em; color: #f6e2b0; text-shadow: 0 3px 0 #6b3a1a, 0 0 26px rgba(255, 200, 120, 0.5); }
-.title-wrap .hanja { margin: -6px 0 0; letter-spacing: 0.6em; color: #d9b26a; font-size: 14px; }
+.title-wrap h1 { margin: 0; font-size: clamp(34px, 9vw, 68px); letter-spacing: 0.06em; font-family: Georgia, 'Times New Roman', serif; text-align: center; color: #f6e2b0; text-shadow: 0 3px 0 #6b3a1a, 0 0 26px rgba(255, 200, 120, 0.5); }
 .title-wrap h2 { margin: 0; color: var(--gold); }
 .sub { color: #e6dcc6; margin: 0; font-size: 14px; }
 .slot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; width: 100%; margin-top: 8px; }

@@ -1,6 +1,6 @@
 {
-  "name": "청풍록",
-  "short_name": "청풍록",
+  "name": "Country of Wind",
+  "short_name": "Country of Wind",
   "description": "오프라인으로 즐기는 고전 감성 2D RPG",
   "start_url": "./index.html",
   "scope": "./",

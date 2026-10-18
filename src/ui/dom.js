@@ -36,7 +36,7 @@ export async function shareOrDownload(filename, text) {
   const file = new File([text], filename, { type: 'application/json' });
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: '청풍록 백업' });
+      await navigator.share({ files: [file], title: 'Country of Wind 백업' });
       return true;
     } catch (err) {
       return err?.name === 'AbortError';
