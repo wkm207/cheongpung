@@ -492,7 +492,7 @@ export function menuView(game, state, settings) {
         <table>${keys}</table>
         <p class="muted">게임은 15초마다, 그리고 앱을 닫을 때 자동 저장됩니다.</p>
         <h3>그림 출처</h3>
-        <p class="muted">맵 타일: Ninja Adventure (Pixel-Boy · AAA, CC0) · 사람 그림: LPC(Liberated Pixel Cup) 기여자들 (CC-BY-SA 3.0) — 만든 이 전체 목록은 assets/lpc/CREDITS.txt</p>
+        <p class="muted">맵 타일: Ninja Adventure (Pixel-Boy · AAA, CC0) · 사람 그림은 이 게임에서 직접 찍은 도트</p>
       </div>
     </div>`;
 }

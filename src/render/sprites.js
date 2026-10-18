@@ -1,6 +1,7 @@
 // 16x16 도트를 문자열로 정의하고 팔레트로 색을 입힌다. '.'은 투명.
 // 모든 그림은 이 프로젝트에서 새로 그린 오리지널이다.
-import { isClassic, dotify } from './artmode.js';
+import { isClassic, isNinja, dotify } from './artmode.js';
+import { personCanvas, playerLook } from './people.js';
 import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
 import { drawCharacter, CHAR_W, CHAR_H } from './characters.js';
@@ -176,5 +177,7 @@ export function monsterSprite(type) {
 
 /** 캐릭터 고르는 화면·초상화용 정면 그림 */
 export function portraitSprite(cls, equip = {}, gender = 'm') {
+  // 새 도트 모드에서는 게임 속과 같은 큰 머리 도트(32×48, 위 8칸 여백, 3배로 키움)
+  if (isNinja()) return personCanvas(playerLook({ cls, equip, gender }), 'down', {}, { res: 3, padTop: 8 });
   return playerSprite(cls, { gender, dir: 'down', equip });
 }

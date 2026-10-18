@@ -7,7 +7,7 @@ import { treeSprite } from './trees.js';
 import { smoothMap } from './smooth.js';
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
-import { drawLpc, npcSheetName, LPC_FRAMES } from './lpc.js';
+import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -87,9 +87,12 @@ function drawSprite(ctx, img, x, y, flip) {
   ctx.restore();
 }
 
-// 말 탄 LPC 그림: 몸을 이만큼 올리고, 엉덩이(칸 위쪽 기준 y) 아래는 가린다
-const RIDER_LIFT = 11;
-const LPC_HORSE_SCALE = 1.35;
+// 말 탄 도트 사람: 몸을 이만큼 올리고 엉덩이 아래(다리)는 가린다. 말은 조금 키운다
+const RIDER_LIFT = 13;
+const RIDER_HIP = 8; // 칸 위쪽 기준 엉덩이 높이
+const PERSON_HORSE_SCALE = 1.35;
+// 도트 사람 머리 위 이름표 자리(칸 위쪽 기준)
+const PERSON_LABEL = 22;
 
 /** (cx,cy)를 기준으로 k배 키워 그리기 */
 function scaledAt(ctx, cx, cy, k, draw) {
@@ -101,7 +104,6 @@ function scaledAt(ctx, cx, cy, k, draw) {
   draw();
   ctx.restore();
 }
-const RIDER_HIP = 13 - RIDER_LIFT;
 
 const spriteDir = (dir) => (dir === 'left' || dir === 'right' ? 'side' : dir);
 // 사람마다 눈 깜빡이는 때가 조금씩 다르게
@@ -401,15 +403,13 @@ export class Renderer {
     });
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
     const gallop = pe.moving ? game.now : 0;
-    // LPC 사람은 크니 말도 키운다
-    const horseK = isNinja() ? LPC_HORSE_SCALE : 1;
+    const horseK = isNinja() ? PERSON_HORSE_SCALE : 1;
     if (riding && rideView === 'side') scaledAt(ctx, x + 16, y + 31, horseK, () => this.drawHorse(ctx, x, y, faceRight, gallop));
     else if (riding) scaledAt(ctx, x + 16, y + 31, horseK, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'back'));
     ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : game.isDodging() ? 0.75 : 1;
     const rollT = (game.now - (game.rollStart ?? -1e9)) / 330;
-    if (isNinja() && this.drawLpcPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop)) {
-      // LPC 그림으로 그렸다
-    } else if (rollT < 1) {
+    if (isNinja()) this.drawDotPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop);
+    else if (rollT < 1) {
       // 구르기: 몸을 한 바퀴 돌린다
       const cx = x + 16;
       const cy = y + 6;
@@ -437,49 +437,41 @@ export class Renderer {
       ctx.stroke();
     }
     const name = `Lv${game.player.level} ${game.player.tier ? `${game.title()} ` : ''}${game.player.name}`;
-    // LPC 사람은 머리가 더 높다
-    const top = y - (isNinja() ? (riding ? 33 : 21) : riding ? 22 : 18);
+    const top = y - (isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
     this.drawVitals(ctx, game, x + 16, top - 1);
     label(ctx, name, x + 16, top - 6, game.player.gm.god ? '#ffd166' : '#ffffff');
     if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, top - 14);
   }
 
-  /** LPC 사람 그림으로 플레이어 그리기(그림이 아직 없으면 false) */
-  drawLpcPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop) {
-    const { cls, gender } = game.player;
-    const name = `${cls}_${gender === 'f' ? 'f' : 'm'}`;
+  /** 큰 머리 도트 사람으로 플레이어 그리기: 걷기·휘두르기·마법 자세·쓰러짐·구르기·말 타기 */
+  drawDotPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop) {
+    const look = playerLook(game.player);
     const dir = riding && rideView === 'side' ? this.rideFace : pe.dir;
-    let anim = 'walk';
-    let frame = pe.moving && !riding ? 1 + (Math.floor(game.now / 95) % 8) : 0;
-    if (game.dead) {
-      anim = 'hurt';
-      frame = LPC_FRAMES.hurt - 1;
-    } else if (pose === 'cast') {
-      anim = 'spellcast';
-      frame = Math.floor((420 - (game.castPoseUntil - game.now)) / 60);
-    } else if (pose === 'attack') {
-      anim = cls === 'mage' || cls === 'priest' ? 'thrust' : 'slash';
-      frame = Math.floor(((200 - (game.attackPoseUntil - game.now)) / 200) * LPC_FRAMES[anim]);
-    }
-    if (rollT < 1) {
+    let opts = { step: riding ? 0 : walkStep(pe.moving, game.now) };
+    if (pose === 'cast') opts = { pose: 'cast' };
+    else if (pose === 'attack') opts = { pose: 'attack', phase: Math.max(0, Math.min(3, Math.floor(((200 - (game.attackPoseUntil - game.now)) / 200) * 4))) };
+    if (game.dead || rollT < 1) {
+      // 쓰러지면 옆으로 눕고, 구르면 한 바퀴
       ctx.save();
-      ctx.translate(x + 16, y + 14);
-      ctx.rotate((pe.dir === 'left' ? -1 : 1) * rollT * Math.PI * 2);
-      const ok = drawLpc(ctx, name, 'walk', pe.dir, 0, -16, -20);
+      ctx.translate(x + 16, y + 20);
+      ctx.rotate(game.dead ? Math.PI / 2 : (pe.dir === 'left' ? -1 : 1) * rollT * Math.PI * 2);
+      drawPerson(ctx, look, pe.dir, {}, -16, -20);
       ctx.restore();
-      return ok;
+      return;
     }
-    if (!riding) return drawLpc(ctx, name, anim, dir, frame, x, y);
+    if (!riding) {
+      drawPerson(ctx, look, dir, opts, x, y);
+      return;
+    }
     // 말 위: 엉덩이 위쪽만 안장에 앉힌다
     const bounce = pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(x - 80, y - 80, 192, 80 + RIDER_HIP - bounce);
+    ctx.rect(x - 40, y - 60, 112, 60 + RIDER_HIP - bounce);
     ctx.clip();
-    const ok = drawLpc(ctx, name, anim, dir, frame, x, y, 1, RIDER_LIFT + bounce);
+    drawPerson(ctx, look, dir, opts, x, y, RIDER_LIFT + bounce);
     ctx.restore();
-    if (ok && rideView !== 'side') scaledAt(ctx, x + 16, y + 31, LPC_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
-    return ok;
+    if (rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
   }
 
   /** 머리 위 체력(빨강)·마력(파랑) 막대 */
@@ -775,16 +767,17 @@ export class Renderer {
     shadow(ctx, x + 16, y + 30, n.look === 'cat' ? 7 : 9);
     const img = npcSprite(n.look, spriteDir(n.dir), blinking(game.now, n.x * 3 + n.y));
     const flip = n.look === 'cat' ? n.face === 'right' : n.dir === 'right';
-    const top = (img.lh ?? img.height) > 32 ? 18 : 2;
-    const sheet = isNinja() && npcSheetName(n.look);
-    const frame = n.moving ? 1 + (Math.floor(game.now / 110) % 8) : 0;
-    if (!sheet || !drawLpc(ctx, sheet, 'walk', n.dir ?? 'down', frame, x, y)) drawSprite(ctx, img, x, y - top, flip);
+    const dot = isNinja() && npcLook(n.look);
+    const tall = dot || (img.lh ?? img.height) > 32;
+    const top = dot ? PERSON_LABEL : tall ? 18 : 2;
+    if (dot) drawPerson(ctx, dot, n.dir ?? 'down', { step: walkStep(n.moving, game.now, 160) }, x, y);
+    else drawSprite(ctx, img, x, y - top, flip);
     label(ctx, n.name, x + 16, y - top, '#ffe08a');
     if (n.speech && n.speech.until > game.now) bubble(ctx, n.speech.text, x + 16, y - top - 8);
     const mark = this.npcMark(game, n);
     if (mark) {
       const hop = Math.abs(Math.sin(game.now / 250)) * 3;
-      label(ctx, mark.text, x + 16, y - ((img.lh ?? img.height) > 32 ? 27 : 11) - hop, mark.color, 13);
+      label(ctx, mark.text, x + 16, y - (tall ? top + 9 : 11) - hop, mark.color, 13);
     }
   }
 
