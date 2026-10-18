@@ -485,6 +485,8 @@ export function menuView(game, state, settings) {
         <p class="muted">몬스터는 옆에 붙은 뒤 잠시 몸을 움찔하고 공격합니다. 그 사이 한 칸 물러나면 공격을 피할 수 있어요.</p>
         <table>${keys}</table>
         <p class="muted">게임은 15초마다, 그리고 앱을 닫을 때 자동 저장됩니다.</p>
+        <h3>그림 출처</h3>
+        <p class="muted">맵 타일: Ninja Adventure (Pixel-Boy · AAA, CC0) · 사람 그림: LPC(Liberated Pixel Cup) 기여자들 (CC-BY-SA 3.0) — 만든 이 전체 목록은 assets/lpc/CREDITS.txt</p>
       </div>
     </div>`;
 }

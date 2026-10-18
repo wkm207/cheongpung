@@ -7,6 +7,7 @@ import { treeSprite } from './trees.js';
 import { smoothMap } from './smooth.js';
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
+import { drawLpc, npcSheetName, LPC_FRAMES } from './lpc.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -85,6 +86,22 @@ function drawSprite(ctx, img, x, y, flip) {
   ctx.drawImage(img, 0, 0, w, h);
   ctx.restore();
 }
+
+// 말 탄 LPC 그림: 몸을 이만큼 올리고, 엉덩이(칸 위쪽 기준 y) 아래는 가린다
+const RIDER_LIFT = 11;
+const LPC_HORSE_SCALE = 1.35;
+
+/** (cx,cy)를 기준으로 k배 키워 그리기 */
+function scaledAt(ctx, cx, cy, k, draw) {
+  if (k === 1) return draw();
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(k, k);
+  ctx.translate(-cx, -cy);
+  draw();
+  ctx.restore();
+}
+const RIDER_HIP = 13 - RIDER_LIFT;
 
 const spriteDir = (dir) => (dir === 'left' || dir === 'right' ? 'side' : dir);
 // 사람마다 눈 깜빡이는 때가 조금씩 다르게
@@ -384,11 +401,15 @@ export class Renderer {
     });
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
     const gallop = pe.moving ? game.now : 0;
-    if (riding && rideView === 'side') this.drawHorse(ctx, x, y, faceRight, gallop);
-    else if (riding) this.drawHorseFacing(ctx, x, y, rideView, gallop, 'back');
+    // LPC 사람은 크니 말도 키운다
+    const horseK = isNinja() ? LPC_HORSE_SCALE : 1;
+    if (riding && rideView === 'side') scaledAt(ctx, x + 16, y + 31, horseK, () => this.drawHorse(ctx, x, y, faceRight, gallop));
+    else if (riding) scaledAt(ctx, x + 16, y + 31, horseK, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'back'));
     ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : game.isDodging() ? 0.75 : 1;
     const rollT = (game.now - (game.rollStart ?? -1e9)) / 330;
-    if (rollT < 1) {
+    if (isNinja() && this.drawLpcPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop)) {
+      // LPC 그림으로 그렸다
+    } else if (rollT < 1) {
       // 구르기: 몸을 한 바퀴 돌린다
       const cx = x + 16;
       const cy = y + 6;
@@ -416,10 +437,49 @@ export class Renderer {
       ctx.stroke();
     }
     const name = `Lv${game.player.level} ${game.player.tier ? `${game.title()} ` : ''}${game.player.name}`;
-    const top = y - (riding ? 22 : 18);
+    // LPC 사람은 머리가 더 높다
+    const top = y - (isNinja() ? (riding ? 33 : 21) : riding ? 22 : 18);
     this.drawVitals(ctx, game, x + 16, top - 1);
     label(ctx, name, x + 16, top - 6, game.player.gm.god ? '#ffd166' : '#ffffff');
     if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, top - 14);
+  }
+
+  /** LPC 사람 그림으로 플레이어 그리기(그림이 아직 없으면 false) */
+  drawLpcPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop) {
+    const { cls, gender } = game.player;
+    const name = `${cls}_${gender === 'f' ? 'f' : 'm'}`;
+    const dir = riding && rideView === 'side' ? this.rideFace : pe.dir;
+    let anim = 'walk';
+    let frame = pe.moving && !riding ? 1 + (Math.floor(game.now / 95) % 8) : 0;
+    if (game.dead) {
+      anim = 'hurt';
+      frame = LPC_FRAMES.hurt - 1;
+    } else if (pose === 'cast') {
+      anim = 'spellcast';
+      frame = Math.floor((420 - (game.castPoseUntil - game.now)) / 60);
+    } else if (pose === 'attack') {
+      anim = cls === 'mage' || cls === 'priest' ? 'thrust' : 'slash';
+      frame = Math.floor(((200 - (game.attackPoseUntil - game.now)) / 200) * LPC_FRAMES[anim]);
+    }
+    if (rollT < 1) {
+      ctx.save();
+      ctx.translate(x + 16, y + 14);
+      ctx.rotate((pe.dir === 'left' ? -1 : 1) * rollT * Math.PI * 2);
+      const ok = drawLpc(ctx, name, 'walk', pe.dir, 0, -16, -20);
+      ctx.restore();
+      return ok;
+    }
+    if (!riding) return drawLpc(ctx, name, anim, dir, frame, x, y);
+    // 말 위: 엉덩이 위쪽만 안장에 앉힌다
+    const bounce = pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - 80, y - 80, 192, 80 + RIDER_HIP - bounce);
+    ctx.clip();
+    const ok = drawLpc(ctx, name, anim, dir, frame, x, y, 1, RIDER_LIFT + bounce);
+    ctx.restore();
+    if (ok && rideView !== 'side') scaledAt(ctx, x + 16, y + 31, LPC_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
+    return ok;
   }
 
   /** 머리 위 체력(빨강)·마력(파랑) 막대 */
@@ -716,7 +776,9 @@ export class Renderer {
     const img = npcSprite(n.look, spriteDir(n.dir), blinking(game.now, n.x * 3 + n.y));
     const flip = n.look === 'cat' ? n.face === 'right' : n.dir === 'right';
     const top = (img.lh ?? img.height) > 32 ? 18 : 2;
-    drawSprite(ctx, img, x, y - top, flip);
+    const sheet = isNinja() && npcSheetName(n.look);
+    const frame = n.moving ? 1 + (Math.floor(game.now / 110) % 8) : 0;
+    if (!sheet || !drawLpc(ctx, sheet, 'walk', n.dir ?? 'down', frame, x, y)) drawSprite(ctx, img, x, y - top, flip);
     label(ctx, n.name, x + 16, y - top, '#ffe08a');
     if (n.speech && n.speech.until > game.now) bubble(ctx, n.speech.text, x + 16, y - top - 8);
     const mark = this.npcMark(game, n);
