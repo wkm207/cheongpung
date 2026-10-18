@@ -20,28 +20,36 @@ function speckle(r, tx, ty, count, colors, salt = 0) {
   }
 }
 
-const grass = (r, tx, ty) => {
-  r(0, 0, 16, 16, '#4e8a3a');
-  speckle(r, tx, ty, 10, ['#5d9c46', '#437a31', '#66a84e']);
-};
-const dryGrass = (r, tx, ty) => {
-  r(0, 0, 16, 16, '#9a9a52');
-  speckle(r, tx, ty, 10, ['#a8a85e', '#878745', '#b3b06a']);
-};
+/**
+ * 원작풍 디더링 바닥: [바탕, 얼룩(체크무늬), 어두운 점, 밝은 점]
+ * 칸을 넘어 이어지는 얼룩이라 타일 경계가 덜 보인다.
+ */
+function dithered(r, tx, ty, [base, patchC, dark, light], blades = false) {
+  r(0, 0, 16, 16, base);
+  for (let y = 0; y < 16; y++) {
+    for (let x = 0; x < 16; x++) {
+      const gx = tx * 16 + x;
+      const gy = ty * 16 + y;
+      const patch = hash2(Math.floor(gx / 6), Math.floor(gy / 5), 11) + hash2(Math.floor(gx / 3), Math.floor(gy / 3), 13) * 0.4;
+      const v = hash2(gx, gy, 7);
+      if (patch > 0.95 && (x + y) % 2 === 0) r(x, y, 1, 1, patchC);
+      else if (v < 0.09) r(x, y, 1, blades && y < 15 ? 2 : 1, dark);
+      else if (v > 0.955) r(x, y, 1, 1, light);
+    }
+  }
+}
 
-const darkGrass = (r, tx, ty) => {
-  r(0, 0, 16, 16, '#355e2d');
-  speckle(r, tx, ty, 10, ['#3f6d35', '#2b4f25', '#4a7a3e']);
-};
+const grass = (r, tx, ty) => dithered(r, tx, ty, ['#3d7a2a', '#4f9036', '#2a5c1d', '#86c060'], true);
+const dryGrass = (r, tx, ty) => dithered(r, tx, ty, ['#8f8f44', '#a3a352', '#6e6e30', '#c4c27a'], true);
+const darkGrass = (r, tx, ty) => dithered(r, tx, ty, ['#2e5c24', '#3c6e2e', '#1e4218', '#5a9244'], true);
 const snow = (r, tx, ty) => {
   r(0, 0, 16, 16, '#eef3f8');
   speckle(r, tx, ty, 8, ['#dde7f0', '#ffffff', '#cfdbe6']);
 };
 // 마을 흙바닥: 주황빛 마른 흙에 잔돌
 const earth = (r, tx, ty) => {
-  r(0, 0, 16, 16, '#c08a52');
-  speckle(r, tx, ty, 9, ['#cf9a62', '#b07a44', '#d8a874', '#a06c3a']);
-  speckle(r, tx, ty, 2, ['#8a5a30'], 50);
+  dithered(r, tx, ty, ['#c4783a', '#b2672e', '#94511f', '#dc9a5e']);
+  speckle(r, tx, ty, 2, ['#7a4418'], 50);
 };
 const GROUNDS = { '.': grass, ':': dryGrass, ';': darkGrass, '*': snow, u: earth };
 
@@ -61,17 +69,36 @@ const PAINTERS = {
   '*': snow,
   ',': (r, tx, ty, n) => {
     grass(r, tx, ty, n);
-    const colors = ['#f7f1a1', '#f5b7d2', '#ffffff', '#f7c873'];
-    for (let i = 0; i < 3; i++) {
-      const x = 2 + Math.floor(hash2(tx, ty, 50 + i) * 12);
-      const y = 2 + Math.floor(hash2(tx, ty, 60 + i) * 12);
-      r(x, y, 1, 1, colors[Math.floor(hash2(tx, ty, 70 + i) * 4)]);
-      r(x, y + 1, 1, 1, '#2f6b25');
+    const kinds = [['#ffffff', '#e8e0d0'], ['#ff9a3c', '#d86a1c'], ['#f5d06a', '#c89a2a']];
+    for (let i = 0; i < 2; i++) {
+      const x = 2 + Math.floor(hash2(tx, ty, 50 + i) * 11);
+      const y = 2 + Math.floor(hash2(tx, ty, 60 + i) * 10);
+      const [c, d] = kinds[Math.floor(hash2(tx, ty, 70 + i) * kinds.length)];
+      r(x + 1, y + 2, 1, 2, '#1e4a16');
+      r(x, y + 3, 1, 1, '#2f6b25');
+      r(x + 1, y, 1, 1, c);
+      r(x, y + 1, 1, 1, c);
+      r(x + 2, y + 1, 1, 1, c);
+      r(x + 1, y + 2, 1, 1, c);
+      r(x + 1, y + 1, 1, 1, d);
     }
   },
-  '=': (r, tx, ty) => {
-    r(0, 0, 16, 16, '#b8955e');
-    speckle(r, tx, ty, 9, ['#a7844f', '#c6a46c', '#9b7a48']);
+  // 흙길: 밟아 다져진 주황 흙
+  '=': (r, tx, ty) => dithered(r, tx, ty, ['#cc8442', '#ba7236', '#9c5a26', '#e4a86a']),
+  // 나무 울타리(막힘): 말뚝과 두 줄 가로대
+  f: (r, tx, ty, n) => {
+    groundUnder(n)(r, tx, ty);
+    r(0, 13, 16, 2, 'rgba(0,0,0,0.22)');
+    for (const px of [1, 9]) {
+      r(px, 3, 3, 11, '#5a3a18');
+      r(px, 3, 2, 10, '#8a5a2a');
+      r(px, 3, 1, 9, '#b07a40');
+      r(px, 2, 3, 1, '#3a2410');
+    }
+    for (const ry of [6, 10]) {
+      r(0, ry, 16, 2, '#5a3a18');
+      r(0, ry, 16, 1, '#9a6632');
+    }
   },
   S: (r, tx, ty) => {
     r(0, 0, 16, 16, '#9a958a');
@@ -84,10 +111,8 @@ const PAINTERS = {
     const ground = groundUnder(n);
     ground(r, tx, ty);
     if (TALL_TREES) {
-      // 잎은 캐릭터와 같은 층에서 따로 그린다: 여기서는 밑동과 그림자만
-      r(3, 12, 10, 3, 'rgba(0,0,0,0.25)');
-      r(7, 10, 2, 5, '#5b3a1e');
-      r(7, 10, 1, 5, '#7a5230');
+      // 줄기와 잎은 캐릭터와 같은 층에서 따로 그린다: 여기서는 그림자만
+      r(2, 11, 12, 4, 'rgba(0,0,0,0.25)');
       return;
     }
     if (ground === snow) {
@@ -172,20 +197,27 @@ const PAINTERS = {
       speckle(r, tx, ty, 3, ['#3a3029'], 40);
     }
   },
+  // 흙벽(원작 초가 느낌): 누런 흙벽에 굵은 나무 기둥·인방, 아래는 돌 기단, 군데군데 살창
   W: (r, tx, ty, n) => {
-    r(0, 0, 16, 16, '#e8dcc0');
-    r(0, 0, 1, 16, '#7a5230');
-    r(15, 0, 1, 16, '#7a5230');
-    r(0, 7, 16, 1, '#7a5230');
-    if (n(0, 1) !== 'W' && n(0, 1) !== 'D') r(0, 14, 16, 2, '#6b6b6b');
-    if (n(-1, 0) === 'D' || n(1, 0) === 'D' || hash2(tx, ty, 9) > 0.6) {
-      r(5, 2, 6, 4, '#4b3420');
-      r(6, 3, 4, 2, '#d8c79a');
-      r(8, 3, 1, 2, '#4b3420');
+    dithered(r, tx, ty, ['#b8844c', '#a8743e', '#8a5a2c', '#d0a06a']);
+    r(0, 0, 2, 16, '#4a2a12');
+    r(1, 0, 1, 16, '#6a4020');
+    r(0, 0, 16, 2, '#4a2a12');
+    r(0, 1, 16, 1, '#6a4020');
+    if (n(0, 1) !== 'W' && n(0, 1) !== 'D') {
+      r(0, 13, 16, 3, '#7a6e60');
+      for (let x = 0; x < 16; x += 4) r(x + (ty % 2) * 2, 13, 1, 3, '#5a5048');
+      r(0, 13, 16, 1, '#9a8e80');
+    }
+    if (n(-1, 0) === 'D' || n(1, 0) === 'D' || hash2(tx, ty, 9) > 0.55) {
+      r(4, 4, 8, 6, '#3a2210');
+      r(5, 5, 6, 4, '#1e120a');
+      for (let x = 6; x < 11; x += 2) r(x, 5, 1, 4, '#6a4a2a');
+      r(5, 7, 6, 1, '#6a4a2a');
     }
   },
   D: (r) => {
-    r(0, 0, 16, 16, '#e8dcc0');
+    r(0, 0, 16, 16, '#b8844c');
     r(2, 1, 12, 15, '#5b3a1e');
     r(3, 2, 4, 14, '#7a5230');
     r(9, 2, 4, 14, '#7a5230');
@@ -216,10 +248,27 @@ const PAINTERS = {
     r(0, 15, 16, 1, '#4d463d');
   },
   // 초가지붕
+  // 초가지붕: 짚 결이 비스듬히 흐르고, 군데군데 박 넝쿨이 올라앉는다
   Y: (r, tx, ty, n) => {
-    r(0, 0, 16, 16, '#d8b25a');
-    for (let y = 1; y < 16; y += 3) r(0, y, 16, 1, '#b8913f');
-    speckle(r, tx, ty, 10, ['#e9c977', '#c49d4a']);
+    r(0, 0, 16, 16, '#c88a3a');
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const v = hash2(tx * 16 + x, ty * 16 + y, 41);
+        if ((x + y * 2) % 5 === 0) r(x, y, 1, 1, '#a86a28');
+        else if (v > 0.9) r(x, y, 1, 1, '#e0a858');
+        else if (v < 0.06) r(x, y, 1, 1, '#8a521c');
+      }
+    }
+    if (n(0, -1) === 'Y' && hash2(tx, ty, 77) > 0.72) {
+      // 박: 초록 넝쿨에 둥근 박
+      r(2, 9, 12, 1, '#4a7a2a');
+      r(4, 8, 1, 2, '#4a7a2a');
+      r(10, 10, 1, 2, '#4a7a2a');
+      r(6, 4, 5, 5, '#5a8a32');
+      r(7, 3, 3, 7, '#5a8a32');
+      r(7, 4, 2, 2, '#c8e090');
+      r(6, 8, 5, 1, '#3a6a20');
+    }
     if (n(0, -1) !== 'Y') {
       r(0, 0, 16, 3, '#c9a24c');
       r(0, 0, 16, 1, '#8a6a2a');
@@ -381,19 +430,39 @@ export function renderMapCanvas(tiles) {
       (PAINTERS[ch] ?? grass)(painter(ctx, tx * TILE, ty * TILE), tx, ty, n);
     }
   }
-  // 풀밭과 흙의 경계: 흙 쪽으로 풀이 삐죽삐죽 번져 나오게(네모 경계를 감춘다)
+  // 풀밭과 흙의 경계(원작풍 언덕): 풀밭 아래쪽에 흙 비탈과 그늘, 옆·위는 짙은 테두리와 삐죽한 풀
+  const GRASSY = new Set(['.', ',']);
+  const DIRT = new Set(['u', '=', 'd']);
   for (let ty = 0; ty < h; ty++) {
     for (let tx = 0; tx < w; tx++) {
-      if (tiles[ty][tx] !== 'u') continue;
+      const ch = tiles[ty][tx];
       const r = painter(ctx, tx * TILE, ty * TILE);
-      const near = (dx, dy) => tiles[ty + dy]?.[tx + dx] === '.';
-      for (let i = 0; i < 16; i++) {
-        const depth = 1 + Math.floor(hash2(tx, ty, 90 + i) * 3);
-        const c = hash2(tx, ty, 120 + i) < 0.5 ? '#4e8a3a' : '#5d9c46';
-        if (near(0, -1)) r(i, 0, 1, depth, c);
-        if (near(0, 1)) r(i, 16 - depth, 1, depth, c);
-        if (near(-1, 0)) r(0, i, depth, 1, c);
-        if (near(1, 0)) r(16 - depth, i, depth, 1, c);
+      const at = (dx, dy) => tiles[ty + dy]?.[tx + dx];
+      if (GRASSY.has(ch)) {
+        if (DIRT.has(at(0, 1))) {
+          // 비탈: 풀 끝선 → 주황 흙 벽 → 그늘
+          for (let i = 0; i < 16; i++) {
+            const lip = 11 + Math.floor(hash2(tx * 16 + i, ty, 31) * 2);
+            r(i, lip, 1, 1, '#2a5c1d');
+            r(i, lip + 1, 1, 16 - lip - 1, i % 3 === 0 ? '#8a4418' : '#a85a24');
+          }
+          r(0, 15, 16, 1, '#6a3412');
+        }
+        if (DIRT.has(at(0, -1))) r(0, 0, 16, 1, '#2a5c1d');
+        if (DIRT.has(at(-1, 0))) r(0, 0, 1, 16, '#2a5c1d');
+        if (DIRT.has(at(1, 0))) r(15, 0, 1, 16, '#2a5c1d');
+      } else if (DIRT.has(ch)) {
+        if (GRASSY.has(at(0, -1))) {
+          // 비탈 아래 흙에 드리운 그늘
+          ctx.fillStyle = 'rgba(60, 25, 5, 0.35)';
+          ctx.fillRect(tx * TILE, ty * TILE, TILE, 6);
+        }
+        for (let i = 0; i < 16; i++) {
+          const depth = 1 + Math.floor(hash2(tx, ty, 90 + i) * 2);
+          const c = hash2(tx, ty, 120 + i) < 0.5 ? '#3d7a2a' : '#2a5c1d';
+          if (GRASSY.has(at(-1, 0))) r(0, i, depth, 1, c);
+          if (GRASSY.has(at(1, 0))) r(16 - depth, i, depth, 1, c);
+        }
       }
     }
   }

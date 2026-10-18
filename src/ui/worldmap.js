@@ -248,7 +248,7 @@ function drawWorld(canvas, game, s) {
 }
 
 const TILE_COLORS = {
-  '~': '#2f6db5', '=': '#b8955e', S: '#9a958a', c: '#5a4a3c', '*': '#e6edf3', ':': '#8f8f4c', ';': '#2f5528', u: '#c08a52', d: '#c98a4b', M: '#5a2e1c', g: '#3a2c22', N: '#1a1418', L: '#d4451f', a: '#3a2e2a',
+  '~': '#2f6db5', '=': '#b8955e', S: '#9a958a', c: '#5a4a3c', '*': '#e6edf3', ':': '#8f8f4c', ';': '#2f5528', u: '#c4783a', f: '#8a5a2a', d: '#c98a4b', M: '#5a2e1c', g: '#3a2c22', N: '#1a1418', L: '#d4451f', a: '#3a2e2a',
 };
 
 function drawHere(canvas, game) {

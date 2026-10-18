@@ -2,7 +2,7 @@ import { mulberry32, randInt } from '../core/rng.js';
 
 // 지나갈 수 없는 타일
 // Q 돌담, Y 초가지붕, G 대문 기둥, J 장승, K 장독, H 실내 벽, U 탁자·계산대, V 선반 (D 문은 지나갈 수 있다)
-export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V', 'C', 'Z', 'L', 'M', 'N']);
+export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V', 'C', 'Z', 'L', 'M', 'N', 'f']);
 
 const grid = (w, h, ch) => Array.from({ length: h }, () => Array(w).fill(ch));
 const inInterior = (g, x, y) => x >= 1 && y >= 1 && y < g.length - 1 && x < g[0].length - 1;
@@ -217,7 +217,7 @@ export function buildVillage({ w, h, seed, portals, npcs }) {
   }
   fillRect(g, 1, 14, w - 2, 2, '=');
   fillRect(g, 19, 1, 2, 13, '=');
-  fillRect(g, 14, 11, 12, 8, 'S');
+  fillRect(g, 14, 11, 12, 8, '='); // 다져진 흙마당
   // 기와집(R)과 초가집(Y)
   for (const [hx, hy, roof] of [[5, 4, 'R'], [27, 4, 'R'], [5, 20, 'Y'], [27, 20, 'R'], [13, 20, 'Y'], [33, 3, 'Y']]) house(g, hx, hy, roof);
   fillRect(g, 7, 10, 1, 4, '=');
@@ -237,11 +237,11 @@ export function buildVillage({ w, h, seed, portals, npcs }) {
     for (let x = 1; x < w - 1; x++) {
       if ((g[y][x] !== '.' && g[y][x] !== 'u') || nearNpc(x, y)) continue;
       const r = rng();
-      if (r < 0.03 && g[y][x] === '.') g[y][x] = 'T';
+      if (r < 0.06 && g[y][x] === '.') g[y][x] = 'T';
       else if (r < 0.06 && g[y][x] === '.') g[y][x] = ',';
     }
   }
-  border(g, 'Q');
+  border(g, 'f');
   decorateGates(g, portals);
   return fillUnreachable(g, 19, 17, 'T');
 }
