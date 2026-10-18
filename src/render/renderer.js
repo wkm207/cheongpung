@@ -5,7 +5,8 @@ import { drawEffect } from './effects.js';
 import { Ambient } from './ambient.js';
 import { treeSprite } from './trees.js';
 import { smoothMap } from './smooth.js';
-import { isClassic, dotify } from './artmode.js';
+import { isClassic, isNinja, dotify } from './artmode.js';
+import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -133,10 +134,12 @@ export class Renderer {
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     if (!game) return;
 
-    const mapKey = `${game.mapId}:${isClassic()}`;
+    const ninja = isNinja() && ninjaReady();
+    const mapKey = `${game.mapId}:${isClassic()}:${ninja}`;
     if (mapKey !== this.mapId) {
-      // 원작풍은 도트를 그대로, 매끈한 방식은 계단을 둥글리고 살짝 번지게
-      this.mapCanvas = isClassic() ? renderMapCanvas(game.map.tiles) : smoothMap(renderMapCanvas(game.map.tiles));
+      // 새 타일 → 기존 그림 위에 덧그림, 원작풍 → 도트 그대로, 매끈 → 계단을 둥글리고 살짝 번지게
+      if (ninja) this.mapCanvas = renderNinjaMap(game.map.tiles, renderMapCanvas(game.map.tiles));
+      else this.mapCanvas = isClassic() ? renderMapCanvas(game.map.tiles) : smoothMap(renderMapCanvas(game.map.tiles));
       this.mapId = mapKey;
       this.trees = this.findTrees(game.map.tiles);
     }
@@ -197,7 +200,7 @@ export class Renderer {
         if (near.includes('*')) kind = 'snow';
         else if (near.includes(';')) kind = 'pine';
         else if (near.includes(':')) kind = 'dry';
-        out.push({ x, y, look: kind, variant: (x * 7 + y * 3) % 3 });
+        out.push({ x, y, look: kind, variant: (x * 13 + y * 7) % 11 === 0 ? 3 : (x * 7 + y * 3) % 3 });
       }
     }
     return out;
@@ -349,7 +352,9 @@ export class Renderer {
         // 플레이어가 나무 바로 뒤에 있으면 잎을 반투명하게
         const behind = game.pe.x === e.x && (game.pe.y === e.y - 1);
         ctx.globalAlpha = behind ? 0.55 : 1;
-        ctx.drawImage(treeSprite(e.look, e.variant), x, y - 22, 32, 48);
+        const big = isNinja() ? ninjaTree(e.look, e.variant) : null;
+        if (big) ctx.drawImage(big, x + 16 - big.lw / 2, y + 34 - big.lh, big.lw, big.lh);
+        else ctx.drawImage(treeSprite(e.look, e.variant), x, y - 22, 32, 48);
         ctx.globalAlpha = 1;
         continue;
       }

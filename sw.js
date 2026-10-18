@@ -1,6 +1,6 @@
 // 오프라인 실행용 서비스 워커: 처음 접속할 때 모든 파일을 저장해 두고, 이후엔 저장본을 먼저 쓴다.
 // 게임 파일을 고치면 VERSION을 올려야 기기에 새 버전이 받아진다.
-const VERSION = 'cheongpung-v21';
+const VERSION = 'cheongpung-v22';
 const ASSETS = [
   './',
   './index.html',
@@ -41,6 +41,7 @@ const ASSETS = [
   './src/render/characters.js',
   './src/render/effects.js',
   './src/render/foes.js',
+  './src/render/ninja.js',
   './src/render/renderer.js',
   './src/render/smooth.js',
   './src/render/sprites.js',
@@ -63,6 +64,11 @@ const ASSETS = [
   './src/world/mapgen.js',
   './src/world/monsters.js',
   './src/world/skills.js',
+  './assets/ninja/Floor.png',
+  './assets/ninja/House.png',
+  './assets/ninja/Nature.png',
+  './assets/ninja/Relief.png',
+  './assets/ninja/Water.png',
 ];
 
 self.addEventListener('install', (event) => {

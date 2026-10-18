@@ -176,8 +176,7 @@ export function buildCastle({ w, h, seed, portals, npcs }) {
   g[8][19] = 'D';
   g[8][20] = 'D';
   for (const [hx, hy] of [[3, 12], [31, 20]]) {
-    fillRect(g, hx, hy, 6, 2, 'R');
-    fillRect(g, hx, hy + 2, 6, 3, 'W');
+    house(g, hx, hy, 'R');
   }
   fillRect(g, 3, 22, 4, 3, '~');
   for (const [kx, ky] of [[9, 9], [10, 9], [29, 9], [30, 9]]) g[ky][kx] = 'K';
@@ -195,9 +194,10 @@ export function buildCastle({ w, h, seed, portals, npcs }) {
   return fillUnreachable(g, 20, 15, 'T');
 }
 
+/** 집: (x,y)부터 6×5 터의 아래쪽 가운데에 4×3(지붕 2줄 + 벽 1줄). 문은 늘 (x+2, y+4) */
 function house(g, x, y, roof = 'R') {
-  fillRect(g, x, y, 6, 2, roof);
-  fillRect(g, x, y + 2, 6, 3, 'W');
+  fillRect(g, x + 1, y + 2, 4, 2, roof);
+  fillRect(g, x + 1, y + 4, 4, 1, 'W');
   g[y + 4][x + 2] = 'D';
 }
 

@@ -1,4 +1,5 @@
-import { isClassic, setClassic } from './render/artmode.js';
+import { isClassic, setClassic, isNinja, setNinja } from './render/artmode.js';
+import { loadNinja } from './render/ninja.js';
 import { Game, createPlayer } from './game.js';
 import { Renderer } from './render/renderer.js';
 import { Input } from './ui/input.js';
@@ -31,8 +32,11 @@ const saveNow = () => (game ? writeSave(game.toSave(), slot) : false);
 
 function applySettings(settings) {
   const classic = settings.graphics !== 'smooth';
-  if (classic !== isClassic()) {
+  const ninja = settings.graphics === 'ninja';
+  if (classic !== isClassic() || ninja !== isNinja()) {
     setClassic(classic);
+    setNinja(ninja);
+    renderer.mapId = null;
     renderer.resize();
     hud.portraitKey = '';
     sidebar.dollKey = '';
@@ -373,6 +377,8 @@ $('#ride-toggle').addEventListener('click', () => game?.toggleRide());
 $('#minimap').addEventListener('click', () => openPanel('worldmap'));
 
 applySettings(getSettings());
+// 새 도트 타일 그림을 불러오면 맵을 다시 그린다
+loadNinja().then(() => { renderer.mapId = null; });
 setPlaying(false);
 title.show();
 requestAnimationFrame(frame);

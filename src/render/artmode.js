@@ -2,9 +2,15 @@
 // 원작풍은 같은 벡터 그림을 1배 크기로 그린 뒤 반투명 가장자리를 잘라 또렷한 도트로 만들고 진한 외곽선을 두른다.
 
 let classic = true;
+let ninja = true;
 export const isClassic = () => classic;
+/** 새 타일(닌자 어드벤처) 그림을 쓰는가 */
+export const isNinja = () => ninja;
 export function setClassic(on) {
   classic = !!on;
+}
+export function setNinja(on) {
+  ninja = !!on;
 }
 
 const OUTLINE = [28, 18, 12];

@@ -1,6 +1,6 @@
 // 기기별 설정(조작 방식·효과음). 저장소를 못 쓰면 기본값으로 동작한다.
 const KEY = 'cheongpung-settings';
-const DEFAULTS = { control: 'dpad', sound: true, music: true, minimap: true, graphics: 'classic' };
+const DEFAULTS = { control: 'dpad', sound: true, music: true, minimap: true, graphics: 'ninja' };
 
 function read() {
   try {
@@ -10,7 +10,8 @@ function read() {
       sound: typeof raw.sound === 'boolean' ? raw.sound : DEFAULTS.sound,
       minimap: typeof raw.minimap === 'boolean' ? raw.minimap : DEFAULTS.minimap,
       music: typeof raw.music === 'boolean' ? raw.music : DEFAULTS.music,
-      graphics: ['classic', 'smooth'].includes(raw.graphics) ? raw.graphics : DEFAULTS.graphics,
+      // 그래픽 설정은 새 타일이 나온 뒤(gv 2)에 고른 값만 따른다
+      graphics: raw.gv === 2 && ['ninja', 'classic', 'smooth'].includes(raw.graphics) ? raw.graphics : DEFAULTS.graphics,
     };
   } catch {
     return { ...DEFAULTS };
@@ -22,7 +23,7 @@ let current = read();
 export const getSettings = () => current;
 
 export function updateSettings(patch) {
-  current = { ...current, ...patch };
+  current = { ...current, ...patch, gv: 2 };
   try {
     localStorage.setItem(KEY, JSON.stringify(current));
   } catch {
