@@ -3,6 +3,7 @@ import {
   POTION_CD_MS, COMBAT_REGEN_PAUSE_MS, ROLL_CD_MS, ROLL_INVULN_MS, EFFECT_TIME_MULT, RESPAWN_MULT,
 } from './config.js';
 import { updateFoes, cancelCast } from './world/foes.js';
+import { newRoyalOrder, royalReward } from './core/royal.js';
 import { josa } from './core/josa.js';
 import { MAP_DEFS, getTiles } from './data/maps.js';
 import { CLASSES } from './data/classes.js';
@@ -260,11 +261,30 @@ export class Game {
   onArrive() {
     const portal = this.portalAt(this.pe.x, this.pe.y);
     if (portal) {
+      const block = this.entryBlock(portal.to);
+      if (block) {
+        // 못 들어가는 곳: 안내하고 한 칸 뒤로 물린다
+        this.log(block, '#ff9f80');
+        this.say(block);
+        const pe = this.pe;
+        beginStep(pe, pe.fromX, pe.fromY);
+        pe.dir = { up: 'down', down: 'up', left: 'right', right: 'left' }[pe.dir];
+        return false;
+      }
       this.loadMap(portal.to, portal.tx, portal.ty, this.pe.dir);
       return true;
     }
     this.pickUp();
     return false;
+  }
+
+  /** 레벨 제한 때문에 못 들어가면 그 까닭을, 들어갈 수 있으면 null (운영자 무적이면 언제나 통과) */
+  entryBlock(mapId) {
+    const def = MAP_DEFS[mapId];
+    if (!def || this.player.gm.god) return null;
+    if (def.minLevel && this.player.level < def.minLevel) return `${def.name}: 레벨 ${def.minLevel}부터 들어갈 수 있습니다.`;
+    if (def.maxLevel && this.player.level > def.maxLevel) return '이런 곳에 들어가기는 창피합니다...';
+    return null;
   }
 
   updateNpcs(dt) {
@@ -466,7 +486,46 @@ export class Game {
     this.emit('sfx', 'kill');
     if (d.boss) this.log(`${josa(d.name, '을/를')} 쓰러뜨렸습니다!`, '#ff9fd0');
     this.countQuestKill(m.type);
+    this.countRoyalKill(m.type);
     this.grantExp(d.exp);
+  }
+
+  // ── 어명 사냥 ───────────────────────────────────────────
+  countRoyalKill(type) {
+    const r = this.player.royal;
+    if (!r || r.type !== type || r.have >= r.need) return;
+    const have = r.have + 1;
+    this.setPlayer({ royal: { ...r, have } });
+    if (have === r.need) this.log(`[어명] ${MONSTERS[type].name} ${r.need}마리를 모두 잡았습니다! 청풍성 대전의 성주에게 아뢰세요.`, '#ffd166');
+    this.emit('quest');
+  }
+
+  acceptRoyal() {
+    if (this.player.royal) return;
+    const order = newRoyalOrder(this.player.level);
+    this.setPlayer({ royal: order });
+    this.log(`[어명] ${MONSTERS[order.type].name} ${order.need}마리를 잡아 오라는 어명을 받았습니다.`, '#ffd166');
+    this.emit('quest');
+  }
+
+  completeRoyal() {
+    const r = this.player.royal;
+    if (!r || r.have < r.need) return false;
+    const exp = royalReward(r);
+    const gold = Math.round(exp / 20);
+    this.setPlayer({ royal: null, gold: this.player.gold + gold });
+    this.log(`[어명 완수] 성주가 크게 기뻐하며 경험치 ${exp.toLocaleString()}과 ${gold.toLocaleString()}전을 내렸습니다.`, '#ffd166');
+    this.emit('sfx', 'quest');
+    this.grantExp(exp);
+    this.emit('quest');
+    return true;
+  }
+
+  abandonRoyal() {
+    if (!this.player.royal) return;
+    this.setPlayer({ royal: null });
+    this.log('[어명] 어명을 내려놓았습니다.', '#bbb');
+    this.emit('quest');
   }
 
   grantExp(amount) {

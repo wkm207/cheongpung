@@ -108,6 +108,8 @@ export class Hud {
       if (q.state === 'ready') return `<div class="ready">✅ ${esc(q.quest.title)} → ${esc(QUEST_GIVERS[q.npc])}</div>`;
       return `<div>📜 ${esc(q.quest.title)} · ${esc(targetName(q.quest))} ${q.progress}/${q.quest.goal.count}</div>`;
     });
+    const r = game.player.royal;
+    if (r) lines.unshift(r.have >= r.need ? `<div class="ready">✅ 어명 완수 → 청풍성 성주</div>` : `<div>📜 어명 · ${esc(MONSTERS[r.type].name)} ${r.have}/${r.need}</div>`);
     if (!quests.length && offers) lines.push(`<div class="offer">❗ 마을에 부탁할 일이 있는 사람이 있습니다 (${offers})</div>`);
     const html = lines.join('');
     if (this.tracker._html !== html) {

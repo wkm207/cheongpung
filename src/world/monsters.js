@@ -147,6 +147,30 @@ function resolveStrike(game, m) {
   game.damagePlayer(monsterDamage(monsterAtk(m.type), game.stats().def));
 }
 
+/** 체력이 낮아지면 도망치는 몹(flee): 공격하지 않고 플레이어 반대쪽으로 달아난다 */
+function fleeing(game, m, d) {
+  if (!d.flee || m.hp >= m.maxHp * d.flee) return false;
+  if (game.now >= m.nextActAt) {
+    tryStep(game, m, dirTowards(game.pe.x, game.pe.y, m.x, m.y));
+    m.nextActAt = game.now + CHASE_PAUSE_MS;
+    if (!m.fledOnce) {
+      m.fledOnce = true;
+      m.emote = { text: '도망!', until: game.now + 900 };
+    }
+  }
+  m.engagedAt = 0;
+  return true;
+}
+
+/** 싸우는 중 가끔 외치는 말(taunts) */
+function taunt(game, m, d) {
+  if (!d.taunts?.length) return;
+  m.nextTauntAt ??= game.now + randInt(rng, 1500, 6000);
+  if (game.now < m.nextTauntAt) return;
+  m.nextTauntAt = game.now + randInt(rng, 7000, 15000);
+  m.emote = { text: d.taunts[randInt(rng, 0, d.taunts.length - 1)], until: game.now + 1600 };
+}
+
 /** 원거리 몬스터: 줄(가로·세로)을 맞추고, 너무 가까우면 물러난다 */
 function rangedStep(game, m) {
   const p = game.pe;
@@ -217,6 +241,8 @@ export function updateMonsters(game, dt) {
         if (game.now >= m.strikeAt) resolveStrike(game, m);
         continue;
       }
+      if (fleeing(game, m, d)) continue;
+      taunt(game, m, d);
       if (tryMonsterSkill(game, m)) continue;
       // 거리는 플레이어가 '도착할 칸' 기준: 옆으로 비켜도 여전히 붙어 있으면 공격 준비가 이어지고,
       // 실제로 한 칸 떨어져야만 공격을 피할 수 있다.

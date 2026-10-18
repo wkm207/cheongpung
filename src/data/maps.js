@@ -1,6 +1,83 @@
-import { buildVillage, buildField, buildCave, buildRoom, buildCastle } from '../world/mapgen.js';
+import { buildVillage, buildField, buildCave, buildDen, buildRoom, buildCastle } from '../world/mapgen.js';
 
 // 포탈: (x, y, w, h) 영역에 들어서면 to 맵의 (tx, ty)로 이동
+
+// ── 층으로 된 굴: 아래(북쪽 출구)로 내려갈수록 세지고 마지막 층에 보스가 있다 ──
+const DEN_W = 34;
+const DEN_H = 26;
+const UP = { x: 16, y: DEN_H - 1, w: 2, h: 1 };
+const DOWN = { x: 16, y: 0, w: 2, h: 1 };
+
+/**
+ * key1, key2 … 층 맵들을 만든다. entry: 1층 남쪽 출구로 나가면 도착할 곳.
+ * floors: [{ spawns, minLevel? }], extra: 층 번호 → 추가 출구 목록
+ */
+function den(key, name, { seed, entry, floors, floor, wall, pillarGap, extra = {}, minLevel = 0, maxLevel = 0 }) {
+  const out = {};
+  floors.forEach((f, i) => {
+    const n = i + 1;
+    const portals = [{ ...UP, ...(n === 1 ? { to: entry.to, tx: entry.tx, ty: entry.ty } : { to: `${key}${n - 1}`, tx: DOWN.x, ty: 2 }) }];
+    if (n < floors.length) portals.push({ ...DOWN, to: `${key}${n + 1}`, tx: UP.x, ty: DEN_H - 3 });
+    portals.push(...(extra[n] ?? []));
+    out[`${key}${n}`] = {
+      name: `${name} ${n}층`, w: DEN_W, h: DEN_H, seed: seed + n * 17, floor, wall, pillarGap,
+      build: buildDen, denOf: `${key}1`, minLevel: n === 1 ? minLevel : 0, maxLevel: n === 1 ? maxLevel : 0,
+      portals, spawns: f.spawns,
+    };
+  });
+  return out;
+}
+
+export const DEN_MAPS = {
+  // 쥐굴: 청풍촌 남쪽. 맨 아래층 동쪽으로 뱀굴이 이어진다. 레벨이 너무 높으면 창피해서 못 들어간다
+  ...den('ratDen', '쥐굴', {
+    seed: 300, entry: { to: 'village', tx: 36, ty: 27 }, maxLevel: 40,
+    floors: [
+      { spawns: [['rat', 9], ['bigRat', 3]] },
+      { spawns: [['rat', 5], ['bigRat', 6], ['bat', 3]] },
+      { spawns: [['bigRat', 5], ['bat', 5], ['sewerRat', 4]] },
+      { spawns: [['bat', 5], ['sewerRat', 7], ['ratKing', 1]] },
+    ],
+    extra: { 4: [{ x: DEN_W - 1, y: 12, w: 1, h: 2, to: 'snakeDen1', tx: 16, ty: DEN_H - 3 }] },
+  }),
+  ...den('snakeDen', '뱀굴', {
+    seed: 400, entry: { to: 'ratDen4', tx: DEN_W - 3, ty: 12 },
+    floors: [
+      { spawns: [['snake', 10], ['viper', 3]] },
+      { spawns: [['snake', 5], ['viper', 7], ['whiteSnake', 2]] },
+      { spawns: [['viper', 6], ['whiteSnake', 6], ['greatSnake', 1]] },
+    ],
+  }),
+  // 돼지굴: 늑대 언덕 남쪽. 고기가 비싸게 팔려 돈벌이에 좋다
+  ...den('pigDen', '돼지굴', {
+    seed: 500, entry: { to: 'wolfHill', tx: 10, ty: 31 }, minLevel: 20, pillarGap: 6,
+    floors: [
+      { spawns: [['wildPig', 12]] },
+      { spawns: [['wildPig', 7], ['forestPig', 6]] },
+      { spawns: [['forestPig', 10], ['pigKing', 1]] },
+    ],
+  }),
+  // 해골굴: 청풍성 북쪽
+  ...den('skullDen', '해골굴', {
+    seed: 600, entry: { to: 'castle', tx: 33, ty: 2 }, minLevel: 50, floor: 'c', wall: 'X',
+    floors: [
+      { spawns: [['skeleton', 12]] },
+      { spawns: [['skeleton', 6], ['skeletonSword', 7]] },
+      { spawns: [['skeletonSword', 7], ['skeletonArcher', 6]] },
+      { spawns: [['skeletonSword', 5], ['skeletonArcher', 6], ['skeletonGeneral', 1]] },
+    ],
+  }),
+  // 흉가: 청풍성 남쪽. Lv90부터
+  ...den('haunted', '흉가', {
+    seed: 700, entry: { to: 'castle', tx: 19, ty: 27 }, minLevel: 90, floor: 'g', wall: 'N', pillarGap: 6,
+    floors: [
+      { spawns: [['eggGhost', 12]] },
+      { spawns: [['eggGhost', 6], ['maidenGhost', 6], ['bachelorGhost', 3]] },
+      { spawns: [['maidenGhost', 5], ['bachelorGhost', 7], ['grudgeLord', 1]] },
+    ],
+  }),
+};
+
 export const MAP_DEFS = {
   village: {
     name: '청풍촌',
@@ -11,6 +88,7 @@ export const MAP_DEFS = {
       { x: 39, y: 14, w: 1, h: 2, to: 'field1', tx: 2, ty: 14 },
       { x: 19, y: 0, w: 2, h: 1, to: 'forest', tx: 19, ty: 37 },
       { x: 0, y: 14, w: 1, h: 2, to: 'castle', tx: 36, ty: 14 },
+      { x: 36, y: 29, w: 2, h: 1, to: 'ratDen1', tx: 16, ty: 23 },
       { x: 7, y: 8, w: 1, h: 1, to: 'smithy', tx: 5, ty: 6, door: true },
       { x: 29, y: 8, w: 1, h: 1, to: 'tailorShop', tx: 5, ty: 6, door: true },
       { x: 7, y: 24, w: 1, h: 1, to: 'pharmacy', tx: 5, ty: 6, door: true },
@@ -141,6 +219,8 @@ export const MAP_DEFS = {
     portals: [
       { x: 39, y: 14, w: 1, h: 2, to: 'village', tx: 2, ty: 14 },
       { x: 19, y: 8, w: 2, h: 1, to: 'palace', tx: 9, ty: 9, door: true },
+      { x: 33, y: 0, w: 2, h: 1, to: 'skullDen1', tx: 16, ty: 23 },
+      { x: 19, y: 29, w: 2, h: 1, to: 'haunted1', tx: 16, ty: 23 },
     ],
     npcs: [
       { id: 'gateguard1', name: '성문 수문장', x: 35, y: 12, look: 'guard', lines: ['청풍성에 온 것을 환영하오. 대전은 북쪽 큰 건물이오.'] },
@@ -170,7 +250,7 @@ export const MAP_DEFS = {
     portals: [{ x: 9, y: 11, w: 2, h: 1, to: 'castle', tx: 19, ty: 10 }],
     npcs: [
       {
-        id: 'lord', name: '성주 윤휘', x: 10, y: 3, look: 'lord', quests: true,
+        id: 'lord', name: '성주 윤휘', x: 10, y: 3, look: 'lord', quests: true, royal: true,
         lines: ['그대가 요즘 고을에서 이름을 떨친다는 무사인가.', '이 땅의 평화를 위해 그대의 힘을 빌려 주게.'],
       },
       { id: 'royalguard1', name: '금위 무사', x: 4, y: 4, look: 'guard', lines: ['성주님을 뵙거든 고개를 숙이시오.'] },
@@ -247,6 +327,7 @@ export const MAP_DEFS = {
     portals: [
       { x: 0, y: 16, w: 1, h: 2, to: 'field1', tx: 41, ty: 16 },
       { x: 43, y: 16, w: 1, h: 2, to: 'deepMountain', tx: 2, ty: 16 },
+      { x: 10, y: 33, w: 2, h: 1, to: 'pigDen1', tx: 16, ty: 23 },
     ],
     spawns: [['fox', 5], ['wolf', 12]],
   },
@@ -308,6 +389,7 @@ export const MAP_DEFS = {
     ],
     spawns: [['gumiho', 1], ['goblin', 3]],
   },
+  ...DEN_MAPS,
 };
 
 const cache = new Map();

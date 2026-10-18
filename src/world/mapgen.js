@@ -2,7 +2,7 @@ import { mulberry32, randInt } from '../core/rng.js';
 
 // 지나갈 수 없는 타일
 // Q 돌담, Y 초가지붕, G 대문 기둥, J 장승, K 장독, H 실내 벽, U 탁자·계산대, V 선반 (D 문은 지나갈 수 있다)
-export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V', 'C', 'Z', 'L']);
+export const SOLID = new Set(['T', 'O', '~', 'X', 'W', 'R', 'F', 'w', 'Q', 'Y', 'G', 'J', 'K', 'H', 'U', 'V', 'C', 'Z', 'L', 'M', 'N']);
 
 const grid = (w, h, ch) => Array.from({ length: h }, () => Array(w).fill(ch));
 const inInterior = (g, x, y) => x >= 1 && y >= 1 && y < g.length - 1 && x < g[0].length - 1;
@@ -103,6 +103,27 @@ export function buildCave({ w, h, seed, fill = 0.45, portals, floor = 'c', wall 
     }
     g = next;
   }
+  fillRect(g, (w >> 1) - 2, (h >> 1) - 2, 5, 5, floor);
+  carvePortals(g, portals, floor);
+  return fillUnreachable(g, w >> 1, h >> 1, wall);
+}
+
+/**
+ * 층으로 된 굴: 바닥에 바위기둥이 줄지어 서 있고(사이로 몹이 돌아다닌다), 군데군데 바위 무더기가 있다.
+ * floor/wall 로 모래굴·흉가 같은 분위기를 바꾼다.
+ */
+export function buildDen({ w, h, seed, portals, floor = 'd', wall = 'M', pillarGap = 5, rubble = 0.04 }) {
+  const rng = mulberry32(seed);
+  const g = grid(w, h, floor);
+  for (let y = 3; y < h - 3; y += pillarGap) {
+    for (let x = 3; x < w - 3; x += pillarGap) {
+      const px = x + Math.floor(rng() * 2);
+      const py = y + Math.floor(rng() * 2);
+      fillRect(g, px, py, rng() < 0.5 ? 2 : 1, 2, wall);
+    }
+  }
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) if (rng() < rubble) g[y][x] = wall;
+  border(g, wall);
   fillRect(g, (w >> 1) - 2, (h >> 1) - 2, 5, 5, floor);
   carvePortals(g, portals, floor);
   return fillUnreachable(g, w >> 1, h >> 1, wall);

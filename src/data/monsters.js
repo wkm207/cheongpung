@@ -10,6 +10,7 @@ export const MONSTERS = {
     drops: [['rabbitFur', 0.5], ['herb', 0.12], ['dew', 0.06], ['strawHat', 0.02]],
   },
   fox: {
+    flee: 0.2,
     name: '여우', level: 5, hp: 75, atk: 11, def: 3, exp: 28, gold: [5, 12],
     stepMs: 380, aggressive: true, sight: 4, respawnMs: 10000,
     drops: [['foxTail', 0.35], ['herb', 0.15], ['dew', 0.12], ['ironDagger', 0.015], ['jadeStaff', 0.01], ['leatherCap', 0.02]],
@@ -167,6 +168,113 @@ export const MONSTERS = {
     name: '불새 주작', level: 99, hp: 300000, atk: 440, def: 160, exp: 700000, gold: [100000, 150000],
     stepMs: 280, aggressive: true, sight: 9, boss: true, respawnMs: 420000,
     special: { radius: 5, cd: 3200, power: 1.9, name: '불새의 날갯짓', color: '#ff5a1f' },
-    drops: [['firebirdFeather', 1], ['dragonBreath', 10], ['jujakSword', 0.12], ['jujakDagger', 0.12], ['jujakStaff', 0.12], ['jujakFan', 0.12], ['jujakSword', 0.12], ['jujakDagger', 0.12], ['jujakStaff', 0.12], ['jujakFan', 0.12], ['guardCharm', 2], ['highSword85', 0.35], ['highDagger85', 0.35], ['highStaff85', 0.35], ['highFan85', 0.35], ['highArmor85', 0.35], ['highRing85', 0.35]],
+    drops: [['firebirdFeather', 1], ['dragonBreath', 10], ['jujakSword', 0.12], ['jujakDagger', 0.12], ['jujakStaff', 0.12], ['jujakFan', 0.12], ['guardCharm', 2], ['highSword85', 0.35], ['highDagger85', 0.35], ['highStaff85', 0.35], ['highFan85', 0.35], ['highArmor85', 0.35], ['highRing85', 0.35]],
+  },
+  // ── 쥐굴(Lv5~14) ──
+  rat: {
+    name: '쥐', level: 5, hp: 70, atk: 10, def: 2, exp: 26, gold: [4, 10],
+    stepMs: 360, aggressive: false, respawnMs: 8000, taunts: ['찍찍!', '찍!'],
+    drops: [['ratMeat', 0.4], ['herb', 0.12]],
+  },
+  bigRat: {
+    name: '큰쥐', level: 7, hp: 110, atk: 14, def: 4, exp: 40, gold: [6, 14],
+    stepMs: 360, aggressive: false, respawnMs: 8000, taunts: ['찌이익!'],
+    drops: [['ratMeat', 0.45], ['dew', 0.1]],
+  },
+  bat: {
+    name: '박쥐', level: 9, hp: 140, atk: 18, def: 5, exp: 55, gold: [8, 18],
+    stepMs: 260, aggressive: true, sight: 5, respawnMs: 9000, flee: 0.25,
+    drops: [['batWing', 0.35], ['herb', 0.15]],
+  },
+  sewerRat: {
+    name: '시궁쥐', level: 11, hp: 220, atk: 24, def: 8, exp: 90, gold: [12, 26],
+    stepMs: 320, aggressive: true, sight: 4, respawnMs: 9000, taunts: ['찍찍찍!!'],
+    drops: [['ratMeat', 0.4], ['bigHerb', 0.1], ['returnScroll', 0.03]],
+  },
+  ratKing: {
+    name: '쥐대왕', level: 14, hp: 2200, atk: 38, def: 12, exp: 1600, gold: [300, 600],
+    stepMs: 320, aggressive: true, sight: 7, boss: true, respawnMs: 150000, taunts: ['내 굴에서 썩 나가라, 찍!'],
+    drops: [['guardCharm', 0.3], ['elixir', 0.4], ['leatherCap', 0.3], ['ironDagger', 0.2], ['jadeStaff', 0.2], ['ironSword', 0.2], ['craneFan', 0.2]],
+  },
+  // ── 뱀굴(Lv12~22) ──
+  snake: {
+    name: '뱀', level: 12, hp: 260, atk: 27, def: 8, exp: 110, gold: [14, 30],
+    stepMs: 420, aggressive: false, respawnMs: 9000, taunts: ['쉬이익...'],
+    drops: [['snakeMeat', 0.4], ['bigHerb', 0.08]],
+  },
+  viper: {
+    name: '독사', level: 15, hp: 420, atk: 36, def: 12, exp: 190, gold: [20, 40],
+    stepMs: 360, aggressive: true, sight: 4, respawnMs: 10000, taunts: ['쉬익!'],
+    drops: [['snakeMeat', 0.45], ['bigHerb', 0.12], ['bigDew', 0.08]],
+  },
+  whiteSnake: {
+    name: '흰뱀', level: 18, hp: 650, atk: 46, def: 16, exp: 300, gold: [60, 120],
+    stepMs: 340, aggressive: true, sight: 5, respawnMs: 11000,
+    drops: [['snakeMeat', 0.35], ['silverRing', 0.02], ['returnScroll', 0.04]],
+  },
+  greatSnake: {
+    name: '대구렁이', level: 22, hp: 6000, atk: 64, def: 22, exp: 5000, gold: [800, 1400],
+    stepMs: 380, aggressive: true, sight: 7, boss: true, respawnMs: 180000, taunts: ['백 년 묵은 이 몸을 깨우다니...'],
+    drops: [['snakeSpirit', 1], ['elixir', 0.6], ['guardCharm', 0.4], ['chainArmor', 0.3], ['dragonHelm', 0.1], ['goldRing', 0.2]],
+  },
+  // ── 돼지굴(Lv25~45): 고기를 팔아 돈을 벌기 좋은 곳 ──
+  wildPig: {
+    name: '산돼지', level: 26, hp: 1100, atk: 70, def: 24, exp: 520, gold: [80, 140],
+    stepMs: 340, aggressive: false, respawnMs: 10000, taunts: ['꿀꿀!'],
+    drops: [['pigMeat', 0.5], ['bigHerb', 0.15]],
+  },
+  forestPig: {
+    name: '숲돼지', level: 34, hp: 1900, atk: 98, def: 32, exp: 900, gold: [120, 200],
+    stepMs: 260, aggressive: true, sight: 5, respawnMs: 11000, taunts: ['꾸에에엑!'],
+    drops: [['forestPigMeat', 0.5], ['bigDew', 0.15], ['elixir', 0.03]],
+  },
+  pigKing: {
+    name: '돼지대왕', level: 42, hp: 16000, atk: 135, def: 45, exp: 14000, gold: [3000, 5000],
+    stepMs: 320, aggressive: true, sight: 8, boss: true, respawnMs: 180000, taunts: ['내 새끼들을 건드린 놈이 누구냐!'],
+    drops: [['elixir', 1], ['guardCharm', 0.5], ['ironArmor', 0.3], ['dragonArmor', 0.15], ['dragonBreath', 0.5]],
+  },
+  // ── 해골굴(Lv55~75) ──
+  skeleton: {
+    name: '해골', level: 56, hp: 5000, atk: 180, def: 65, exp: 2600, gold: [250, 420],
+    stepMs: 420, aggressive: false, respawnMs: 11000, taunts: ['달그락달그락...'],
+    drops: [['amber', 0.3], ['elixir', 0.08]],
+  },
+  skeletonSword: {
+    name: '해골 검사', level: 62, hp: 6500, atk: 215, def: 75, exp: 3500, gold: [320, 520],
+    stepMs: 340, aggressive: true, sight: 6, respawnMs: 12000, taunts: ['산 자의 냄새다!', '뼈가 시리구나...'],
+    drops: [['amber', 0.3], ['elixir', 0.1], ['highSword55', 0.004], ['highDagger55', 0.004], ['dragonBreath', 0.03]],
+  },
+  skeletonArcher: {
+    name: '해골 궁수', level: 66, hp: 5200, atk: 225, def: 60, exp: 3800, gold: [350, 560],
+    stepMs: 360, aggressive: true, sight: 7, respawnMs: 12000, taunts: ['내 화살을 피해 보아라!'],
+    drops: [['amber', 0.3], ['darkAmber', 0.05], ['highStaff55', 0.004], ['highFan55', 0.004], ['dragonBreath', 0.03]],
+  },
+  skeletonGeneral: {
+    name: '해골 장군', level: 74, hp: 80000, atk: 280, def: 100, exp: 120000, gold: [25000, 40000],
+    stepMs: 360, aggressive: true, sight: 9, boss: true, respawnMs: 300000, taunts: ['나의 군대여, 일어나라!'],
+    special: { radius: 3, cd: 8000, power: 1.7, name: '백골 진동', color: '#e8e2d0' },
+    drops: [['darkAmber', 1], ['dragonBreath', 3], ['guardCharm', 1], ['highSword65', 0.15], ['highDagger65', 0.15], ['highStaff65', 0.15], ['highFan65', 0.15], ['highHelm65', 0.2]],
+  },
+  // ── 흉가(Lv90~99): 우리 옛이야기의 귀신들 ──
+  eggGhost: {
+    name: '달걀귀신', level: 90, hp: 16000, atk: 340, def: 110, exp: 9500, gold: [650, 1000],
+    stepMs: 380, aggressive: true, sight: 6, respawnMs: 12000, taunts: ['...........'],
+    drops: [['amber', 0.4], ['darkAmber', 0.12], ['elixir', 0.15], ['dragonBreath', 0.06]],
+  },
+  maidenGhost: {
+    name: '처녀귀신', level: 93, hp: 15000, atk: 365, def: 100, exp: 10500, gold: [700, 1050],
+    stepMs: 340, aggressive: true, sight: 7, respawnMs: 12000, taunts: ['내 한을 풀어다오...', '흐흐흐흑...'],
+    drops: [['amber', 0.4], ['darkAmber', 0.15], ['elixir', 0.15], ['highNeck85', 0.004], ['dragonBreath', 0.06]],
+  },
+  bachelorGhost: {
+    name: '몽달귀신', level: 95, hp: 19000, atk: 380, def: 125, exp: 11500, gold: [750, 1100],
+    stepMs: 320, aggressive: true, sight: 7, respawnMs: 12000, taunts: ['장가도 못 가고 죽었으니 원통하다!'],
+    drops: [['amber', 0.4], ['darkAmber', 0.15], ['elixir', 0.15], ['highRing85', 0.004], ['dragonBreath', 0.07]],
+  },
+  grudgeLord: {
+    name: '원귀 대감', level: 99, hp: 260000, atk: 430, def: 150, exp: 600000, gold: [90000, 130000],
+    stepMs: 340, aggressive: true, sight: 9, boss: true, respawnMs: 360000, taunts: ['감히 내 집에 발을 들이다니!'],
+    special: { radius: 4, cd: 9000, power: 1.8, name: '원한의 울부짖음', color: '#b07bff' },
+    drops: [['darkAmber', 3], ['dragonBreath', 8], ['guardCharm', 2], ['highSword85', 0.25], ['highDagger85', 0.25], ['highStaff85', 0.25], ['highFan85', 0.25], ['highArmor85', 0.25], ['highHelm85', 0.25], ['highNeck85', 0.25]],
   },
 };

@@ -8,6 +8,7 @@ import { computeStats } from './stats.js';
 import { canEquip } from './equip.js';
 import { addItem } from './inventory.js';
 import { emptyEnhance, MAX_ENHANCE } from './enhance.js';
+import { validateRoyal } from './royal.js';
 
 const SAVE_FORMAT = 'cheongpung-save';
 
@@ -92,6 +93,7 @@ export function validatePlayer(raw) {
     enhance,
     dragonStage: isInt(raw.dragonStage) && raw.dragonStage >= 0 && raw.dragonStage <= 10 ? raw.dragonStage : 0,
     dragonClaimed: raw.dragonClaimed === true,
+    royal: validateRoyal(raw.royal),
     statPoints: spent <= budget ? statPoints : budget,
     alloc: fairAlloc,
     bonusHp,

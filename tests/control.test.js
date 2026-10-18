@@ -170,3 +170,50 @@ test('화면 전체 궁극기는 화면 안의 적을 모두 세 번 때리고, 
     assert.equal(far.hp, 1e9, `${id} 화면 밖은 안 맞음`);
   }
 });
+
+test('굴: 층마다 이어지고, 입장 레벨 제한이 있다', async () => {
+  const { MAP_DEFS } = await import('../src/data/maps.js');
+  for (const [id, def] of Object.entries(MAP_DEFS)) for (const p of def.portals) assert.ok(MAP_DEFS[p.to], `${id} → ${p.to}`);
+  assert.equal(MAP_DEFS.ratDen2.portals.find((p) => p.y === MAP_DEFS.ratDen2.h - 1).to, 'ratDen1');
+  assert.ok(MAP_DEFS.ratDen4.portals.some((p) => p.to === 'snakeDen1'), '쥐굴 4층에서 뱀굴로');
+  const game = new Game(createPlayer('용사', 'warrior'));
+  assert.ok(game.entryBlock('haunted1'), 'Lv1은 흉가에 못 들어간다');
+  assert.equal(game.entryBlock('ratDen1'), null);
+  game.gmSetLevel(60);
+  assert.ok(game.entryBlock('ratDen1').includes('창피'), '레벨이 높으면 쥐굴이 창피하다');
+});
+
+test('어명: 받기 → 잡기 → 아뢰면 경험치 10배', async () => {
+  const { MONSTERS } = await import('../src/data/monsters.js');
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.gmSetLevel(30);
+  game.acceptRoyal();
+  const r = game.player.royal;
+  assert.ok(r && MONSTERS[r.type].level >= 18 && MONSTERS[r.type].level <= 32, '레벨에 맞는 몬스터');
+  assert.equal(game.completeRoyal(), false, '다 잡기 전엔 못 아뢴다');
+  for (let i = 0; i < r.need; i++) game.countRoyalKill(r.type);
+  const lv = game.player.level;
+  const exp = game.player.exp;
+  assert.ok(game.completeRoyal());
+  assert.equal(game.player.royal, null);
+  assert.ok(game.player.level > lv || game.player.exp > exp);
+  const saved = JSON.parse(JSON.stringify(game.toSave()));
+  assert.equal(saved.royal, null);
+});
+
+test('불러낸 졸개는 잡아도 다시 나오지 않고, 여우는 체력이 낮으면 도망친다', () => {
+  const { game, m } = arena('fox', 2, 0);
+  const minion = createMonster(game, 'rabbit', m.x, m.y + 3);
+  minion.summoned = true;
+  game.monsters.push(minion);
+  game.damageMonster(minion, minion.hp + 1, false);
+  assert.ok(!game.respawnQueue.some((q) => q.type === 'rabbit'));
+  m.hp = Math.floor(m.maxHp * 0.1);
+  m.nextSkillAt = 1e12;
+  const before = Math.abs(m.x - game.pe.x) + Math.abs(m.y - game.pe.y);
+  const hp = game.player.hp;
+  tick(game, 1500);
+  const after = Math.abs(m.x - game.pe.x) + Math.abs(m.y - game.pe.y);
+  assert.ok(after >= before, '멀어진다');
+  assert.equal(game.player.hp, hp, '도망치는 동안 공격하지 않는다');
+});

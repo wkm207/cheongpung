@@ -121,6 +121,37 @@ const PAINTERS = {
     if (n(-1, 0) !== '~') r(0, 0, 1, 16, '#5b8fca');
     if (n(1, 0) !== '~') r(15, 0, 1, 16, '#5b8fca');
   },
+  // 굴 모래 바닥(주황빛 흙)
+  d: (r, tx, ty) => {
+    r(0, 0, 16, 16, '#c98a4b');
+    speckle(r, tx, ty, 10, ['#d69a5a', '#b87a3e', '#e0a868', '#a86c34']);
+  },
+  // 바위기둥: 붉은 갈색 바위 덩어리
+  M: (r, tx, ty, n) => {
+    r(0, 0, 16, 16, n(0, 1) === 'M' ? '#5a2e1c' : '#c98a4b');
+    r(1, 1, 14, 13, '#7a3e24');
+    r(2, 2, 11, 5, '#9a5434');
+    r(3, 2, 5, 2, '#b8704a');
+    r(1, 11, 14, 3, '#4a2416');
+    speckle(r, tx, ty, 4, ['#6a3420', '#8a4a2c'], 20);
+  },
+  // 흉가 마루: 어둡고 낡은 나무판
+  g: (r, tx, ty) => {
+    r(0, 0, 16, 16, '#3a2c22');
+    for (let y = 0; y < 16; y += 4) r(0, y, 16, 1, '#2a1e16');
+    r((tx * 5) % 13, 4 * ((ty * 3) % 4) + 1, 3, 1, '#4a3a2c');
+    speckle(r, tx, ty, 4, ['#2e221a', '#45362a']);
+  },
+  // 흉가 벽: 거무튀튀한 흙벽과 썩은 기둥
+  N: (r, tx, ty, n) => {
+    r(0, 0, 16, 16, '#2a2228');
+    r(0, 0, 3, 16, '#1a1418');
+    speckle(r, tx, ty, 6, ['#342a30', '#201a1e']);
+    if (n(0, 1) !== 'N') {
+      r(0, 10, 16, 6, '#4a3a3e');
+      r(0, 10, 16, 1, '#5a4a4e');
+    }
+  },
   c: (r, tx, ty) => {
     r(0, 0, 16, 16, '#5a4a3c');
     speckle(r, tx, ty, 8, ['#4d3f33', '#67574a', '#715f50']);
@@ -326,7 +357,7 @@ const PAINTERS = {
 let TALL_TREES = true;
 export const setTallTrees = (on) => { TALL_TREES = on; };
 
-const WALLISH = new Set(['W', 'R', 'Y', 'Q', 'X', 'H', 'V', 'G']);
+const WALLISH = new Set(['W', 'R', 'Y', 'Q', 'X', 'H', 'V', 'G', 'M', 'N']);
 
 /** 맵 전체를 한 장의 캔버스로 미리 그린다. */
 export function renderMapCanvas(tiles) {

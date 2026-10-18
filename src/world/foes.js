@@ -167,6 +167,7 @@ export function resolveCast(game, m) {
     for (let i = 0; i < sk.count; i++) {
       const s = spawnMonster(game, sk.minion, m);
       if (!s) continue;
+      s.summoned = true; // 부른 졸개는 잡아도 다시 나오지 않는다
       s.aggro = true;
       game.addEffect({ type: 'poof', x: s.x, y: s.y, dur: 500 });
     }

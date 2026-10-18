@@ -179,6 +179,114 @@ export const BEAST_ART = {
     eye(ctx, 14.6, 6.8, '#fff3c0', 0.8);
     eye(ctx, 17.4, 6.8, '#fff3c0', 0.8);
   },
+  // 쥐: 둥근 귀, 긴 맨꼬리. 쥐대왕은 작은 왕관(c)을 쓴다
+  rat(ctx, p) {
+    ctx.beginPath();
+    ctx.moveTo(24, 22);
+    ctx.bezierCurveTo(30, 22, 31, 14, 27, 12);
+    ctx.strokeStyle = p.k;
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.strokeStyle = p.p;
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+    leg(ctx, 12, 24, 28, p.b, p.k, 2);
+    leg(ctx, 20, 24, 28, p.b, p.k, 2);
+    blob(ctx, 17, 20.5, 8.5, 6, p.b, p.k);
+    ellipse(ctx, 15, 23, 5, 2.6, p.w, null);
+    ellipse(ctx, 8.5, 11.5, 3, 3, p.b, p.k, 0.6);
+    ellipse(ctx, 8.5, 11.5, 1.7, 1.7, p.p, null);
+    blob(ctx, 8, 16.5, 5.2, 4.4, p.b, p.k);
+    shape(ctx, [[4, 15], [0.6, 18.2, 1.5, 16], [4.5, 19.5]], p.b, p.k, 0.6);
+    ellipse(ctx, 1.2, 18, 1, 0.8, p.p, null);
+    eye(ctx, 6, 15.4, '#ffffff', 1);
+    line(ctx, 2.5, 18.5, -0.5, 18, 'rgba(40,30,30,0.6)', 0.3);
+    line(ctx, 2.5, 19.2, -0.5, 20, 'rgba(40,30,30,0.6)', 0.3);
+    if (p.c) shape(ctx, [[5, 12.5], [5, 9.5], [6.6, 11], [8, 8.6], [9.4, 11], [11, 9.5], [11, 12.5]], p.c, p.k, 0.5);
+  },
+  // 박쥐: 날개를 펼친 정면 모습
+  bat(ctx, p) {
+    for (const s of [-1, 1]) {
+      const x = (v) => 16 + s * v;
+      shape(ctx, [[x(3), 12], [x(9), 6, x(5), 6], [x(15), 9, x(13), 5], [x(13), 13], [x(15.5), 17], [x(11), 16], [x(9), 19], [x(6), 17], [x(3), 18]], lin(ctx, x(2), 8, x(15), 18, [[0, p.b], [1, p.w]]), p.k, 0.6);
+      line(ctx, x(4), 12.5, x(13), 7, 'rgba(0,0,0,0.3)', 0.4);
+      line(ctx, x(4), 13.5, x(11), 15.5, 'rgba(0,0,0,0.3)', 0.4);
+    }
+    blob(ctx, 16, 15, 4, 5, p.b, p.k);
+    shape(ctx, [[13.2, 11], [12.6, 6.5], [15, 9.5]], p.b, p.k, 0.5);
+    shape(ctx, [[18.8, 11], [19.4, 6.5], [17, 9.5]], p.b, p.k, 0.5);
+    eye(ctx, 14.5, 13.5, p.e, 0.9);
+    eye(ctx, 17.5, 13.5, p.e, 0.9);
+    shape(ctx, [[15, 16.5], [15.5, 18], [16, 16.5], [16.5, 18], [17, 16.5]], '#ffffff', null);
+  },
+  // 해골: 뼈만 남은 병사. w가 'sword'면 칼, 'bow'면 활, h가 있으면 투구
+  skeleton(ctx, p) {
+    const bone = (x0, y0, x1, y1, w = 1.6) => {
+      line(ctx, x0, y0, x1, y1, p.k, w + 1);
+      line(ctx, x0, y0, x1, y1, p.b, w);
+    };
+    bone(13, 22, 12, 29.5);
+    bone(19, 22, 20, 29.5);
+    ellipse(ctx, 11.6, 30, 2, 0.9, p.b, p.k, 0.5);
+    ellipse(ctx, 20.4, 30, 2, 0.9, p.b, p.k, 0.5);
+    ellipse(ctx, 16, 21.5, 4.5, 1.6, p.b, p.k, 0.6); // 골반
+    bone(16, 12, 16, 21, 1.8); // 척추
+    for (const y of [13.5, 15.5, 17.5]) {
+      ctx.beginPath();
+      ctx.ellipse(16, y, 5 - (y - 13.5) * 0.4, 1.3, 0, Math.PI * 0.05, Math.PI * 0.95);
+      ctx.strokeStyle = p.k;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      ctx.strokeStyle = p.b;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    bone(11.5, 12.5, 9, 19);
+    bone(20.5, 12.5, 23.5, 18.5);
+    if (p.w === 'sword') {
+      line(ctx, 24, 18.5, 28.5, 4.5, p.k, 2.2);
+      line(ctx, 24, 18.5, 28.5, 4.5, p.c, 1.3);
+      line(ctx, 22.2, 17, 25.8, 18.4, '#c9a23a', 1.2);
+    } else if (p.w === 'bow') {
+      ctx.beginPath();
+      ctx.arc(23, 16, 7, -Math.PI * 0.45, Math.PI * 0.45);
+      ctx.strokeStyle = p.c;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      line(ctx, 23 + 7 * Math.cos(-Math.PI * 0.45), 16 + 7 * Math.sin(-Math.PI * 0.45), 23 + 7 * Math.cos(Math.PI * 0.45), 16 + 7 * Math.sin(Math.PI * 0.45), '#f4f1ea', 0.4);
+    } else {
+      line(ctx, 24, 19, 26, 9, p.c, 1.4);
+    }
+    blob(ctx, 16, 7.5, 5.4, 5.2, p.b, p.k);
+    shape(ctx, [[12.5, 10.5], [19.5, 10.5], [18.5, 13.5], [13.5, 13.5]], tone(p.b, -0.05), p.k, 0.6);
+    for (const x of [14.5, 16, 17.5]) line(ctx, x, 10.8, x, 13.2, p.k, 0.3);
+    ellipse(ctx, 13.8, 7.6, 1.6, 1.8, '#1a1410', null);
+    ellipse(ctx, 18.2, 7.6, 1.6, 1.8, '#1a1410', null);
+    ellipse(ctx, 13.8, 7.8, 0.7, 0.7, p.e, null);
+    ellipse(ctx, 18.2, 7.8, 0.7, 0.7, p.e, null);
+    shape(ctx, [[15.4, 9.4], [16.6, 9.4], [16, 10.4]], '#1a1410', null);
+    if (p.h) {
+      ctx.beginPath();
+      ctx.ellipse(16, 5.6, 6, 4.4, 0, Math.PI, Math.PI * 2);
+      ctx.fillStyle = lin(ctx, 10, 1, 22, 6, [[0, tone(p.h, 0.3)], [1, tone(p.h, -0.3)]]);
+      ctx.fill();
+      ctx.strokeStyle = p.k;
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+      shape(ctx, [[15, 1.6], [16, -1.5], [17, 1.6]], p.c, p.k, 0.4);
+    }
+  },
+  // 달걀귀신: 눈코입 없는 하얀 달걀 얼굴에 소복
+  egg(ctx, p) {
+    const g = lin(ctx, 8, 14, 24, 30, [[0, '#ffffff'], [1, '#d8dce4']]);
+    shape(ctx, [[10, 16], [22, 16], [25, 29, 24, 22], [21, 27.5], [18.5, 30], [16, 27.5], [13.5, 30], [11, 27.5], [7, 29, 8, 22]], g, p.k, 0.7);
+    line(ctx, 16, 17, 16, 27, 'rgba(120,120,140,0.3)', 0.5);
+    blob(ctx, 16, 10, 6.4, 7.6, p.b, p.k);
+    ellipse(ctx, 13.6, 7, 2, 2.8, 'rgba(255,255,255,0.7)', null);
+    ellipse(ctx, 8.8, 18.5, 1.8, 2.4, '#fbfaf4', p.k, 0.5);
+    ellipse(ctx, 23.2, 18.5, 1.8, 2.4, '#fbfaf4', p.k, 0.5);
+  },
   // 고양이(마을 NPC): 앉아서 꼬리를 세운 모습
   cat(ctx, p) {
     shape(ctx, [[22, 22], [27, 12, 28, 18], [26, 6, 25, 8], [28.5, 6.5, 28, 5], [29.5, 14, 30, 9], [24, 24, 29, 22]], lin(ctx, 22, 5, 30, 24, [[0, tone(p.o, 0.25)], [1, tone(p.o, -0.2)]]), p.k);

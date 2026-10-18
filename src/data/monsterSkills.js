@@ -64,6 +64,20 @@ export const MONSTER_KITS = {
   firebird: ['fireball', 'meteor', 'cross', { summon: 'flameSpirit', count: 2 }],
   gumiho: ['darkOrb', 'pounce', 'curseMark', 'regen', { summon: 'fox', count: 3 }],
   imugi: ['waterBall', 'whirlpool', 'quake', 'regen'],
+  sewerRat: ['pounce'],
+  ratKing: ['slam', { summon: 'rat', count: 3 }],
+  viper: ['pounce'],
+  whiteSnake: ['pounce'],
+  greatSnake: ['pounce', 'quake', 'regen'],
+  forestPig: ['charge'],
+  pigKing: ['charge', 'quake', { summon: 'wildPig', count: 2 }],
+  skeletonSword: ['slam'],
+  skeletonArcher: ['arrow'],
+  skeletonGeneral: ['cross', 'arrow', { summon: 'skeleton', count: 3 }],
+  eggGhost: ['curseMark'],
+  maidenGhost: ['darkOrb'],
+  bachelorGhost: ['darkOrb', 'curseMark'],
+  grudgeLord: ['darkOrb', 'curseMark', 'cross', { summon: 'eggGhost', count: 3 }],
 };
 
 /** 몬스터 종류의 기술 목록: [{ id, ...정의 }] (졸개 부르기는 id 'summon') */

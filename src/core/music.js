@@ -59,6 +59,11 @@ export const MAP_TRACK = {
   smithy: 'indoor', tailorShop: 'indoor', pharmacy: 'indoor', chiefHouse: 'indoor', tavern: 'indoor',
   castle: 'castle', palace: 'castle',
   trainingBlue: 'cave', trainingRed: 'cave', zodiacTemple: 'cave', dragonPalace: 'swamp', northFortress: 'snow', eastIsland: 'forest', fireIsland: 'boss',
+  ratDen1: 'cave', ratDen2: 'cave', ratDen3: 'cave', ratDen4: 'cave',
+  snakeDen1: 'cave', snakeDen2: 'cave', snakeDen3: 'cave',
+  pigDen1: 'cave', pigDen2: 'cave', pigDen3: 'cave',
+  skullDen1: 'cave', skullDen2: 'cave', skullDen3: 'cave', skullDen4: 'cave',
+  haunted1: 'swamp', haunted2: 'swamp', haunted3: 'swamp',
 };
 
 const LOW = 7; // 노래 음역: 으뜸음 한 옥타브 위부터

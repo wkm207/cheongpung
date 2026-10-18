@@ -1,4 +1,5 @@
 import { shareOrDownload, copyText, readFileText } from './dom.js';
+import { royalBox } from './views.js';
 import { worldMapHtml, drawWorldMap, pickWorldMap } from './worldmap.js';
 import { josa } from '../core/josa.js';
 import { ITEMS, isEquipment } from '../data/items.js';
@@ -124,6 +125,7 @@ export class Panels {
     } else {
       body = talkPage(npc, s.line, game);
     }
+    if (npc.royal && !s.doneText) body += royalBox(game);
     return `${header(npc.name, null)}<div class="body">${body}</div>`;
   }
 
@@ -147,6 +149,9 @@ export class Panels {
     switch (act) {
       case 'close': this.close(); return;
       case 'wmTab': s.wmTab = el.dataset.tab; break;
+      case 'royalAccept': game.acceptRoyal(); break;
+      case 'royalDone': game.completeRoyal(); break;
+      case 'royalDrop': game.abandonRoyal(); break;
       case 'wmPick': {
         const id = pickWorldMap(el, e);
         if (!id) return;

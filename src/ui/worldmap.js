@@ -9,22 +9,31 @@ const LAYOUT = {
   bossLair: [2, 0], goblinCave: [2, 1], forest: [2, 2],
   castle: [0, 3], village: [2, 3], field1: [3, 3], wolfHill: [4, 3], deepMountain: [5, 3],
   imugiSwamp: [5, 2], snowPass: [6, 2], dragonCave: [6, 1],
-  trainingBlue: [0, 5], trainingRed: [1, 5], zodiacTemple: [2, 5], dragonPalace: [3, 5],
-  northFortress: [4, 5], eastIsland: [5, 5], fireIsland: [6, 5],
+  skullDen1: [0, 2], haunted1: [0, 4], ratDen1: [2, 4], snakeDen1: [3, 4], pigDen1: [4, 4],
+  trainingBlue: [0, 6], trainingRed: [1, 6], zodiacTemple: [2, 6], dragonPalace: [3, 6],
+  northFortress: [4, 6], eastIsland: [5, 6], fireIsland: [6, 6],
 };
 const COLS = 7;
-const ROWS = 6;
-const SEA_ROW = 4.45;
+const ROWS = 7;
+const SEA_ROW = 5.45;
 
-/** 건물 안(실내)이면 바깥 맵으로 */
+/** 건물 안(실내)이면 바깥 맵으로, 굴 아래층이면 그 굴의 1층으로 */
 function outdoorOf(id) {
+  if (MAP_DEFS[id]?.denOf) return MAP_DEFS[id].denOf;
   let cur = id;
   for (let i = 0; i < 3 && MAP_DEFS[cur]?.indoor; i++) cur = MAP_DEFS[cur].portals[0]?.to ?? cur;
   return cur;
 }
 
+/** 굴이면 모든 층을, 아니면 그 맵의 출현 목록 */
+function allSpawns(def) {
+  if (!def.denOf) return def.spawns ?? [];
+  return Object.values(MAP_DEFS).filter((d) => d.denOf === def.denOf).flatMap((d) => d.spawns);
+}
+const placeName = (def) => def.name.replace(/ 1층$/, '');
+
 function levelRange(def) {
-  const lv = (def.spawns ?? []).map(([t]) => MONSTERS[t].level);
+  const lv = allSpawns(def).map(([t]) => MONSTERS[t].level);
   return lv.length ? [Math.min(...lv), Math.max(...lv)] : null;
 }
 
@@ -77,7 +86,7 @@ function placeInfo(game, id) {
   if (!def) return '';
   const r = levelRange(def);
   const here = outdoorOf(game.mapId) === id || game.mapId === id;
-  const mons = (def.spawns ?? []).map(([t]) => MONSTERS[t]).sort((a, b) => a.level - b.level);
+  const mons = [...new Set(allSpawns(def).map(([t]) => t))].map((t) => MONSTERS[t]).sort((a, b) => a.level - b.level);
   const monRows = mons.length
     ? mons.map((m) => `<span class="wm-mon${m.boss ? ' boss' : ''}">${m.boss ? '👑 ' : ''}${esc(m.name)} <small>Lv${m.level}</small></span>`).join('')
     : '<span class="muted">몬스터가 나오지 않는 안전한 곳</span>';
@@ -89,8 +98,9 @@ function placeInfo(game, id) {
   const npcs = (def.npcs ?? []).map((n) => esc(n.name));
   for (const p of def.portals.filter((q) => q.door)) for (const n of MAP_DEFS[p.to]?.npcs ?? []) npcs.push(`${esc(n.name)} <small class="muted">(${esc(MAP_DEFS[p.to].name)})</small>`);
   return `<div class="wm-info">
-    <h3>${esc(def.name)} ${here ? '<span class="badge new">현재 위치</span>' : ''}</h3>
-    <div class="wm-line"><b>권장 레벨</b> ${r ? `Lv ${r[0]} ~ ${r[1]}` : '누구나'}${def.safe ? ' · 안전 지역' : ''}</div>
+    <h3>${esc(placeName(def))} ${here ? '<span class="badge new">현재 위치</span>' : ''}</h3>
+    <div class="wm-line"><b>권장 레벨</b> ${r ? `Lv ${r[0]} ~ ${r[1]}` : '누구나'}${def.safe ? ' · 안전 지역' : ''}${def.minLevel ? ` · <b class="warn">Lv${def.minLevel}부터 입장</b>` : ''}${def.maxLevel ? ` · Lv${def.maxLevel} 넘으면 못 들어감` : ''}</div>
+    ${def.denOf ? `<div class="wm-line"><b>층</b> ${Object.values(MAP_DEFS).filter((d) => d.denOf === def.denOf).map((d, i) => `${i + 1}층: ${[...new Set(d.spawns.map(([t]) => MONSTERS[t].name))].join('·')}`).join(' / ')}</div>` : ''}
     <div class="wm-line"><b>몬스터</b><div class="wm-mons">${monRows}</div></div>
     <div class="wm-line"><b>가는 길</b><ul>${ways.join('')}</ul></div>
     ${npcs.length ? `<div class="wm-line"><b>사람</b> ${npcs.join(' · ')}</div>` : ''}
@@ -128,7 +138,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 function drawWorld(canvas, game, s) {
-  const { ctx, w, h } = fitCanvas(canvas, 0.78);
+  const { ctx, w, h } = fitCanvas(canvas, 0.9);
   const g = worldGeometry(w, h);
   // 땅과 바다
   const land = ctx.createLinearGradient(0, 0, 0, h);
@@ -214,8 +224,8 @@ function drawWorld(canvas, game, s) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `bold ${fs}px sans-serif`;
-    const boss = (def.spawns ?? []).some(([t]) => MONSTERS[t].boss);
-    ctx.fillText(`${boss ? '👑' : ''}${def.name}`, cx, cy - fs * 0.45, g.boxW - 4);
+    const boss = allSpawns(def).some(([t]) => MONSTERS[t].boss);
+    ctx.fillText(`${boss ? '👑' : ''}${placeName(def)}`, cx, cy - fs * 0.45, g.boxW - 4);
     const r = levelRange(def);
     ctx.font = `${fs * 0.82}px sans-serif`;
     ctx.fillText(r ? `Lv ${r[0]}~${r[1]}` : '마을', cx, cy + fs * 0.7, g.boxW - 4);
@@ -238,7 +248,7 @@ function drawWorld(canvas, game, s) {
 }
 
 const TILE_COLORS = {
-  '~': '#2f6db5', '=': '#b8955e', S: '#9a958a', c: '#5a4a3c', '*': '#e6edf3', ':': '#8f8f4c', ';': '#2f5528', L: '#d4451f', a: '#3a2e2a',
+  '~': '#2f6db5', '=': '#b8955e', S: '#9a958a', c: '#5a4a3c', '*': '#e6edf3', ':': '#8f8f4c', ';': '#2f5528', d: '#c98a4b', M: '#5a2e1c', g: '#3a2c22', N: '#1a1418', L: '#d4451f', a: '#3a2e2a',
 };
 
 function drawHere(canvas, game) {

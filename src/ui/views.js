@@ -9,6 +9,7 @@ import { MAP_DEFS } from '../data/maps.js';
 import { QUEST_CHAINS, QUEST_GIVERS, rewardItems } from '../data/quests.js';
 import { TIER_TITLES } from '../data/tiers.js';
 import { MAX_LEVEL, GAME_VERSION } from '../config.js';
+import { ROYAL_COUNT, ROYAL_EXP_MULT, royalReward } from '../core/royal.js';
 import { expToNext } from '../core/stats.js';
 import { canEquip, compareEquip, compareUnequip, isUpgrade, formatStat } from '../core/equip.js';
 import { enhanceInfo, MAX_ENHANCE, ENHANCE_STEP } from '../core/enhance.js';
@@ -520,4 +521,17 @@ export function gmView(game, state) {
       <h3>직업 변경</h3><div class="btn-wrap">${classes}</div>
       <h3>아이템 만들기</h3>${items}
     </div>`;
+}
+
+// ── 어명 사냥(성주) ─────────────────────────────────────
+export function royalBox(game) {
+  const r = game.player.royal;
+  if (!r) {
+    return `<div class="quest-box"><b>📜 어명 사냥</b><p class="muted">성주가 그대의 실력에 맞는 몬스터를 정해 준다. ${ROYAL_COUNT}마리를 잡아 오면 그 몬스터 경험치의 ${ROYAL_EXP_MULT}배를 내린다. 몇 번이고 다시 받을 수 있다.</p><button class="green" data-act="royalAccept">어명 받기</button></div>`;
+  }
+  const m = MONSTERS[r.type];
+  const done = r.have >= r.need;
+  return `<div class="quest-box"><b>📜 어명: ${esc(m.name)} <small class="muted">Lv${m.level}</small> ${r.have}/${r.need}</b>
+    <p class="muted">보상: 경험치 ${royalReward(r).toLocaleString()} · ${Math.round(royalReward(r) / 20).toLocaleString()}전</p>
+    <div class="row end"><button data-act="royalDrop">포기</button><button class="primary" data-act="royalDone" ${done ? '' : 'disabled'}>${done ? '어명 아뢰기' : '아직 다 못 잡음'}</button></div></div>`;
 }
