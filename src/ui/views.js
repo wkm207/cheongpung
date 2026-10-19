@@ -19,6 +19,7 @@ import { awakenInfo, awakenLabel, MAX_AWAKEN, AWAKEN_STEP } from '../core/dragon
 import { countOf } from '../core/inventory.js';
 import { exportText } from '../core/save.js';
 import { KEY_PANELS } from './input.js';
+import { looksFor, photoLook, photoSrc } from '../render/photos.js';
 
 const KEY_OF = Object.fromEntries(Object.entries(KEY_PANELS).filter(([k]) => k !== 'Backquote').map(([k, v]) => [v, k.replace('Key', '')]));
 
@@ -433,6 +434,15 @@ const KEY_HELP = [
   ['퀘스트 · 메뉴 · GM', 'L · M · G'], ['창 닫기', 'Esc'],
 ];
 
+/** 메뉴의 생김새 바꾸기(실사 그림이 2개 이상일 때) */
+function lookRow(p) {
+  const list = looksFor(p.cls, p.gender);
+  if (list.length < 2) return '';
+  const cur = photoLook(p.cls, p.gender, p.look);
+  const btns = list.map((n) => `<button class="look-pick${n === cur ? ' sel' : ''}" data-act="setLook" data-look="${n}"><img src="${photoSrc(p.cls, p.gender, n)}" alt="${n}번 생김새"></button>`).join('');
+  return `<h3>생김새</h3><div class="look-row">${btns}</div>`;
+}
+
 export function menuView(game, state, settings) {
   const noteHtml = state.note ? `<p class="note">${esc(state.note)}</p>` : '';
   if (state.view === 'export') {
@@ -459,6 +469,7 @@ export function menuView(game, state, settings) {
     <div class="body menu-list">
       <p class="hint">게임 버전 <b>${GAME_VERSION}</b></p>
       <button class="primary" data-act="save">지금 저장하기</button>
+      ${lookRow(game.player)}
       <h3>설정</h3>
       <div class="row">
         <span class="grow">터치 이동 방식</span>

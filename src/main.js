@@ -23,6 +23,7 @@ import { AUTOSAVE_MS } from './config.js';
 import { FIREBASE_CONFIG } from './firebase-config.js';
 import { createCloud } from './core/cloud.js';
 import { CloudSync } from './core/sync.js';
+import { preloadPhotos } from './render/photos.js';
 
 const renderer = new Renderer($('#game'));
 const hud = new Hud();
@@ -144,7 +145,7 @@ const title = new Title($('#title'), {
   },
   importText,
   account: sync,
-  onStart: (data, i) => startGame(data.newName ? createPlayer(data.newName, data.cls, data.gender) : data, i),
+  onStart: (data, i) => startGame(data.newName ? createPlayer(data.newName, data.cls, data.gender, data.look) : data, i),
 });
 
 const input = new Input({
@@ -410,6 +411,8 @@ $('#minimap').addEventListener('click', () => openPanel('worldmap'));
 applySettings(getSettings());
 // 새 도트 타일 그림을 불러오면 맵을 다시 그린다
 loadNinja().then(() => { renderer.mapId = null; });
+// 실사 생김새 그림을 미리 불러 두고, 다 오면 타이틀 그림을 다시 그린다
+preloadPhotos(() => { if (!$('#title').hidden) title.render(); });
 loadFx();
 setPlaying(false);
 title.show();

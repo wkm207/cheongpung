@@ -1,4 +1,5 @@
 import { esc, readFileText, formatPlayTime } from './dom.js';
+import { looksFor, photoLook, photoSrc } from '../render/photos.js';
 import { GAME_VERSION } from '../config.js';
 import { CLASSES } from '../data/classes.js';
 import { MAP_DEFS } from '../data/maps.js';
@@ -21,6 +22,7 @@ export class Title {
     this.slot = 0;
     this.cls = null;
     this.gender = 'm';
+    this.look = 1;
     this.name = '';
     this.note = '';
     this.confirmDelete = null;
@@ -120,10 +122,19 @@ export class Title {
         <button class="${this.gender === 'f' ? 'primary' : ''}" data-act="gender" data-g="f">여자</button>
       </div>
       <div class="class-grid">${cards}</div>
+      ${this.lookPicker()}
       <div class="title-buttons row">
         <button data-act="back">뒤로</button>
         <button class="primary" id="start-btn" data-act="start">모험 시작</button>
       </div>`;
+  }
+
+  /** 고른 직업·성별의 실사 생김새 고르기(그림이 있을 때만) */
+  lookPicker() {
+    const list = this.cls ? looksFor(this.cls, this.gender) : [];
+    if (!list.length) return '';
+    const btns = list.map((n) => `<button class="look-pick${n === this.look ? ' sel' : ''}" data-act="look" data-look="${n}"><img src="${photoSrc(this.cls, this.gender, n)}" alt="${n}번 생김새"></button>`).join('');
+    return `<div class="look-row"><span>생김새</span>${btns}</div>`;
   }
 
   render_import() {
@@ -201,7 +212,7 @@ export class Title {
     for (const canvas of this.root.querySelectorAll('[data-preview]')) {
       const ctx = canvas.getContext('2d');
       const save = canvas.dataset.side ? this.sides?.[canvas.dataset.side] : canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)] : null;
-      const img = portraitSprite(canvas.dataset.preview, save?.equip ?? {}, save?.gender ?? this.gender);
+      const img = portraitSprite(canvas.dataset.preview, save?.equip ?? {}, save?.gender ?? this.gender, save ? save.look : this.look);
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
@@ -250,12 +261,13 @@ export class Title {
         return;
       }
       case 'back': this.view = 'main'; this.note = ''; break;
-      case 'pick': this.cls = el.dataset.cls; break;
-      case 'gender': this.gender = el.dataset.g; break;
+      case 'pick': this.cls = el.dataset.cls; this.look = photoLook(this.cls, this.gender, this.look); break;
+      case 'gender': this.gender = el.dataset.g; this.look = this.cls ? photoLook(this.cls, this.gender, this.look) : 1; break;
+      case 'look': this.look = Number(el.dataset.look); break;
       case 'start': {
         const name = this.name.trim();
         if (!name || !this.cls) return;
-        this.onStart({ newName: name, cls: this.cls, gender: this.gender }, this.slot);
+        this.onStart({ newName: name, cls: this.cls, gender: this.gender, look: this.look || 1 }, this.slot);
         return;
       }
       case 'doImport': this.tryImport(this.root.querySelector('#title-import-text').value); return;

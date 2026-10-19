@@ -2,6 +2,7 @@
 // 모든 그림은 이 프로젝트에서 새로 그린 오리지널이다.
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { personCanvas, playerLook } from './people.js';
+import { photoOf, photoPortrait } from './photos.js';
 import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
 import { drawCharacter, CHAR_W, CHAR_H } from './characters.js';
@@ -176,8 +177,10 @@ export function monsterSprite(type) {
 }
 
 /** 캐릭터 고르는 화면·초상화용 정면 그림 */
-export function portraitSprite(cls, equip = {}, gender = 'm') {
-  // 새 도트 모드에서는 게임 속과 같은 그림(게임 좌표 32×48, 위 8칸 여백, 6배 = 원본 3배 해상도의 2배)
+export function portraitSprite(cls, equip = {}, gender = 'm', look = 0) {
+  // 새 도트 모드: 고른 생김새의 실사 그림이 있으면 그것, 없으면 게임 속과 같은 도트
+  const photo = isNinja() && photoOf(cls, gender, look);
+  if (photo) return photoPortrait(photo);
   if (isNinja()) return personCanvas(playerLook({ cls, equip, gender }), 'down', {}, { res: 6, padTop: 8 });
   return playerSprite(cls, { gender, dir: 'down', equip });
 }

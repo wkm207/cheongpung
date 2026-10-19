@@ -31,12 +31,12 @@ export const STAT_POINTS_PER_LEVEL = 3;
 const NPC_STEP_MS = 480;
 const TURN_HOLD_MS = 110;
 
-export function createPlayer(name, cls, gender = 'm') {
+export function createPlayer(name, cls, gender = 'm', look = 1) {
   const c = CLASSES[cls];
   let inv = [];
   for (const [id, qty] of [['herb', 5], ['dew', 3], ['returnScroll', 1]]) inv = addItem(inv, id, qty).inv;
   const player = {
-    name, cls, gender, level: 1, exp: 0, gold: 100, hp: 1, mp: 0, inv,
+    name, cls, gender, look, level: 1, exp: 0, gold: 100, hp: 1, mp: 0, inv,
     statPoints: 0, alloc: { str: 0, dex: 0, int: 0, con: 0 },
     equip: { weapon: c.startWeapon, helmet: null, armor: 'cottonRobe', shield: null, necklace: null, ring: null, ring2: null, aux: null, aux2: null },
     mapId: RESPAWN_POINT.mapId, x: RESPAWN_POINT.x, y: RESPAWN_POINT.y, dir: 'down',

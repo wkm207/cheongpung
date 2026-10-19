@@ -191,6 +191,7 @@ export class Panels {
       case 'openShop': this.open('shop', s.data); return;
       case 'view': s.view = el.dataset.view; s.note = ''; break;
       case 'setting': this.hooks.onSetting(el.dataset.key, el.dataset.value); break;
+      case 'setLook': game.setPlayer({ look: Number(el.dataset.look) }); break;
       case 'save': s.note = this.hooks.onSave() ? `저장했습니다. (${new Date().toLocaleTimeString()})` : '저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요.'; break;
       case 'copy': {
         const area = this.panel.querySelector('#export-text');

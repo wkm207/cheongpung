@@ -75,6 +75,7 @@ export function validatePlayer(raw) {
     name,
     cls: raw.cls,
     gender: raw.gender === 'f' ? 'f' : 'm',
+    look: isInt(raw.look) && raw.look >= 1 && raw.look <= 99 ? raw.look : 1,
     level: raw.level,
     exp: isNum(raw.exp) && raw.exp >= 0 ? Math.floor(raw.exp) : 0,
     gold: isNum(raw.gold) && raw.gold >= 0 ? Math.floor(raw.gold) : 0,

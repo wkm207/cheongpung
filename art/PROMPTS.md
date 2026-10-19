@@ -1,0 +1,76 @@
+# 그림 만들기 안내 (강민님용)
+
+1. 아래 **문장(영어)** 을 하나씩 그림 AI(제미나이·ChatGPT 등)에 붙여넣습니다.
+2. 나온 그림을 이 폴더 안의 **`inbox`** 폴더(`E:\내 드라이브\바람의나라 RPG\art\inbox`)에 저장합니다.
+   - 파일 이름은 표의 **파일 이름**대로 해 주시면 제일 좋습니다(예: `warrior_m2.png`). 확장자는 png·jpg 아무거나 됩니다.
+   - 이름 바꾸기가 귀찮으면 그냥 저장하시고 "몇 번째가 뭐다"라고만 알려 주세요. 제가 보고 맞춥니다.
+3. 다 넣으시면 "그림 넣었어"라고 해 주세요. 제가 흰 바탕을 지우고 크기를 맞춰 게임에 넣습니다.
+
+> 꼭 지킬 것: **흰 바탕 · 그림자 없음 · 글자 없음 · 머리부터 발끝까지 다 보이게.** 마음에 안 들면 같은 문장으로 다시 뽑으셔도 됩니다.
+> 같은 느낌을 내려고 모든 문장 앞부분(화풍)은 똑같이 두었습니다.
+
+---
+
+## 1. 캐릭터 (이미 있는 것: warrior_m1 · warrior_f1 · warrior_f2 · rogue_f1 · mage_f1)
+
+공통 앞부분(모든 캐릭터 문장에 이미 들어 있음):
+`Full-body game character sprite, realistic painted concept-art style, ... Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text.`
+
+### 전사
+| 파일 이름 | 문장 |
+|---|---|
+| warrior_m2 | Full-body game character sprite, realistic painted concept-art style, rugged Korean male warrior of the ancient Goguryeo era, long black hair tied back with a leather headband, short beard, warm tan skin, wearing steel lamellar armor over a dark blue tunic, trousers and boots, holding a straight sword. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| warrior_m3 | Full-body game character sprite, realistic painted concept-art style, handsome young Korean male warrior, black hair in a high ponytail, fair skin, sharp eyes, wearing black armor with red trim over a red tunic, white trousers and black boots, sword resting on his shoulder. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| warrior_f3 | Full-body game character sprite, realistic painted concept-art style, young Korean woman warrior, chin-length black bob hair with a dark red headband, light brown skin, bright friendly face, wearing a crimson armored tunic with bronze plates and a short skirt over trousers, boots, holding a straight sword on her shoulder. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| warrior_f4 | Full-body game character sprite, realistic painted concept-art style, elegant Korean woman general, black hair braided and coiled into a crown with a gold ornament, pale skin, calm noble face, wearing white and gold lamellar armor over a long red skirt, holding a long straight sword point down. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+
+### 도적
+| 파일 이름 | 문장 |
+|---|---|
+| rogue_m1 | Full-body game character sprite, realistic painted concept-art style, young Korean male rogue assassin of the Goryeo era, black hair in a messy topknot, a black cloth mask over the lower face, fair skin, wearing a fitted black and charcoal martial outfit with leather bracers and a short cape, holding a dagger. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| rogue_m2 | Full-body game character sprite, realistic painted concept-art style, lean Korean male thief with a scar across his cheek, long black hair loose to the shoulders, tan skin, smirking face, wearing a dark navy jacket, belt with small pouches, trousers wrapped at the shins, holding two short daggers. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| rogue_m3 | Full-body game character sprite, realistic painted concept-art style, young Korean male ranger-rogue, short black hair under a dark gray hood, light skin, calm eyes, wearing a gray and dark green hooded outfit with a leather vest, holding a curved dagger. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| rogue_f2 | Full-body game character sprite, realistic painted concept-art style, cute young Korean woman thief, black hair in two round buns on top of her head, fair skin, playful smile, wearing a short purple jacket with a black sash, dark fitted trousers and soft boots, twirling a small dagger. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| rogue_f3 | Full-body game character sprite, realistic painted concept-art style, mysterious Korean woman assassin, long straight black hair with blunt bangs, very pale skin, red lips, wearing a black and deep red fitted outfit with a thin veil over the lower face, holding a slim dagger. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| rogue_f4 | Full-body game character sprite, realistic painted concept-art style, sporty young Korean woman rogue, short boyish black hair, warm tan skin, freckles, confident grin, wearing a dark teal sleeveless martial top over a black undershirt, wrapped forearms, dark trousers, holding a dagger. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+
+### 주술사
+| 파일 이름 | 문장 |
+|---|---|
+| mage_m1 | Full-body game character sprite, realistic painted concept-art style, young Korean male sorcerer of the Goryeo era, long black hair half tied up with a silver pin, fair skin, cool expression, wearing a deep purple layered robe with silver embroidery and wide sleeves, holding a wooden staff with a glowing blue orb. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| mage_m2 | Full-body game character sprite, realistic painted concept-art style, middle-aged Korean male shaman sorcerer, black hair in a topknot under a small black horsehair cap, thin mustache, tan skin, wearing a black and gold robe with talisman papers tucked in the belt, holding a gnarled staff with a red orb. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| mage_m3 | Full-body game character sprite, realistic painted concept-art style, young Korean male mage with silver-white long hair, pale skin, gentle face, wearing a dark blue and white robe with star patterns, holding a slim staff with a floating crystal. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| mage_f2 | Full-body game character sprite, realistic painted concept-art style, beautiful young Korean woman sorceress, black hair in two long braids with red ribbons (daenggi), fair skin, bright eyes, wearing a black and red hanbok robe with gold patterns, holding a staff with a flame-like red orb. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| mage_f3 | Full-body game character sprite, realistic painted concept-art style, ethereal Korean woman sorceress with long silver hair and a delicate floral hairpin, very pale skin, light blue eyes, wearing a flowing ice-blue and white robe with translucent sleeves, holding a crystal staff. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| mage_f4 | Full-body game character sprite, realistic painted concept-art style, confident Korean woman sorceress, wavy black hair to the waist with a gold circlet, warm tan skin, wearing a dark green and gold robe with a high collar, holding a staff topped with a jade orb. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+
+### 도사
+| 파일 이름 | 문장 |
+|---|---|
+| priest_m1 | Full-body game character sprite, realistic painted concept-art style, calm young Korean male Taoist healer, black hair in a topknot with a white headband, fair skin, kind face, wearing a white robe with sky-blue trim and a blue sash, holding a folding fan. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| priest_m2 | Full-body game character sprite, realistic painted concept-art style, elderly Korean male Taoist sage with long white hair and a long white beard, wearing a pale gray robe and a black gat hat, holding a feather fan. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| priest_m3 | Full-body game character sprite, realistic painted concept-art style, young Korean male monk healer with a shaved head, warm tan skin, gentle smile, wearing an orange and gray monk robe with prayer beads, holding a folding fan. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| priest_f1 | Full-body game character sprite, realistic painted concept-art style, gentle young Korean woman Taoist healer, black hair in a low neat bun with a jade hairpin and a few loose strands, light skin with rosy cheeks, kind face, wearing a white hanbok robe with sky-blue trim and a long white skirt, holding a folding paper fan. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| priest_f2 | Full-body game character sprite, realistic painted concept-art style, lovely young Korean woman healer, long straight black hair with a pink flower ornament, fair skin, soft smile, wearing a pale pink jeogori and a long pink skirt with a white sash, holding a fan with cherry blossom painting. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| priest_f3 | Full-body game character sprite, realistic painted concept-art style, Korean woman shaman priestess, black hair in a high bun with a gold crown ornament and hanging beads, warm tan skin, serene face, wearing a colorful red, blue and yellow ceremonial robe, holding a fan and a bell. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+| priest_f4 | Full-body game character sprite, realistic painted concept-art style, graceful Korean woman healer with short black hair tucked behind her ears, light skin, round glasses-free bright eyes, wearing a light green jeogori and a long white skirt with a green sash, holding a folding fan. Standing, facing the viewer, slightly top-down 3/4 view. Whole figure from head to feet with margin. Isolated on a plain pure white background, no shadow, no text. |
+
+---
+
+## 2. 아이템 아이콘 (한 장에 16개씩 — 제가 잘라서 씁니다)
+
+공통: 정사각형(1:1)으로 만들어 주세요.
+
+| 파일 이름 | 문장 |
+|---|---|
+| icons_sword | A 4 by 4 grid of 16 different realistic game inventory icons of ancient Korean swords, from a simple wooden practice sword and plain iron swords to ornate jeweled legendary swords with dragon and phoenix decorations, each sword shown diagonally, evenly spaced with clear gaps, finely detailed metal shine, plain pure white background, no text, no shadow. |
+| icons_dagger | A 4 by 4 grid of 16 different realistic game inventory icons of ancient Asian daggers and short blades, from simple bone and iron knives to ornate jeweled and glowing legendary daggers, each shown diagonally, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_staff | A 4 by 4 grid of 16 different realistic game inventory icons of magic staffs, wooden and jade staffs topped with glowing orbs, crystals, skulls and dragon heads, from simple to legendary, each shown diagonally, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_fan | A 4 by 4 grid of 16 different realistic game inventory icons of Korean folding fans and feather fans, paper, bamboo, silk, crane feather, peacock feather and golden phoenix fans, from simple to legendary, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_armor | A 4 by 4 grid of 16 different realistic game inventory icons of ancient Korean clothing and armor, cotton robes, hanbok jeogori, leather armor, chain mail, lamellar armor, dragon scale armor and golden royal armor, each shown flat front view, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_helmet | A 4 by 4 grid of 16 different realistic game inventory icons of ancient Korean hats and helmets, straw hat, black gat, headbands, leather caps, iron helmets with plumes, dragon helmets and golden crowns, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_shield | A 4 by 4 grid of 16 different realistic game inventory icons of ancient Asian shields, wooden, leather, iron, turtle shell, bronze mirror, demon face and golden dragon shields, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_jewelry | A 4 by 4 grid of 16 different realistic game inventory icons: 8 Korean necklaces and norigae ornaments (wooden beads, amber, pearl, jade, dragon pearl) and 8 rings (copper, iron, silver, gold, jade, ruby, sapphire, glowing legendary ring), evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_charm | A 4 by 4 grid of 16 different realistic game inventory icons of Korean lucky charms and accessories: silk lucky pouch, paper talisman, gourd bottle, brass bell, incense pouch, tiger claw, bronze mirror, jade tablet, fox tail ornament, prayer beads, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_potion | A 4 by 4 grid of 16 different realistic game inventory icons of Korean consumables: medicinal herbs, wild ginseng, dew in a small bottle, honey water jar, elixir pill box, rice cake, bowl of gukbap soup, makgeolli bottle, rolled scroll, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |
+| icons_loot | A 4 by 4 grid of 16 different realistic game inventory icons of monster loot: acorn, rabbit fur, fox tail, wolf fang, goblin horn, boar tusk, white tiger fur, blue bead, dragon scale, black pearl, amber gem, raw meat, bat wing, snake skin, iron shard, glowing orb, evenly spaced with clear gaps, plain pure white background, no text, no shadow. |

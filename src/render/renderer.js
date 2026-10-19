@@ -9,6 +9,7 @@ import { smoothMap } from './smooth.js';
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
+import { photoOf, drawPhoto, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -429,14 +430,75 @@ export class Renderer {
       ctx.stroke();
     }
     const name = `Lv${game.player.level} ${game.player.tier ? `${game.title()} ` : ''}${game.player.name}`;
-    const top = y - (isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
+    const photo = isNinja() && this.playerPhoto(game);
+    const top = y - (photo ? PHOTO_H - 27 : isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
     this.drawVitals(ctx, game, x + 16, top - 1);
     label(ctx, name, x + 16, top - 6, game.player.gm.god ? '#ffd166' : '#ffffff');
     if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, top - 14);
   }
 
+  /** 고른 생김새의 실사 그림(없거나 아직 못 불러왔으면 null) */
+  playerPhoto(game) {
+    const p = game.player;
+    return photoOf(p.cls, p.gender, p.look);
+  }
+
+  /**
+   * 실사 그림으로 플레이어 그리기: 걸으면 들썩이며 살짝 흔들리고, 공격하면 앞으로 내딛고,
+   * 마법을 쓰면 떠오르듯 올라가고, 쓰러지면 눕고, 구르면 한 바퀴, 말 위에서는 허리 위만
+   */
+  drawPhotoPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop, photo) {
+    const dir = riding && rideView === 'side' ? this.rideFace : pe.dir;
+    const flip = dir === 'right';
+    const cx = x + 16;
+    const foot = y + 31;
+    if (game.dead || rollT < 1) {
+      ctx.save();
+      ctx.translate(cx, y + 22);
+      ctx.rotate(game.dead ? Math.PI / 2 : (pe.dir === 'left' ? -1 : 1) * rollT * Math.PI * 2);
+      drawPhoto(ctx, photo, 0, PHOTO_H / 2, { flip });
+      ctx.restore();
+      return;
+    }
+    const [ldx, ldy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[pe.dir];
+    let dx = 0;
+    let dy = 0;
+    let tilt = 0;
+    if (pose === 'attack') {
+      const t = Math.max(0, Math.min(1, (200 - (game.attackPoseUntil - game.now)) / 200));
+      const push = Math.sin(t * Math.PI) * 5;
+      dx = ldx * push;
+      dy = ldy * push;
+      tilt = (ldx || (flip ? 1 : -1)) * Math.sin(t * Math.PI) * 0.08;
+    } else if (pose === 'cast') dy = -2 - Math.sin(game.now / 120);
+    else if (pe.moving && !riding) {
+      dy = -Math.abs(Math.sin(game.now / 110)) * 1.6;
+      tilt = Math.sin(game.now / 110) * 0.035;
+    } else dy = Math.sin(game.now / 600) * 0.5;
+    if (!riding) {
+      if (pe.dir === 'up') ctx.filter = 'brightness(0.82)';
+      drawPhoto(ctx, photo, cx + dx, foot + dy, { flip, tilt });
+      ctx.filter = 'none';
+      return;
+    }
+    // 말 위: 허리 위만 안장에 앉힌다
+    const bounce = pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - 40, y - 80, 112, 80 + 6 - bounce);
+    ctx.clip();
+    drawPhoto(ctx, photo, cx, foot + PHOTO_H * 0.42 - 34 - bounce, { flip });
+    ctx.restore();
+    if (rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
+  }
+
   /** 큰 머리 도트 사람으로 플레이어 그리기: 걷기·휘두르기·마법 자세·쓰러짐·구르기·말 타기 */
   drawDotPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop) {
+    const photo = this.playerPhoto(game);
+    if (photo) {
+      this.drawPhotoPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop, photo);
+      return;
+    }
     const look = playerLook(game.player);
     const dir = riding && rideView === 'side' ? this.rideFace : pe.dir;
     let opts = { step: riding ? 0 : walkStep(pe.moving, game.now) };
