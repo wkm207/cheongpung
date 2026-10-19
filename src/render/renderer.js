@@ -9,7 +9,7 @@ import { smoothMap } from './smooth.js';
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
-import { photoOf, npcPhoto, drawPhoto, PHOTO_H } from './photos.js';
+import { photoOf, npcPhoto, mobPhoto, drawPhoto, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -111,6 +111,14 @@ function scaledAt(ctx, cx, cy, k, draw) {
   ctx.translate(-cx, -cy);
   draw();
   ctx.restore();
+}
+
+// 실사 몬스터 크기(긴 쪽, 게임 좌표): 작은 짐승은 작게, 보스는 정해진 배율만큼 크게
+const SMALL_MOB = new Set(['squirrel', 'rabbit', 'rat', 'bat']);
+function mobPhotoBox(type) {
+  const look = MONSTER_LOOK[type];
+  if (look.scale) return 46 * look.scale;
+  return SMALL_MOB.has(look.art) ? 34 : 56;
 }
 
 const spriteDir = (dir) => (dir === 'left' || dir === 'right' ? 'side' : dir);
@@ -867,25 +875,37 @@ export class Renderer {
     const d = MONSTERS[m.type];
     const scale = monsterScale(m.type);
     // 새 도트 모드: 네 방향·걸음이 있는 도트(바라보는 쪽은 그림에 들어 있다)
-    const dot = isNinja();
+    // 실사 그림이 있으면 그것(긴 쪽을 몬스터 크기에 맞춤, 오른쪽을 보면 뒤집기)
+    const photo = isNinja() && mobPhoto(m.type);
+    const dot = isNinja() && !photo;
     const stunned = game.now < m.stunUntil;
-    const img = dot ? mobSprite(m.type, m.dir ?? 'down', stunned ? 0 : mobStep(m, game.now)) : monsterSprite(m.type);
+    const img = photo || (dot ? mobSprite(m.type, m.dir ?? 'down', stunned ? 0 : mobStep(m, game.now)) : monsterSprite(m.type));
     const size = Math.round(32 * scale);
-    const w = dot ? img.lw : size;
-    const h = dot ? img.lh : size;
+    const box = photo ? mobPhotoBox(m.type) : 0;
+    const w = photo ? (img.width * box) / Math.max(img.width, img.height) : dot ? img.lw : size;
+    const h = photo ? (img.height * box) / Math.max(img.width, img.height) : dot ? img.lh : size;
     const telegraph = m.strikeAt > game.now;
     let bob = 0;
-    if (m.moving) bob = dot ? 0 : m.stepT < 0.5 ? -1 : 0;
+    if (m.moving) bob = photo ? -Math.abs(Math.sin(game.now / 110)) * 2 : dot ? 0 : m.stepT < 0.5 ? -1 : 0;
     else if (!stunned) bob = Math.sin((game.now + m.id * 300) / 260) > 0.7 ? -1.5 : 0;
     const jitter = telegraph ? (Math.random() - 0.5) * 2 : 0;
     const dx = Math.round(x + 16 - w / 2 + jitter);
-    const dy = Math.round(y + 32 - h + bob - (dot ? mobHover(m, game.now) : 0));
+    const dy = Math.round(y + 32 - h + bob - (dot || photo ? mobHover(m, game.now) : 0));
     shadow(ctx, x + 16, y + 29, dot ? Math.min(w * 0.36, 9 * scale) : 9 * scale);
     drawFoeCasting(ctx, game, m, x + 16, y + 28, scale);
     if (telegraph) drawStrikeTell(ctx, x + 16, dy + h / 2, Math.max(w, h), game.now);
     const flashing = game.now - m.hitAt < 120;
-    ctx.globalAlpha = (flashing ? 0.55 : 1) * (dot ? MONSTER_LOOK[m.type].alpha ?? 1 : 1);
-    if (dot) {
+    ctx.globalAlpha = (flashing ? 0.55 : 1) * (dot || photo ? MONSTER_LOOK[m.type].alpha ?? 1 : 1);
+    if (photo) {
+      ctx.save();
+      if (m.face === 'right') {
+        ctx.translate(dx + w / 2, 0);
+        ctx.scale(-1, 1);
+        ctx.translate(-(dx + w / 2), 0);
+      }
+      ctx.drawImage(img, dx, dy, w, h);
+      ctx.restore();
+    } else if (dot) {
       const smooth = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
       drawSprite(ctx, img, dx, dy, false);

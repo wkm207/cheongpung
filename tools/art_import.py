@@ -19,6 +19,7 @@ from PIL import Image, ImageFilter
 ROOT = Path(__file__).resolve().parent.parent
 INBOX = ROOT / 'art' / 'inbox'
 PEOPLE = ROOT / 'assets' / 'people'
+MOBS = ROOT / 'assets' / 'mobs'
 ICONS = ROOT / 'assets' / 'icons'
 LOOKS_JS = ROOT / 'src' / 'data' / 'looks.js'
 CLASSES = ('warrior', 'rogue', 'mage', 'priest')
@@ -122,6 +123,23 @@ def import_person(path, name):
     print('사람', name, out.size)
 
 
+def import_mob(path, mob_id, box=None, size=320):
+    """몬스터 한 마리(box 가 있으면 그 부분만) → 긴 쪽 size px, assets/mobs/{id}.png"""
+    im = Image.open(path).convert('RGB')
+    if box:
+        im = im.crop(box)
+    MOBS.mkdir(parents=True, exist_ok=True)
+    tmp = MOBS / f'_{mob_id}.png'
+    im.save(tmp)
+    out = cutout(tmp)
+    tmp.unlink()
+    out = out.crop(out.getbbox())
+    k = size / max(out.size)
+    out = out.resize((max(1, round(out.width * k)), max(1, round(out.height * k))), Image.LANCZOS)
+    out.save(MOBS / f'{mob_id}.png', optimize=True)
+    print('몬스터', mob_id, out.size)
+
+
 def components(alpha, min_px):
     """불투명 덩어리들의 상자(읽는 순서: 위 줄부터 왼→오)"""
     w, h = alpha.size
@@ -178,13 +196,16 @@ def write_looks():
             g.sort()
     icons = sorted(p.stem for p in ICONS.glob('*.png')) if ICONS.exists() else []
     npcs = sorted(p.stem[len('npc_'):] for p in PEOPLE.glob('npc_*.png'))
+    mobs = sorted(p.stem for p in MOBS.glob('*.png') if not p.stem.startswith('_')) if MOBS.exists() else []
     LOOKS_JS.write_text(
         '// tools/art_import.py 가 만든다. 직업·성별마다 고를 수 있는 생김새 번호(assets/people/{직업}_{m|f}{번호}.png)\n'
         f'export const LOOKS = {json.dumps(looks, ensure_ascii=False)};\n'
         '// 실사 아이템 아이콘(assets/icons/{이름}.png)\n'
         f'export const ICON_FILES = {json.dumps(icons)};\n'
         '// 실사 마을 사람(assets/people/npc_{생김새}.png)\n'
-        f'export const NPC_PHOTOS = {json.dumps(npcs)};\n',
+        f'export const NPC_PHOTOS = {json.dumps(npcs)};\n'
+        '// 실사 몬스터(assets/mobs/{몬스터 id}.png)\n'
+        f'export const MOB_PHOTOS = {json.dumps(mobs)};\n',
         encoding='utf-8')
     print('목록', LOOKS_JS.relative_to(ROOT))
 
