@@ -10,6 +10,7 @@ import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { photoMapReady, renderPhotoMap, photoTree } from './photomap.js';
 import { setMapShot } from './mapshot.js';
+import { gearLook } from './gearlook.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
 import { photoOf, photoView, npcPhoto, mobPhoto, drawPhoto, drawWalking, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
@@ -501,7 +502,9 @@ export class Renderer {
     // 방향별 그림(앞·뒤·옆)이 있으면 그것, 없으면 앞모습을 좌우로 뒤집는다
     const p = game.player;
     const view = photoView(p.cls, p.gender, p.look, dir) ?? { img: photoFront, flip: false, front: true };
-    const photo = view.img;
+    // 맨손 그림에 끼고 있는 무기·쓰개를 입힌 그림(여백만큼 키를 늘려 그린다)
+    const photo = gearLook(view.img, p.equip);
+    const ph = PHOTO_H * (photo.hScale ?? 1);
     const flip = view.front ? dir === 'right' : view.flip;
     const cx = x + 16;
     const foot = y + 31;
@@ -509,7 +512,7 @@ export class Renderer {
       ctx.save();
       ctx.translate(cx, y + 22);
       ctx.rotate(game.dead ? Math.PI / 2 : (pe.dir === 'left' ? -1 : 1) * rollT * Math.PI * 2);
-      drawPhoto(ctx, photo, 0, PHOTO_H / 2, { flip });
+      drawPhoto(ctx, photo, 0, PHOTO_H / 2, { flip, h: ph });
       ctx.restore();
       return;
     }
@@ -530,7 +533,7 @@ export class Renderer {
     const phase = game.now / 85;
     if (!riding) {
       if (pe.dir === 'up' && view.front) ctx.filter = 'brightness(0.82)';
-      drawWalking(ctx, photo, cx + dx, foot + dy, { flip, phase, moving: pe.moving && pose !== 'attack', view: side ? 'side' : 'front', lean });
+      drawWalking(ctx, photo, cx + dx, foot + dy, { h: ph, flip, phase, moving: pe.moving && pose !== 'attack', view: side ? 'side' : 'front', lean, legs: 0.36 / (photo.hScale ?? 1) });
       ctx.filter = 'none';
       return;
     }
@@ -542,14 +545,14 @@ export class Renderer {
       ctx.beginPath();
       ctx.rect(x - 40, y - 100, 112, 100 + 6 - bounce);
       ctx.clip();
-      drawPhoto(ctx, photo, cx, y + 6 + PHOTO_H * 0.47 - bounce, { flip });
+      drawPhoto(ctx, photo, cx, y + 6 + PHOTO_H * 0.47 - bounce, { flip, h: ph });
       ctx.restore();
       if (rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
       return;
     }
     const horseTop = y + 33 - bounce * 0.5 - HORSE_H;
     const saddle = horseTop + HORSE_H * SADDLE_AT;
-    drawPhoto(ctx, photo, cx + (flip ? 2 : -2), saddle + PHOTO_H * 0.42 - bounce, { flip });
+    drawPhoto(ctx, photo, cx + (flip ? 2 : -2), saddle + PHOTO_H * 0.42 - bounce, { flip, h: ph });
     // 안장 아래 말 몸통을 위에 덧그려 사람 다리를 가린다
     ctx.save();
     ctx.beginPath();

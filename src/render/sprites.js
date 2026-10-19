@@ -3,6 +3,7 @@
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { personCanvas, playerLook } from './people.js';
 import { photoOf, photoPortrait } from './photos.js';
+import { gearLook } from './gearlook.js';
 import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
 import { drawCharacter, CHAR_W, CHAR_H } from './characters.js';
@@ -180,7 +181,7 @@ export function monsterSprite(type) {
 export function portraitSprite(cls, equip = {}, gender = 'm', look = 0) {
   // 새 도트 모드: 고른 생김새의 실사 그림이 있으면 그것, 없으면 게임 속과 같은 도트
   const photo = isNinja() && photoOf(cls, gender, look);
-  if (photo) return photoPortrait(photo);
+  if (photo) return photoPortrait(gearLook(photo, equip));
   if (isNinja()) return personCanvas(playerLook({ cls, equip, gender }), 'down', {}, { res: 6, padTop: 8 });
   return playerSprite(cls, { gender, dir: 'down', equip });
 }

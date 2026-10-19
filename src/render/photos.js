@@ -122,6 +122,7 @@ export function photoPortrait(img) {
   ctx.drawImage(img, (c.width - w) / 2, c.height * 0.01, w, h);
   c.lw = 32;
   c.lh = 48;
+  c.tag = img.gearTag ?? ''; // 장비 입힌 그림이 준비되면 초상화를 다시 그리게
   portraits.set(img, c);
   return c;
 }

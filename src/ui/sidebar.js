@@ -83,7 +83,7 @@ export class Sidebar {
       if (sig) this.panels.render();
     }
     const img = portraitSprite(p.cls, p.equip, p.gender, p.look);
-    const dk = `${p.cls}:${p.gender}:${p.look}:${img.width}:${Object.values(p.equip).join(',')}:${Object.values(p.enhance ?? {}).join(',')}:${p.dragonStage ?? 0}`;
+    const dk = `${p.cls}:${p.gender}:${p.look}:${img.width}:${Object.values(p.equip).join(',')}:${Object.values(p.enhance ?? {}).join(',')}:${p.dragonStage ?? 0}:${img.tag ?? ''}`;
     if (dk === this.dollKey) return;
     this.dollKey = dk;
     const ctx = this.doll.getContext('2d');

@@ -133,7 +133,7 @@ export class Hud {
 
     const p = game.player;
     const img = portraitSprite(p.cls, p.equip, p.gender, p.look);
-    const pk = `${p.cls}:${p.gender}:${p.look}:${img.width}:${Object.values(p.equip).join(',')}`;
+    const pk = `${p.cls}:${p.gender}:${p.look}:${img.width}:${Object.values(p.equip).join(',')}:${img.tag ?? ''}`;
     if (pk !== this.portraitKey) {
       this.portraitKey = pk;
       const ctx = this.portrait.getContext('2d');
