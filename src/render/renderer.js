@@ -121,6 +121,9 @@ function mobPhotoBox(type) {
   return SMALL_MOB.has(look.art) ? 34 : 56;
 }
 
+// 실사 말 키(게임 좌표)
+const HORSE_H = 56;
+
 const spriteDir = (dir) => (dir === 'left' || dir === 'right' ? 'side' : dir);
 // 사람마다 눈 깜빡이는 때가 조금씩 다르게
 const blinking = (now, seed) => (now + seed * 977) % 3600 < 140;
@@ -422,7 +425,12 @@ export class Renderer {
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
     const gallop = pe.moving ? game.now : 0;
     const horseK = isNinja() ? PERSON_HORSE_SCALE : 1;
-    if (riding && rideView === 'side') scaledAt(ctx, x + 16, y + 31, horseK, () => this.drawHorse(ctx, x, y, faceRight, gallop));
+    // 실사 말 그림이 있으면 그것(옆모습, 오른쪽으로 가면 뒤집기)
+    const horsePic = riding && isNinja() && npcPhoto('horse');
+    if (horsePic) {
+      const bounce = pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
+      drawPhoto(ctx, horsePic, x + 16, y + 33 - bounce * 0.5, { h: HORSE_H, flip: faceRight });
+    } else if (riding && rideView === 'side') scaledAt(ctx, x + 16, y + 31, horseK, () => this.drawHorse(ctx, x, y, faceRight, gallop));
     else if (riding) scaledAt(ctx, x + 16, y + 31, horseK, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'back'));
     ctx.globalAlpha = game.dead ? 0.35 : game.isStealthed() ? 0.4 : game.isDodging() ? 0.75 : 1;
     const rollT = (game.now - (game.rollStart ?? -1e9)) / 330;
@@ -456,7 +464,7 @@ export class Renderer {
     }
     const name = `Lv${game.player.level} ${game.player.tier ? `${game.title()} ` : ''}${game.player.name}`;
     const photo = isNinja() && this.playerPhoto(game);
-    const top = y - (photo ? PHOTO_H - 27 : isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
+    const top = y - (photo ? PHOTO_H - 27 + (riding && npcPhoto('horse') ? 13 : 0) : isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
     this.drawVitals(ctx, game, x + 16, top - 1);
     label(ctx, name, x + 16, top - 6, game.player.gm.god ? '#ffd166' : '#ffffff');
     if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, top - 14);
@@ -510,11 +518,14 @@ export class Renderer {
     const bounce = pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(x - 40, y - 80, 112, 80 + 6 - bounce);
+    const horsePic = npcPhoto('horse');
+    // 실사 말이면 안장(말 키의 위쪽 25%쯤)에 엉덩이를 맞춘다
+    const hip = horsePic ? y + 33 - HORSE_H * 0.74 : y + 6;
+    ctx.rect(x - 40, y - 100, 112, 100 + hip - y + 4 - bounce);
     ctx.clip();
-    drawPhoto(ctx, photo, cx, foot + PHOTO_H * 0.42 - 34 - bounce, { flip });
+    drawPhoto(ctx, photo, cx + (horsePic ? (flip ? 3 : -3) : 0), hip + PHOTO_H * 0.47 - bounce, { flip });
     ctx.restore();
-    if (rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
+    if (!horsePic && rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
   }
 
   /** 큰 머리 도트 사람으로 플레이어 그리기: 걷기·휘두르기·마법 자세·쓰러짐·구르기·말 타기 */
@@ -850,10 +861,10 @@ export class Renderer {
     const photo = isNinja() && npcPhoto(n.look);
     const dot = !photo && isNinja() && npcLook(n.look);
     const tall = photo || dot || (img.lh ?? img.height) > 32;
-    const top = photo ? PHOTO_H - 27 : dot ? PERSON_LABEL : tall ? 18 : 2;
+    const top = photo ? (n.look === 'cat' ? 2 : PHOTO_H - 27) : dot ? PERSON_LABEL : tall ? 18 : 2;
     if (photo) {
       const bob = n.moving ? -Math.abs(Math.sin(game.now / 120)) * 1.5 : 0;
-      drawPhoto(ctx, photo, x + 16, y + 31 + bob, { flip, tilt: n.moving ? Math.sin(game.now / 120) * 0.03 : 0 });
+      drawPhoto(ctx, photo, x + 16, y + 31 + bob, { h: n.look === 'cat' ? 24 : PHOTO_H, flip, tilt: n.moving ? Math.sin(game.now / 120) * 0.03 : 0 });
     } else if (dot) drawPerson(ctx, dot, n.dir ?? 'down', { step: walkStep(n.moving, game.now, 160) }, x, y);
     else drawSprite(ctx, img, x, y - top, flip);
     label(ctx, n.name, x + 16, y - top, '#ffe08a');
