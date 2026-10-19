@@ -358,8 +358,8 @@ export class Renderer {
       if (blink) continue;
       const age = game.now - (g.spawnAt ?? -1e9);
       const bounce = age < 450 ? -Math.sin((age / 450) * Math.PI) * 12 : Math.sin((game.now + g.x * 100) / 300);
-      if (isNinja()) {
-        // 새 도트 모드: 아이템 도트(사람 도트와 같은 배율)
+      if (isNinja() && typeof document !== 'undefined') {
+        // 새 도트 모드: 아이템 도트(사람 도트와 같은 배율). 캔버스가 없는 노드(테스트)에서는 이모지로 그린다
         const img = itemCanvas(g.id === GOLD_ID ? '__gold' : g.id);
         const s = img.width * ITEM_DOT_SCALE;
         ctx.drawImage(img, Math.round(cx - s / 2), Math.round(cy + 9 - s + bounce), s, s);
