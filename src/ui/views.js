@@ -227,7 +227,7 @@ export function characterView(game) {
   const s = game.stats();
   const need = p.level >= MAX_LEVEL ? '-' : expToNext(p.level).toLocaleString();
   const rows = [
-    ['직업', `${game.title()}${p.tier ? ` (${p.tier}차)` : ''}`], ['레벨', p.level],
+    ['직업', `${game.titleWithClass()}${p.tier ? ` · ${p.tier}차` : ''}`], ['레벨', p.level],
     ['체력', `${p.hp} / ${s.maxHp}`], ['마력', `${p.mp} / ${s.maxMp}`],
     ['공격', s.atk], ['방어', s.def], ['술력', s.mag], ['치명타', formatStat('crit', s.crit)],
     ...[['mcrit', '마법치명'], ['dmgPct', '피해증가'], ['pen', '방어무시'], ['cdr', '쿨타임 감소']]
@@ -249,7 +249,7 @@ export function characterView(game) {
   const used = Object.values(a).reduce((x, y) => x + y, 0);
   return `${header('정보', 'character')}
     <div class="body">
-      <div class="char-head"><span class="lv-badge">Lv.${p.level}</span> <b>${esc(p.name)}</b> · ${game.title()}</div>
+      <div class="char-head"><span class="lv-badge">Lv.${p.level}</span> <b>${esc(p.name)}</b> · ${game.titleWithClass()}</div>
       <div class="side-bars char-bars">
         <div class="sbar hp"><i style="width:${Math.min(100, (p.hp / s.maxHp) * 100)}%"></i><span>체력 ${p.hp.toLocaleString()} / ${s.maxHp.toLocaleString()}</span></div>
         <div class="sbar mp"><i style="width:${Math.min(100, (p.mp / s.maxMp) * 100)}%"></i><span>마력 ${p.mp.toLocaleString()} / ${s.maxMp.toLocaleString()}</span></div>
@@ -476,13 +476,6 @@ export function menuView(game, state, settings) {
         <span class="grow">터치 이동 방식</span>
         <button class="${settings.control === 'dpad' ? 'on' : ''}" data-act="setting" data-key="control" data-value="dpad">방향 버튼</button>
         <button class="${settings.control === 'joystick' ? 'on' : ''}" data-act="setting" data-key="control" data-value="joystick">조이스틱</button>
-      </div>
-      <div class="row">
-        <span class="grow">그래픽</span>
-        <button class="${settings.graphics === 'ninja' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="ninja">새 도트 타일</button>
-        <button class="${settings.graphics === 'photo' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="photo">손그림</button>
-        <button class="${settings.graphics === 'classic' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="classic">원작풍 도트</button>
-        <button class="${settings.graphics === 'smooth' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="smooth">매끈한 그림</button>
       </div>
       <div class="row">
         <span class="grow">배경음악</span>

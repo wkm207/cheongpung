@@ -10,7 +10,7 @@ import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { photoMapReady, renderPhotoMap, photoTree } from './photomap.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
-import { photoOf, photoView, npcPhoto, mobPhoto, drawPhoto, PHOTO_H } from './photos.js';
+import { photoOf, photoView, npcPhoto, mobPhoto, drawPhoto, drawWalking, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -122,8 +122,15 @@ function mobPhotoBox(type) {
   return SMALL_MOB.has(look.art) ? 34 : 56;
 }
 
+// 손그림 몬스터 중 오른쪽을 보는 그림(나머지는 왼쪽), 앞을 보고 서 있는 그림(걸을 때 발을 번갈아 든다)
+const MOB_FACES_RIGHT = new Set(['eggGhost', 'goblin', 'rabbit', 'skeletonSword']);
+const MOB_FRONT = new Set(['dueok', 'pigKing', 'redOgre', 'skeleton', 'skeletonGeneral', 'turtleGeneral', 'yeti',
+  'zodiacGeneral', 'zodiacOx', 'zodiacRat', 'zodiacTiger', 'waterImp', 'fishSoldier', 'goblin', 'skeletonArcher', 'skeletonSword']);
+
 // 실사 말 키(게임 좌표)
 const HORSE_H = 56;
+// 말 그림에서 안장 윗면 높이(위에서부터 비율)
+const SADDLE_AT = 0.4;
 
 const spriteDir = (dir) => (dir === 'left' || dir === 'right' ? 'side' : dir);
 // 사람마다 눈 깜빡이는 때가 조금씩 다르게
@@ -468,7 +475,7 @@ export class Renderer {
       ctx.ellipse(x + 16, y + 29, 12, 5, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-    const name = `Lv${game.player.level} ${game.player.tier ? `${game.title()} ` : ''}${game.player.name}`;
+    const name = `Lv${game.player.level} ${game.player.tier ? `${game.titleWithClass()} ` : ''}${game.player.name}`;
     const photo = isNinja() && this.playerPhoto(game);
     const top = y - (photo ? PHOTO_H - 27 + (riding && npcPhoto('horse') ? 13 : 0) : isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
     this.drawVitals(ctx, game, x + 16, top - 1);
@@ -487,7 +494,8 @@ export class Renderer {
    * 마법을 쓰면 떠오르듯 올라가고, 쓰러지면 눕고, 구르면 한 바퀴, 말 위에서는 허리 위만
    */
   drawPhotoPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop, photoFront) {
-    const dir = riding && rideView === 'side' ? this.rideFace : pe.dir;
+    // 말 위에서는 말 그림(옆모습)에 맞춰 늘 옆을 본다
+    const dir = riding ? this.rideFace ?? 'right' : pe.dir;
     // 방향별 그림(앞·뒤·옆)이 있으면 그것, 없으면 앞모습을 좌우로 뒤집는다
     const p = game.player;
     const view = photoView(p.cls, p.gender, p.look, dir) ?? { img: photoFront, flip: false, front: true };
@@ -504,38 +512,49 @@ export class Renderer {
       return;
     }
     const [ldx, ldy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[pe.dir];
+    const side = dir === 'left' || dir === 'right';
     let dx = 0;
     let dy = 0;
-    let tilt = 0;
+    let lean = 0;
     if (pose === 'attack') {
+      // 공격: 앞으로 한 걸음 내딛으며 윗몸을 숙인다
       const t = Math.max(0, Math.min(1, (200 - (game.attackPoseUntil - game.now)) / 200));
-      const push = Math.sin(t * Math.PI) * 5;
-      dx = ldx * push;
-      dy = ldy * push;
-      tilt = (ldx || (flip ? 1 : -1)) * Math.sin(t * Math.PI) * 0.08;
+      const push = Math.sin(t * Math.PI);
+      dx = ldx * push * 5;
+      dy = ldy * push * 4;
+      lean = side ? push * 0.22 : 0;
     } else if (pose === 'cast') dy = -2 - Math.sin(game.now / 120);
-    else if (pe.moving && !riding) {
-      dy = -Math.abs(Math.sin(game.now / 110)) * 1.6;
-      tilt = Math.sin(game.now / 110) * 0.035;
-    } else dy = Math.sin(game.now / 600) * 0.5;
+    else if (!pe.moving) dy = Math.sin(game.now / 600) * 0.4;
+    const phase = game.now / 85;
     if (!riding) {
       if (pe.dir === 'up' && view.front) ctx.filter = 'brightness(0.82)';
-      drawPhoto(ctx, photo, cx + dx, foot + dy, { flip, tilt });
+      drawWalking(ctx, photo, cx + dx, foot + dy, { flip, phase, moving: pe.moving && pose !== 'attack', view: side ? 'side' : 'front', lean });
       ctx.filter = 'none';
       return;
     }
-    // 말 위: 허리 위만 안장에 앉힌다
+    // 말 위: 사람을 안장에 앉히고, 그 위에 말 몸통(안장 아래)을 다시 그려 다리를 가린다
+    const horsePic = npcPhoto('horse');
     const bounce = pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
+    if (!horsePic) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - 40, y - 100, 112, 100 + 6 - bounce);
+      ctx.clip();
+      drawPhoto(ctx, photo, cx, y + 6 + PHOTO_H * 0.47 - bounce, { flip });
+      ctx.restore();
+      if (rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
+      return;
+    }
+    const horseTop = y + 33 - bounce * 0.5 - HORSE_H;
+    const saddle = horseTop + HORSE_H * SADDLE_AT;
+    drawPhoto(ctx, photo, cx + (flip ? 2 : -2), saddle + PHOTO_H * 0.42 - bounce, { flip });
+    // 안장 아래 말 몸통을 위에 덧그려 사람 다리를 가린다
     ctx.save();
     ctx.beginPath();
-    const horsePic = npcPhoto('horse');
-    // 실사 말이면 안장(말 키의 위쪽 25%쯤)에 엉덩이를 맞춘다
-    const hip = horsePic ? y + 33 - HORSE_H * 0.74 : y + 6;
-    ctx.rect(x - 40, y - 100, 112, 100 + hip - y + 4 - bounce);
+    ctx.rect(x - 60, saddle + 2, 152, HORSE_H);
     ctx.clip();
-    drawPhoto(ctx, photo, cx + (horsePic ? (flip ? 3 : -3) : 0), hip + PHOTO_H * 0.47 - bounce, { flip });
+    drawPhoto(ctx, horsePic, x + 16, y + 33 - bounce * 0.5, { h: HORSE_H, flip: this.rideFace === 'right' });
     ctx.restore();
-    if (!horsePic && rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
   }
 
   /** 큰 머리 도트 사람으로 플레이어 그리기: 걷기·휘두르기·마법 자세·쓰러짐·구르기·말 타기 */
@@ -874,7 +893,7 @@ export class Renderer {
     const top = photo ? (n.look === 'cat' ? 2 : PHOTO_H - 27) : dot ? PERSON_LABEL : tall ? 18 : 2;
     if (photo) {
       const bob = n.moving ? -Math.abs(Math.sin(game.now / 120)) * 1.5 : 0;
-      drawPhoto(ctx, photo, x + 16, y + 31 + bob, { h: n.look === 'cat' ? 24 : PHOTO_H, flip, tilt: n.moving ? Math.sin(game.now / 120) * 0.03 : 0 });
+      drawWalking(ctx, photo, x + 16, y + 31, { h: n.look === 'cat' ? 24 : PHOTO_H, flip, phase: game.now / 95 + n.x, moving: !!n.moving, view: n.dir === 'left' || n.dir === 'right' ? 'side' : 'front' });
     } else if (dot) drawPerson(ctx, dot, n.dir ?? 'down', { step: walkStep(n.moving, game.now, 160) }, x, y);
     else drawSprite(ctx, img, x, y - top, flip);
     label(ctx, n.name, x + 16, y - top, '#ffe08a');
@@ -918,14 +937,15 @@ export class Renderer {
     const flashing = game.now - m.hitAt < 120;
     ctx.globalAlpha = (flashing ? 0.55 : 1) * (dot || photo ? MONSTER_LOOK[m.type].alpha ?? 1 : 1);
     if (photo) {
-      ctx.save();
-      if (m.face === 'right') {
-        ctx.translate(dx + w / 2, 0);
-        ctx.scale(-1, 1);
-        ctx.translate(-(dx + w / 2), 0);
-      }
-      ctx.drawImage(img, dx, dy, w, h);
-      ctx.restore();
+      // 그림이 보는 쪽과 가는 쪽이 다르면 뒤집고, 걸으면 다리를 번갈아 내딛는다(떠다니는 몸은 둥실둥실만)
+      const facesRight = MOB_FACES_RIGHT.has(m.type);
+      const flip = (m.face === 'right') !== facesRight;
+      const art = MONSTER_LOOK[m.type].art;
+      const floats = art === 'ghost' || art === 'bat' || art === 'bird' || art === 'egg';
+      drawWalking(ctx, img, dx + w / 2, dy + h, {
+        h, flip, phase: game.now / 80 + m.id, moving: !!m.moving && !floats && !stunned,
+        view: MOB_FRONT.has(m.type) ? 'front' : 'side', legs: 0.3,
+      });
     } else if (dot) {
       const smooth = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;

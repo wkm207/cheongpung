@@ -67,7 +67,7 @@ export class Sidebar {
     if (!this.active || !game) return;
     const p = game.player;
     this.name.textContent = p.name;
-    this.title.textContent = `Lv.${p.level} ${game.title()}`;
+    this.title.textContent = `Lv.${p.level} ${game.titleWithClass()}`;
     const s = game.stats();
     const bk = `${p.hp}/${s.maxHp}/${p.mp}/${s.maxMp}`;
     if (bk !== this.barKey) {

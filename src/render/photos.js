@@ -132,6 +132,88 @@ export const PHOTO_H = 58;
 /**
  * 발이 (cx, footY)에 닿게 그린다. flip: 좌우 뒤집기, tilt: 기울기(라디안)
  */
+/**
+ * 걷는 모습: 한 장 그림을 윗몸과 다리로 나눠, 다리 왼쪽·오른쪽 절반을 번갈아 움직인다.
+ * view 'front'(앞·뒤): 한쪽 발씩 들어 올린다, 'side'(옆): 앞다리·뒷다리를 반대로 내딛는다.
+ * phase 는 걸음 진행(라디안), lean 은 공격 때 앞으로 숙이기(+면 바라보는 쪽)
+ */
+export function drawWalking(ctx, img, cx, footY, { h = PHOTO_H, flip = false, phase = 0, moving = false, view = 'front', lean = 0, legs = 0.36 } = {}) {
+  const w = (img.width * h) / img.height;
+  const iw = img.width;
+  const ih = img.height;
+  const sy = ih * (1 - legs);
+  const legH = h * legs;
+  const k = w / iw;
+  const bob = moving ? -Math.abs(Math.sin(phase)) * 1.6 : 0;
+  // 다리가 있는 가로 범위(발 끝 줄 기준). 그 바깥(옆으로 뻗은 칼·지팡이)은 움직이지 않는다
+  const [fx0, fx1] = view === 'side' ? feetSpan(img) : [0, iw];
+  const mid = (fx0 + fx1) / 2;
+  ctx.save();
+  ctx.translate(cx, footY);
+  if (flip) ctx.scale(-1, 1);
+  // 윗몸(숙이기는 아래를 기준으로 기울인다)
+  ctx.save();
+  ctx.translate(0, -legH + bob);
+  if (lean) ctx.transform(1, 0, -lean * (flip ? -1 : 1), 1, 0, 0);
+  ctx.drawImage(img, 0, 0, iw, sy + 1, -w / 2, -(h - legH), w, h - legH + 1);
+  ctx.restore();
+  // 다리 범위 바깥은 윗몸과 함께
+  ctx.save();
+  ctx.translate(0, -legH + bob * 0.4);
+  if (fx0 > 0) ctx.drawImage(img, 0, sy, fx0, ih - sy, -w / 2, 0, fx0 * k, legH);
+  if (fx1 < iw) ctx.drawImage(img, fx1, sy, iw - fx1, ih - sy, -w / 2 + fx1 * k, 0, (iw - fx1) * k, legH);
+  ctx.restore();
+  // 다리: 뒤(왼쪽) 절반·앞(오른쪽) 절반
+  for (const [a, b, half] of [[fx0, mid, 0], [mid, fx1, 1]]) {
+    if (b <= a) continue;
+    const swing = moving ? Math.sin(phase + half * Math.PI) : 0;
+    ctx.save();
+    ctx.translate(0, -legH + bob * 0.4);
+    if (view === 'side') ctx.transform(1, 0, swing * 0.32, 1, 0, 0);
+    else ctx.translate(0, -Math.max(0, swing) * 2.2);
+    ctx.drawImage(img, a, sy, b - a, ih - sy, -w / 2 + a * k, 0, (b - a) * k, legH);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+const spans = new Map();
+
+/** 그림 맨 아래쪽(발) 줄들에서 불투명한 가로 범위 [x0, x1] — 조금 넉넉하게 */
+function feetSpan(img) {
+  if (spans.has(img)) return spans.get(img);
+  let span = [0, img.width];
+  try {
+    const iw = img.width;
+    const ih = img.height;
+    const c = document.createElement('canvas');
+    c.width = iw;
+    c.height = ih;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0);
+    const rows = Math.max(2, Math.round(ih * 0.06));
+    const d = g.getImageData(0, ih - rows, iw, rows).data;
+    let x0 = iw;
+    let x1 = 0;
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < iw; x++) {
+        if (d[(y * iw + x) * 4 + 3] > 40) {
+          if (x < x0) x0 = x;
+          if (x > x1) x1 = x;
+        }
+      }
+    }
+    if (x1 > x0) {
+      const pad = (x1 - x0) * 0.15;
+      span = [Math.max(0, Math.floor(x0 - pad)), Math.min(iw, Math.ceil(x1 + pad))];
+    }
+  } catch {
+    // 그림을 읽을 수 없으면 전체 폭을 다리로 본다
+  }
+  spans.set(img, span);
+  return span;
+}
+
 export function drawPhoto(ctx, img, cx, footY, { h = PHOTO_H, flip = false, tilt = 0 } = {}) {
   const w = (img.width * h) / img.height;
   ctx.save();

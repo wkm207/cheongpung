@@ -59,7 +59,7 @@ export class Hud {
     const p = game.player;
     const s = game.stats();
     setText(this.name, p.name);
-    setText(this.level, `Lv.${p.level} ${game.title()}`);
+    setText(this.level, `Lv.${p.level} ${game.titleWithClass()}`);
     setText(this.gold, `${p.gold.toLocaleString()}전`);
     setText(this.map, game.mapDef.name);
     setText(this.coord, `${game.pe.x}, ${game.pe.y}`);

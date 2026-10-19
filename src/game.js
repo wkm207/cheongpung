@@ -115,6 +115,13 @@ export class Game {
   isStealthed() { return this.stealthUntil > this.now; }
   title() { return titleOf(this.player.cls, this.player.tier); }
 
+  /** 승급 이름 뒤에 원래 직업을 붙인 이름(예: 무장(전사)). 승급 전이면 직업 이름 그대로 */
+  titleWithClass() {
+    const t = this.title();
+    const base = titleOf(this.player.cls, 0);
+    return t === base ? t : `${t}(${base})`;
+  }
+
   toSave() {
     const base = { ...this.player, playMs: Math.floor(this.playMs) };
     if (this.dead) {

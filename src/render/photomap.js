@@ -182,6 +182,28 @@ function stand(ctx, name, tx, ty, size, dy = 0) {
 
 const HOUSE_CH = new Set(['R', 'Y', 'W', 'D']);
 
+/** 드나드는 문: 나무 문틀과 어두운 문간, 돌 디딤돌 */
+function drawDoor(ctx, tx, ty) {
+  const x = tx * TILE + 6;
+  const y = ty * TILE + 4;
+  const w = TILE - 12;
+  const h = TILE - 6;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.fillRect(x - 2, y + h - 2, w + 4, 4);
+  ctx.fillStyle = '#5a3a1e';
+  ctx.fillRect(x - 2, y - 3, w + 4, h + 3);
+  ctx.fillStyle = '#2a1a10';
+  ctx.fillRect(x + 1, y + 1, w - 2, h - 3);
+  // 문살 빛(안쪽이 보이는 듯)
+  ctx.fillStyle = 'rgba(255, 210, 140, 0.25)';
+  ctx.fillRect(x + 3, y + 3, w - 6, h * 0.45);
+  ctx.strokeStyle = '#8a5a2e';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x - 1.5, y - 2.5, w + 3, h + 2);
+  ctx.fillStyle = '#a8a29a';
+  ctx.fillRect(x - 3, y + h - 2, w + 6, 3);
+}
+
 /** 4×3 집터마다 실사 집(초가·기와집)을 얹는다 */
 function drawHouses(ctx, tiles) {
   const h = tiles.length;
@@ -210,6 +232,10 @@ function drawHouses(ctx, tiles) {
       const bw = (maxX - minX + 1) * TILE + 8;
       const bh = (im.height * bw) / im.width;
       ctx.drawImage(im, minX * TILE - 4, (maxY + 1) * TILE - bh + 2, bw, bh);
+      // 집 그림의 문 위치와 실제 드나드는 칸(D)이 달라서, 드나드는 칸에 문을 또렷하게 그린다
+      for (let dy = minY; dy <= maxY; dy++) {
+        for (let dx = minX; dx <= maxX; dx++) if (tiles[dy][dx] === 'D') drawDoor(ctx, dx, dy);
+      }
     }
   }
 }
