@@ -5,4 +5,4 @@ export const ICON_FILES = ["armor_1", "armor_10", "armor_11", "armor_12", "armor
 // 실사 마을 사람(assets/people/npc_{생김새}.png)
 export const NPC_PHOTOS = ["chief", "ferryman", "forger", "guard", "herbalist", "innkeeper", "lord", "master", "peddler", "smith", "stable", "tailor", "traveler"];
 // 실사 몬스터(assets/mobs/{몬스터 id}.png)
-export const MOB_PHOTOS = [];
+export const MOB_PHOTOS = ["bachelorGhost", "bat", "bigRat", "blackDragon", "blueGuardian", "boar", "bulgasari", "dueok", "eggGhost", "eightSerpent", "fireLizard", "firebird", "fishSoldier", "flameSpirit", "forestPig", "fox", "goblin", "greatSnake", "grudgeLord", "gumiho", "iceDragon", "iceSpirit", "imugi", "jangsanbeom", "maidenGhost", "pigKing", "rabbit", "rat", "ratKing", "redGuardian", "redOgre", "seaDragon", "sewerRat", "skeleton", "skeletonArcher", "skeletonGeneral", "skeletonSword", "snake", "snowWolf", "squirrel", "turtleGeneral", "viper", "waterGhost", "waterImp", "whiteSnake", "wildPig", "wolf", "yeti", "zodiacGeneral", "zodiacOx", "zodiacRat", "zodiacTiger"];

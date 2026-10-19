@@ -123,6 +123,39 @@ def import_person(path, name):
     print('사람', name, out.size)
 
 
+def keep_main(rgba, ratio=0.08):
+    """옆 그림에서 딸려 온 작은 조각은 지우고 큰 덩어리(가장 큰 것의 ratio 이상)만 남긴다"""
+    w, h = rgba.size
+    a = bytearray(rgba.getchannel('A').tobytes())
+    label = [0] * (w * h)
+    sizes = [0]
+    for i0 in range(w * h):
+        if a[i0] < 128 or label[i0]:
+            continue
+        n = len(sizes)
+        label[i0] = n
+        q = deque([i0])
+        count = 0
+        while q:
+            i = q.popleft()
+            count += 1
+            x, y = i % w, i // w
+            for j in ((i + 1) if x + 1 < w else -1, (i - 1) if x > 0 else -1, (i + w) if y + 1 < h else -1, (i - w) if y > 0 else -1):
+                if j >= 0 and a[j] >= 128 and not label[j]:
+                    label[j] = n
+                    q.append(j)
+        sizes.append(count)
+    if len(sizes) <= 2:
+        return rgba
+    big = max(sizes)
+    keep = {n for n, s in enumerate(sizes) if n and s >= big * ratio}
+    alpha = bytes(a[i] if label[i] in keep or (a[i] < 128 and a[i] and any(
+        0 <= j < w * h and label[j] in keep for j in (i - 1, i + 1, i - w, i + w))) else 0 for i in range(w * h))
+    out = rgba.copy()
+    out.putalpha(Image.frombytes('L', (w, h), alpha))
+    return out
+
+
 def import_mob(path, mob_id, box=None, size=320):
     """몬스터 한 마리(box 가 있으면 그 부분만) → 긴 쪽 size px, assets/mobs/{id}.png"""
     im = Image.open(path).convert('RGB')
@@ -131,7 +164,7 @@ def import_mob(path, mob_id, box=None, size=320):
     MOBS.mkdir(parents=True, exist_ok=True)
     tmp = MOBS / f'_{mob_id}.png'
     im.save(tmp)
-    out = cutout(tmp)
+    out = keep_main(cutout(tmp))
     tmp.unlink()
     out = out.crop(out.getbbox())
     k = size / max(out.size)
