@@ -177,7 +177,7 @@ export function monsterSprite(type) {
 
 /** 캐릭터 고르는 화면·초상화용 정면 그림 */
 export function portraitSprite(cls, equip = {}, gender = 'm') {
-  // 새 도트 모드에서는 게임 속과 같은 큰 머리 도트(32×48, 위 8칸 여백, 3배로 키움)
-  if (isNinja()) return personCanvas(playerLook({ cls, equip, gender }), 'down', {}, { res: 3, padTop: 8 });
+  // 새 도트 모드에서는 게임 속과 같은 도트(게임 좌표 32×48, 위 8칸 여백, 4배로 키움)
+  if (isNinja()) return personCanvas(playerLook({ cls, equip, gender }), 'down', {}, { res: 4, padTop: 8 });
   return playerSprite(cls, { gender, dir: 'down', equip });
 }

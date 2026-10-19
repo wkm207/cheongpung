@@ -1,5 +1,5 @@
 // 플레이어·마을 사람을 큰 머리 한복 도트(chibi.js)로 그린다: 장비(옷 색·쓰개·무기)가 그림에 반영된다.
-import { chibiFrame, CW, CH, FOOT_ROW } from './chibi.js';
+import { chibiFrame, CW, CH, FOOT_ROW, DOT_RES } from './chibi.js';
 import { CLASSES } from '../data/classes.js';
 import { ITEMS } from '../data/items.js';
 
@@ -58,7 +58,7 @@ const NPC = {
 export const npcLook = (look) => NPC[look] ?? null;
 
 /** 한 칸 그림(캔버스). res 배로 키워 둔다(초상화용) */
-export function personCanvas(look, dir, opts = {}, { res = 1, padTop = 0 } = {}) {
+export function personCanvas(look, dir, opts = {}, { res = DOT_RES, padTop = 0 } = {}) {
   const key = `${JSON.stringify(look)}|${dir}|${opts.step ?? 0}|${opts.pose ?? 'stand'}|${opts.phase ?? 0}|${res}|${padTop}`;
   if (cache.has(key)) return cache.get(key);
   const f = chibiFrame(look, dir, opts);
@@ -66,24 +66,27 @@ export function personCanvas(look, dir, opts = {}, { res = 1, padTop = 0 } = {})
   src.width = CW;
   src.height = CH;
   src.getContext('2d').putImageData(new ImageData(f.data, CW, CH), 0, 0);
+  // 그림은 2배 해상도(DOT_RES)라 게임 좌표 크기는 그 절반. res 는 게임 좌표 1칸당 캔버스 픽셀 수
+  const lw = CW / DOT_RES;
+  const lh = CH / DOT_RES;
   let out = src;
-  if (res !== 1 || padTop) {
+  if (res !== DOT_RES || padTop) {
     out = document.createElement('canvas');
-    out.width = CW * res;
-    out.height = (CH + padTop) * res;
+    out.width = lw * res;
+    out.height = (lh + padTop) * res;
     const ctx = out.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(src, 0, padTop * res, CW * res, CH * res);
+    ctx.drawImage(src, 0, padTop * res, lw * res, lh * res);
   }
-  out.lw = CW;
-  out.lh = CH + padTop;
+  out.lw = lw;
+  out.lh = lh + padTop;
   if (cache.size > 600) cache.clear();
   cache.set(key, out);
   return out;
 }
 
-// 원작처럼 사람이 칸보다 크게(1.5배 — 고해상도 화면에서 도트 한 개가 3픽셀이라 또렷하다)
-export const PERSON_SCALE = 1.5;
+// 원작처럼 사람이 칸보다 크게(게임 좌표로 1.5배 — 2배 해상도 도트라 그림 한 칸은 0.75)
+export const PERSON_SCALE = 1.5 / DOT_RES;
 
 /** 게임 칸(x,y: 32px 칸 왼쪽 위)에 발이 칸 아래쪽에 닿게 그린다. lift 만큼 띄운다 */
 export function drawPerson(ctx, look, dir, opts, x, y, lift = 0) {
