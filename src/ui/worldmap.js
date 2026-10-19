@@ -3,6 +3,9 @@ import { MAP_DEFS } from '../data/maps.js';
 import { MONSTERS } from '../data/monsters.js';
 import { SOLID } from '../world/mapgen.js';
 import { esc } from './dom.js';
+import { mapShot } from '../render/mapshot.js';
+import { photoObject, photoTexture, photoTree } from '../render/photomap.js';
+import { TILE } from '../config.js';
 
 // 세계 지도 위 칸 자리(열, 줄). 실제 출구 방향과 맞게 손으로 놓았다. 아래 두 줄은 바다 건너(뱃길).
 const LAYOUT = {
@@ -12,6 +15,14 @@ const LAYOUT = {
   skullDen1: [0, 2], haunted1: [0, 4], ratDen1: [2, 4], snakeDen1: [3, 4], pigDen1: [4, 4],
   trainingBlue: [0, 6], trainingRed: [1, 6], zodiacTemple: [2, 6], dragonPalace: [3, 6],
   northFortress: [4, 6], eastIsland: [5, 6], fireIsland: [6, 6],
+};
+// 지역마다 세계 지도에 세울 그림(손그림 물건)
+const ICON = {
+  village: 'thatch', castle: 'tilehouse', field1: 'flowers', forest: 'tree', wolfHill: 'pine', deepMountain: 'pine',
+  bossLair: 'rock', goblinCave: 'rock', imugiSwamp: 'bush', snowPass: 'snowpine', dragonCave: 'rock',
+  skullDen1: 'deadtree', haunted1: 'deadtree', ratDen1: 'rock', snakeDen1: 'bush', pigDen1: 'rock',
+  trainingBlue: 'well', trainingRed: 'well', zodiacTemple: 'tilehouse', dragonPalace: 'tilehouse',
+  northFortress: 'snowpine', eastIsland: 'blossom', fireIsland: 'deadtree',
 };
 const COLS = 7;
 const ROWS = 7;
@@ -140,23 +151,39 @@ function roundRect(ctx, x, y, w, h, r) {
 function drawWorld(canvas, game, s) {
   const { ctx, w, h } = fitCanvas(canvas, 0.9);
   const g = worldGeometry(w, h);
-  // 땅과 바다
+  // 땅과 바다(손그림 풀밭·물 무늬가 있으면 그것으로)
   const land = ctx.createLinearGradient(0, 0, 0, h);
   land.addColorStop(0, '#d9c99a');
   land.addColorStop(1, '#c9b27a');
-  ctx.fillStyle = land;
+  ctx.fillStyle = texFill(ctx, 'grass', g.cw * 1.6) ?? land;
   ctx.fillRect(0, 0, w, h);
   const seaY = SEA_ROW * g.ch;
   const sea = ctx.createLinearGradient(0, seaY, 0, h);
   sea.addColorStop(0, '#7fb6d9');
   sea.addColorStop(1, '#3d7fb0');
-  ctx.fillStyle = sea;
-  ctx.beginPath();
-  ctx.moveTo(0, seaY);
-  for (let x = 0; x <= w; x += 12) ctx.lineTo(x, seaY + Math.sin(x / 18) * 3);
-  ctx.lineTo(w, h);
-  ctx.lineTo(0, h);
+  const shore = () => {
+    ctx.beginPath();
+    ctx.moveTo(0, seaY);
+    for (let x = 0; x <= w; x += 12) ctx.lineTo(x, seaY + Math.sin(x / 18) * 3);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+  };
+  // 모래 바닷가 → 바다
+  ctx.save();
+  ctx.translate(0, -g.ch * 0.12);
+  ctx.fillStyle = texFill(ctx, 'sand', g.cw * 1.4) ?? '#e3cf98';
+  shore();
   ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = texFill(ctx, 'water', g.cw * 1.8) ?? sea;
+  shore();
+  ctx.fill();
+  // 가장자리를 어둡게(오래된 종이 지도 느낌)
+  const vig = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
+  vig.addColorStop(0, 'rgba(60,40,10,0)');
+  vig.addColorStop(1, 'rgba(60,40,10,0.45)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = 'rgba(255,255,255,0.75)';
   ctx.font = `bold ${Math.max(9, g.ch * 0.16)}px sans-serif`;
   ctx.textAlign = 'right';
@@ -175,14 +202,14 @@ function drawWorld(canvas, game, s) {
       drawn.add(key);
       const [x0, y0] = g.center(id);
       const [x1, y1] = g.center(to);
-      ctx.strokeStyle = '#8a6a3a';
-      ctx.lineWidth = Math.max(3, g.ch * 0.07);
+      ctx.strokeStyle = 'rgba(90,62,30,0.55)';
+      ctx.lineWidth = Math.max(5, g.ch * 0.12);
       ctx.beginPath();
       ctx.moveTo(x0, y0);
       ctx.lineTo(x1, y1);
       ctx.stroke();
-      ctx.strokeStyle = '#e8d6a8';
-      ctx.lineWidth = Math.max(1, g.ch * 0.025);
+      ctx.strokeStyle = texFill(ctx, 'dirt', g.cw * 0.8) ?? '#c9a46a';
+      ctx.lineWidth = Math.max(3, g.ch * 0.08);
       ctx.stroke();
     }
   }
@@ -210,41 +237,89 @@ function drawWorld(canvas, game, s) {
     const [fill, ink] = nodeColor(def);
     const x = cx - g.boxW / 2;
     const y = cy - g.boxH / 2;
+    // 지역 그림(집·나무·바위 등)을 팻말 위에 세운다
+    const pic = photoObject(ICON[id]);
+    const plateH = fs * 2.2;
+    const plateY = pic ? cy + g.ch * 0.42 - plateH : y;
+    if (pic) {
+      const ph = g.ch * 0.62;
+      const pw = Math.min(g.cw * 0.95, (pic.width * ph) / pic.height);
+      const pH = (pic.height * pw) / pic.width;
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.beginPath();
+      ctx.ellipse(cx, plateY + 1, pw * 0.42, pH * 0.08 + 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.drawImage(pic, cx - pw / 2, plateY + 3 - pH, pw, pH);
+    }
+    // 이름 팻말(나무판). 마을은 금빛 테, 사냥터는 레벨에 따라 초록→빨강 테
+    const bw = g.boxW;
+    const bh = pic ? plateH : g.boxH;
     ctx.shadowColor = 'rgba(0,0,0,0.35)';
     ctx.shadowBlur = 4;
     ctx.shadowOffsetY = 2;
-    roundRect(ctx, x, y, g.boxW, g.boxH, 6);
-    ctx.fillStyle = fill;
+    roundRect(ctx, x, plateY, bw, bh, 4);
+    ctx.fillStyle = pic ? 'rgba(250,240,214,0.94)' : fill;
     ctx.fill();
     ctx.shadowColor = 'transparent';
-    ctx.lineWidth = id === sel ? 2.5 : 1.2;
-    ctx.strokeStyle = id === sel ? '#1b4fd8' : ink;
+    ctx.lineWidth = id === sel ? 2.5 : 1.6;
+    ctx.strokeStyle = id === sel ? '#1b4fd8' : pic ? fill : ink;
     ctx.stroke();
-    ctx.fillStyle = ink;
+    if (pic && id !== sel) {
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = '#6b4a22';
+      roundRect(ctx, x - 0.5, plateY - 0.5, bw + 1, bh + 1, 4.5);
+      ctx.stroke();
+    }
+    const ly = plateY + bh / 2;
+    ctx.fillStyle = pic ? '#3a2410' : ink;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `bold ${fs}px sans-serif`;
     const boss = allSpawns(def).some(([t]) => MONSTERS[t].boss);
-    ctx.fillText(`${boss ? '👑' : ''}${placeName(def)}`, cx, cy - fs * 0.45, g.boxW - 4);
+    ctx.fillText(`${boss ? '👑' : ''}${placeName(def)}`, cx, ly - fs * 0.45, g.boxW - 4);
     const r = levelRange(def);
     ctx.font = `${fs * 0.82}px sans-serif`;
-    ctx.fillText(r ? `Lv ${r[0]}~${r[1]}` : '마을', cx, cy + fs * 0.7, g.boxW - 4);
+    ctx.fillStyle = pic ? ink : ctx.fillStyle;
+    ctx.fillText(r ? `Lv ${r[0]}~${r[1]}` : '마을', cx, ly + fs * 0.6, g.boxW - 4);
     if (id === here) {
       // 현재 위치 깃발
       const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 200);
       ctx.fillStyle = `rgba(220, 40, 40, ${pulse})`;
       ctx.beginPath();
-      ctx.arc(x + g.boxW - 4, y + 4, 5, 0, Math.PI * 2);
+      ctx.arc(x + g.boxW - 4, plateY + 4, 5, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 8px sans-serif';
-      ctx.fillText('나', x + g.boxW - 4, y + 4.5);
+      ctx.fillText('나', x + g.boxW - 4, plateY + 4.5);
     }
   }
   canvas.pick = (px, py) => Object.keys(LAYOUT).find((id) => {
     const [cx, cy] = g.center(id);
-    return Math.abs(px - cx) <= g.boxW / 2 && Math.abs(py - cy) <= g.boxH / 2;
+    return Math.abs(px - cx) <= g.boxW / 2 && Math.abs(py - cy) <= g.ch * 0.45;
   }) ?? null;
+}
+
+/** 게임 화면과 같은 맵 그림(바닥·집·물건)에 나무까지 줄여서 그린다 */
+function drawShot(ctx, shot, ox, oy, sc) {
+  const k = sc / TILE;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(shot.canvas, ox, oy, shot.canvas.width * k, shot.canvas.height * k);
+  for (const t of [...(shot.trees ?? [])].sort((a, b) => a.y - b.y)) {
+    const pt = photoTree(t.look, t.variant);
+    if (!pt) continue;
+    ctx.drawImage(pt.img, ox + (t.x * TILE + 16 - pt.lw / 2) * k, oy + (t.y * TILE + 34 - pt.lh) * k, pt.lw * k, pt.lh * k);
+  }
+}
+
+/** 손그림 바닥 무늬를 지도 크기에 맞춘 채우기(그림이 없으면 null) */
+function texFill(ctx, name, size) {
+  const img = photoTexture(name);
+  if (!img) return null;
+  const pat = ctx.createPattern(img, 'repeat');
+  const k = size / img.width;
+  pat.setTransform?.(new DOMMatrix([k, 0, 0, k, 0, 0]));
+  return pat;
 }
 
 const TILE_COLORS = {
@@ -259,7 +334,13 @@ function drawHere(canvas, game) {
   const oy = (h - mh * sc) / 2;
   ctx.fillStyle = '#0f0905';
   ctx.fillRect(0, 0, w, h);
-  for (let y = 0; y < mh; y++) {
+  const shot = mapShot(game.mapId);
+  // 맵 그림이 아직이면(막 들어온 참) 색 칸으로 그려 두고, 그림이 생기면 다시 그린다
+  if (!shot && (canvas.retry = (canvas.retry ?? 0) + 1) <= 20) {
+    setTimeout(() => canvas.isConnected && drawHere(canvas, game), 300);
+  }
+  if (shot) drawShot(ctx, shot, ox, oy, sc);
+  else for (let y = 0; y < mh; y++) {
     for (let x = 0; x < mw; x++) {
       const t = tiles[y][x];
       let c = TILE_COLORS[t] ?? (SOLID.has(t) ? '#1e2a16' : '#4e8a3a');
@@ -271,7 +352,7 @@ function drawHere(canvas, game) {
   }
   const at = (x, y) => [ox + (x + 0.5) * sc, oy + (y + 0.5) * sc];
   const tag = (text, x, y, color) => {
-    ctx.font = `bold ${Math.max(9, sc * 1.1)}px sans-serif`;
+    ctx.font = `bold ${Math.max(9, Math.min(13, sc * 1.1))}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     const tw = ctx.measureText(text).width + 6;
@@ -287,21 +368,26 @@ function drawHere(canvas, game) {
     const [x, y] = at(m.x, m.y);
     ctx.fillStyle = boss ? '#ff4fd8' : '#ff4d4d';
     ctx.beginPath();
-    ctx.arc(x, y, boss ? Math.max(3, sc * 0.9) : Math.max(1.6, sc * 0.4), 0, Math.PI * 2);
+    ctx.arc(x, y, boss ? Math.max(3, Math.min(8, sc * 0.9)) : Math.max(1.6, Math.min(5, sc * 0.4)), 0, Math.PI * 2);
     ctx.fill();
     if (boss) tag(`👑 ${MONSTERS[m.type].name}`, x, y - sc, '#ffb3ec');
   }
   for (const p of game.mapDef.portals) {
     const [x, y] = at(p.x + (p.w - 1) / 2, p.y + (p.h - 1) / 2);
-    ctx.fillStyle = '#7fe3ff';
+    ctx.fillStyle = shot ? 'rgba(127,227,255,0.45)' : '#7fe3ff';
     ctx.fillRect(ox + p.x * sc - 1, oy + p.y * sc - 1, p.w * sc + 2, p.h * sc + 2);
+    if (shot) {
+      ctx.strokeStyle = '#7fe3ff';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(ox + p.x * sc - 1, oy + p.y * sc - 1, p.w * sc + 2, p.h * sc + 2);
+    }
     tag(`▶ ${MAP_DEFS[p.to]?.name ?? p.to}`, x, y - sc * 0.6, '#bfeeff');
   }
   for (const n of game.npcs) {
     const [x, y] = at(n.x, n.y);
     ctx.fillStyle = '#ffd84d';
     ctx.beginPath();
-    ctx.arc(x, y, Math.max(2.5, sc * 0.55), 0, Math.PI * 2);
+    ctx.arc(x, y, Math.max(2.5, Math.min(6, sc * 0.55)), 0, Math.PI * 2);
     ctx.fill();
     tag(n.name, x, y - sc * 0.6, '#ffe9a8');
   }
@@ -310,7 +396,7 @@ function drawHere(canvas, game) {
   ctx.strokeStyle = '#1b4fd8';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(px, py, Math.max(4, sc * 0.8), 0, Math.PI * 2);
+  ctx.arc(px, py, Math.max(4, Math.min(8, sc * 0.8)), 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   tag('나', px, py - sc, '#ffffff');

@@ -279,6 +279,10 @@ export function renderPhotoMap(tiles, base) {
   return canvas;
 }
 
+/** 불러온 물건·바닥 그림(지도 창에서 쓴다, 없으면 null) */
+export const photoObject = (name) => (ready && isPhoto() ? obj[name] ?? null : null);
+export const photoTexture = (name) => (ready && isPhoto() ? tex[name] ?? null : null);
+
 // 나무 종류 → 그림
 const TREE_OF = { green: 'tree', blossom: 'blossom', pine: 'pine', snow: 'snowpine', dry: 'deadtree' };
 

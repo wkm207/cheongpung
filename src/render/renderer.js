@@ -9,6 +9,7 @@ import { smoothMap } from './smooth.js';
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { photoMapReady, renderPhotoMap, photoTree } from './photomap.js';
+import { setMapShot } from './mapshot.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
 import { photoOf, photoView, npcPhoto, mobPhoto, drawPhoto, drawWalking, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
@@ -218,6 +219,7 @@ export class Renderer {
       this.mapCanvas = built.canvas;
       this.trees = built.trees;
       this.mapId = mapKey;
+      setMapShot(game.mapId, built.canvas, built.trees);
     }
     const k = this.scale * this.dpr;
     const viewW = this.cssW / this.scale;
