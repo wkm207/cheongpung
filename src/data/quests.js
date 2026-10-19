@@ -132,8 +132,8 @@ const TAILOR = [
   {
     id: 't1', title: '여우꼬리 목도리', where: '여우 숲',
     goal: { type: 'collect', target: 'foxTail', count: 8 },
-    offer: '여우꼬리 목도리가 요즘 장에서 인기랍니다. 8개를 모아 오시면 가죽갑옷을 지어 드릴게요.',
-    done: '어쩜, 털이 이렇게 고울 수가! 약속한 가죽갑옷이에요.',
+    offer: '여우꼬리 목도리가 요즘 장에서 인기랍니다. 8개를 모아 오시면 피혁갑을 지어 드릴게요.',
+    done: '어쩜, 털이 이렇게 고울 수가! 약속한 피혁갑이에요.',
     reward: { gold: 200, exp: 500, items: [['leatherArmor', 1]] },
   },
   {

@@ -997,7 +997,7 @@ export class Game {
     return true;
   }
 
-  /** 말 타기 켜고 끄기(말 증서가 있어야 함, 실내에서는 못 탄다) */
+  /** 말 타기 켜고 끄기(마패가 있어야 함, 실내에서는 못 탄다) */
   toggleRide() {
     if (!this.player.inv.some((s) => s.id === 'horseTicket')) {
       this.log('말이 없습니다. 마구간에서 말을 사세요.', '#bbb');
