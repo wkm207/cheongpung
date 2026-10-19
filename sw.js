@@ -10,7 +10,10 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './src/config.js',
+  './src/firebase-config.js',
+  './src/core/account.js',
   './src/core/chatTrade.js',
+  './src/core/cloud.js',
   './src/core/combat.js',
   './src/core/dragon.js',
   './src/core/enhance.js',
@@ -24,6 +27,7 @@ const ASSETS = [
   './src/core/save.js',
   './src/core/skillslots.js',
   './src/core/stats.js',
+  './src/core/sync.js',
   './src/data/classes.js',
   './src/data/gear.js',
   './src/data/items.js',
@@ -54,6 +58,7 @@ const ASSETS = [
   './src/render/sprites.js',
   './src/render/tiles.js',
   './src/render/trees.js',
+  './src/ui/accountView.js',
   './src/ui/bgm.js',
   './src/ui/dom.js',
   './src/ui/hud.js',
@@ -126,6 +131,8 @@ async function refresh(request) {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // 다른 주소(Firebase SDK·로그인·서버 저장)는 건드리지 않고 브라우저에 맡긴다
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   const cached = caches.match(event.request, { ignoreSearch: true });
   const fresh = refresh(event.request).catch(() => null);
   event.waitUntil(fresh);

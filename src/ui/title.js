@@ -4,12 +4,13 @@ import { CLASSES } from '../data/classes.js';
 import { MAP_DEFS } from '../data/maps.js';
 import { titleOf } from '../data/tiers.js';
 import { playerSprite } from '../render/sprites.js';
+import { accountBar, loginView, conflictView } from './accountView.js';
 
 const NAME_MAX = 8;
 
-/** 타이틀 화면: 저장 슬롯 4칸 / 새 캐릭터(이름·직업) / 백업 불러오기 */
+/** 타이틀 화면: 로그인 / 저장 슬롯 4칸 / 새 캐릭터(이름·직업) / 백업 불러오기 / 기기·서버 저장 고르기 */
 export class Title {
-  constructor(root, { listSaves, isCorrupt, deleteSave, importText, onStart }) {
+  constructor(root, { listSaves, isCorrupt, deleteSave, importText, onStart, account = null }) {
     this.root = root;
     this.listSaves = listSaves;
     this.isCorrupt = isCorrupt;
@@ -23,8 +24,19 @@ export class Title {
     this.name = '';
     this.note = '';
     this.confirmDelete = null;
+    this.account = account;   // CloudSync(설정값이 없으면 enabled=false)
+    this.accId = '';
+    this.busy = false;
     root.addEventListener('click', (e) => this.onClick(e));
+    root.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitAccount(e.target.dataset.form);
+    });
+    account?.onChange(() => {
+      if (!root.hidden && (this.view === 'main' || this.view === 'conflict')) this.render();
+    });
     root.addEventListener('input', (e) => {
+      if (e.target.id === 'acc-id') this.accId = e.target.value;
       if (e.target.id === 'new-name') {
         this.name = e.target.value.slice(0, NAME_MAX);
         this.updateStartButton();
@@ -36,7 +48,7 @@ export class Title {
   }
 
   show() {
-    this.view = 'main';
+    this.view = this.account?.enabled && this.account.mode === null ? 'login' : 'main';
     this.note = '';
     this.confirmDelete = null;
     this.root.hidden = false;
@@ -61,24 +73,31 @@ export class Title {
           : `<button data-act="askDelete" data-slot="${i}">비우기</button>`;
         return `<div class="save-slot empty"><span class="slot-no">${i + 1}번</span>⚠️<br>읽을 수 없는 저장<small>백업이 있으면 '백업 불러오기'로 되살릴 수 있어요</small><div class="slot-actions">${del}</div></div>`;
       }
+      if (!p && this.account?.conflicts[i]) {
+        return `<button class="save-slot empty" data-act="conflict" data-slot="${i}"><span class="slot-no">${i + 1}번</span>⚠️<br>저장 고르기</button>`;
+      }
       if (!p) {
         return `<button class="save-slot empty" data-act="new" data-slot="${i}"><span class="slot-no">${i + 1}번</span>➕<br>새 캐릭터</button>`;
       }
       const del = this.confirmDelete === i
         ? `<button class="danger" data-act="delete" data-slot="${i}">정말 삭제</button><button data-act="cancelDelete">취소</button>`
         : `<button data-act="askDelete" data-slot="${i}">삭제</button>`;
+      const start = this.account?.conflicts[i]
+        ? `<button class="primary" data-act="conflict" data-slot="${i}">⚠️ 저장 고르기</button>`
+        : `<button class="primary" data-act="continue" data-slot="${i}">시작</button>`;
       return `<div class="save-slot">
         <span class="slot-no">${i + 1}번</span>
         <canvas data-preview="${p.cls}" data-slot="${i}" width="32" height="48"></canvas>
         <b>${esc(p.name)}</b>
         <small>Lv.${p.level} ${esc(titleOf(p.cls, p.tier))}</small>
         <small>${esc(MAP_DEFS[p.mapId]?.name ?? '')} · ${formatPlayTime(p.playMs)}</small>
-        <div class="slot-actions"><button class="primary" data-act="continue" data-slot="${i}">시작</button>${del}</div>
+        <div class="slot-actions">${start}${del}</div>
       </div>`;
     }).join('');
     return `
       <h1>Country of Wind</h1>
       <p class="sub">바람이 머무는 고을, 나만의 오프라인 모험</p>
+      ${accountBar(this.account)}
       <div class="slot-grid">${slots}</div>
       <div class="title-buttons"><button data-act="import">백업 불러오기</button></div>
       ${this.note ? `<p class="note-light">${esc(this.note)}</p>` : ''}
@@ -124,11 +143,64 @@ export class Title {
       </div>`;
   }
 
+  render_login() {
+    // '로그인이 풀렸습니다' 같은 안내는 sync 쪽 메시지로 온다
+    const note = this.note || (this.account?.status === 'idle' ? this.account.message : '');
+    return loginView({ id: this.accId, note, busy: this.busy, signup: false });
+  }
+
+  render_signup() {
+    return loginView({ id: this.accId, note: this.note, busy: this.busy, signup: true });
+  }
+
+  render_conflict() {
+    const info = this.account?.conflictInfo(this.slot);
+    if (!info) {
+      this.view = 'main';
+      return this.render_main();
+    }
+    this.sides = { local: info.local, remote: info.remote };
+    return conflictView(this.slot, info);
+  }
+
+  /** 로그인·가입 제출 */
+  async submitAccount(kind) {
+    if (this.busy || (kind !== 'signIn' && kind !== 'signUp')) return;
+    const val = (id) => this.root.querySelector(`#${id}`)?.value ?? '';
+    // 다시 그리면 칸이 비므로 먼저 읽어 둔다
+    const [pw, pw2] = [val('acc-pw'), val('acc-pw2')];
+    this.accId = val('acc-id');
+    this.busy = true;
+    this.note = '';
+    this.render();
+    try {
+      if (kind === 'signUp') await this.account.signUp(this.accId, pw, pw2);
+      else await this.account.signIn(this.accId, pw);
+      this.busy = false;
+      this.afterSync(kind === 'signUp' ? '가입했습니다. 이제 어느 기기에서든 이 아이디로 이어서 할 수 있어요.' : '로그인했습니다.');
+    } catch (err) {
+      this.busy = false;
+      this.note = err.message;
+      this.render();
+    }
+  }
+
+  /** 맞춘 뒤: 갈린 칸이 있으면 먼저 고르게 한다 */
+  afterSync(note) {
+    const first = Object.keys(this.account.conflicts).map(Number).sort()[0];
+    this.note = this.account.status === 'error' ? this.account.message : note;
+    if (first !== undefined) {
+      this.slot = first;
+      this.view = 'conflict';
+    } else this.view = 'main';
+    this.render();
+  }
+
   drawPreviews() {
     const saves = this.view === 'main' ? this.listSaves() : [];
     for (const canvas of this.root.querySelectorAll('[data-preview]')) {
       const ctx = canvas.getContext('2d');
-      const save = canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)] : null;
+      const save = canvas.dataset.side ? this.sides?.[canvas.dataset.side] : canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)] : null;
       const img = playerSprite(canvas.dataset.preview, { gender: save?.gender ?? this.gender, equip: save?.equip ?? {} });
       canvas.width = img.width;
       canvas.height = img.height;
@@ -164,6 +236,15 @@ export class Title {
         break;
       }
       case 'pickSlot': this.slot = slot; break;
+      case 'toLogin': this.view = 'login'; this.note = ''; break;
+      case 'toSignup': this.view = 'signup'; this.note = ''; break;
+      case 'playLocal': this.account?.chooseLocal(); this.view = 'main'; this.note = ''; break;
+      case 'logout': this.account?.signOut().then(() => { this.view = 'login'; this.note = '로그아웃했습니다. 이 기기 저장은 그대로 남아 있어요.'; this.render(); }); return;
+      case 'conflict': this.slot = slot; this.view = 'conflict'; break;
+      case 'useLocal':
+      case 'useRemote':
+        this.account?.resolve(this.slot, el.dataset.act === 'useLocal' ? 'local' : 'remote').then(() => this.afterSync(`${this.slot + 1}번 슬롯 저장을 골랐습니다.`));
+        return;
       case 'back': this.view = 'main'; this.note = ''; break;
       case 'pick': this.cls = el.dataset.cls; break;
       case 'gender': this.gender = el.dataset.g; break;

@@ -194,3 +194,24 @@ export function deleteSave(slot, storage = store()) {
     return false;
   }
 }
+
+/** 슬롯의 저장 글자 그대로(없거나 못 읽으면 null). 서버와 맞출 때 쓴다. */
+export function readSlotText(slot, storage = store()) {
+  migrateLegacy(storage);
+  try {
+    return storage?.getItem(slotKey(slot)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** 서버에서 받은 저장 글자를 슬롯에 그대로 넣는다(null 이면 비운다). 검증된 글자만 넣을 것. */
+export function writeSlotText(slot, text, storage = store()) {
+  try {
+    if (text === null) storage.removeItem(slotKey(slot));
+    else storage.setItem(slotKey(slot), text);
+    return true;
+  } catch {
+    return false;
+  }
+}

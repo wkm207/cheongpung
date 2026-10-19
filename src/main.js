@@ -20,6 +20,9 @@ import { runCommand } from './core/gm.js';
 import { parseTrade, findItemByName } from './core/chatTrade.js';
 import { ITEMS } from './data/items.js';
 import { AUTOSAVE_MS } from './config.js';
+import { FIREBASE_CONFIG } from './firebase-config.js';
+import { createCloud } from './core/cloud.js';
+import { CloudSync } from './core/sync.js';
 
 const renderer = new Renderer($('#game'));
 const hud = new Hud();
@@ -28,8 +31,17 @@ const chatInput = $('#chat-input');
 let game = null;
 let slot = 0;
 let lastSaveAt = 0;
+let warnedConflict = false;   // 이번 판에서 '다른 기기 저장' 안내를 했는지
 
+// 로그인했으면 서버에도 올린다(설정값이 비어 있으면 아무것도 하지 않는다)
+const sync = new CloudSync(createCloud(FIREBASE_CONFIG));
 const saveNow = () => (game ? writeSave(game.toSave(), slot) : false);
+/** 자동 저장 + 서버에는 가끔(force 면 바로) 올린다 */
+function saveAndSync(force = false) {
+  const ok = saveNow();
+  if (ok && game) (force ? sync.flush(slot) : sync.noteSaved(slot)).catch(() => {});
+  return ok;
+}
 
 function applySettings(settings) {
   const classic = settings.graphics !== 'smooth';
@@ -125,8 +137,13 @@ const sidebar = new Sidebar({
 const title = new Title($('#title'), {
   listSaves: () => listSaves(),
   isCorrupt: (i) => isCorrupt(i),
-  deleteSave: (i) => deleteSave(i),
+  deleteSave: (i) => {
+    const ok = deleteSave(i);
+    if (sync.loggedIn) sync.syncAll().catch(() => {});
+    return ok;
+  },
   importText,
+  account: sync,
   onStart: (data, i) => startGame(data.newName ? createPlayer(data.newName, data.cls, data.gender) : data, i),
 });
 
@@ -208,6 +225,7 @@ function updateInsets() {
 
 function startGame(player, i) {
   slot = i;
+  warnedConflict = false;
   game = new Game(player);
   game.on(onGameEvent);
   game.log(`${player.name}님, Country of Wind에 오신 것을 환영합니다.`, '#ffd166');
@@ -219,7 +237,7 @@ function startGame(player, i) {
 }
 
 function backToTitle() {
-  saveNow();
+  saveAndSync(true);
   game = null;
   setPlaying(false);
   title.show();
@@ -310,7 +328,7 @@ function frame(ts) {
     minimap.update(game, ts);
     sidebar.update(game);
     if (ts - lastSaveAt > AUTOSAVE_MS) {
-      saveNow();
+      saveAndSync();
       lastSaveAt = ts;
     }
   }
@@ -332,9 +350,17 @@ window.addEventListener('resize', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'hidden') return;
   input.release();
-  saveNow();
+  saveAndSync(true);
 });
-window.addEventListener('pagehide', saveNow);
+window.addEventListener('pagehide', () => saveAndSync(true));
+// 비행기 모드가 풀리면 밀린 저장을 올린다
+window.addEventListener('online', () => sync.reconnect(game ? slot : null).catch(() => {}));
+// 다른 기기에서 지금 하는 캐릭터를 더 진행했으면 알려 준다(덮어쓰지 않고 타이틀에서 고르게 한다)
+sync.onChange(() => {
+  if (!game || !sync.conflicts[slot] || warnedConflict) return;
+  warnedConflict = true;
+  game.log('다른 기기에서 이 캐릭터를 따로 진행한 저장이 서버에 있습니다. 타이틀로 나가면 어느 쪽을 쓸지 고를 수 있어요.', '#ffb199');
+});
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('pointerdown', unlockAudio);
 document.addEventListener('keydown', unlockAudio);
@@ -383,4 +409,5 @@ loadNinja().then(() => { renderer.mapId = null; });
 loadFx();
 setPlaying(false);
 title.show();
+sync.reconnect().catch(() => {});
 requestAnimationFrame(frame);
