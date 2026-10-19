@@ -311,6 +311,7 @@ def write_looks():
             g.sort()
     icons = sorted(p.stem for p in ICONS.glob('*.png')) if ICONS.exists() else []
     npcs = sorted(p.stem[len('npc_'):] for p in PEOPLE.glob('npc_*.png'))
+    views = sorted(p.stem for p in PEOPLE.glob('*_up.png')) + sorted(p.stem for p in PEOPLE.glob('*_side.png'))
     mobs = sorted(p.stem for p in MOBS.glob('*.png') if not p.stem.startswith('_')) if MOBS.exists() else []
     LOOKS_JS.write_text(
         '// tools/art_import.py 가 만든다. 직업·성별마다 고를 수 있는 생김새 번호(assets/people/{직업}_{m|f}{번호}.png)\n'
@@ -319,6 +320,8 @@ def write_looks():
         f'export const ICON_FILES = {json.dumps(icons)};\n'
         '// 실사 마을 사람(assets/people/npc_{생김새}.png)\n'
         f'export const NPC_PHOTOS = {json.dumps(npcs)};\n'
+        '// 방향별 그림이 있는 생김새(_up 뒷모습, _side 오른쪽을 보는 옆모습)\n'
+        f'export const VIEW_PHOTOS = {json.dumps(views)};\n'
         '// 실사 몬스터(assets/mobs/{몬스터 id}.png)\n'
         f'export const MOB_PHOTOS = {json.dumps(mobs)};\n'
         '// 실사 맵: 바닥 무늬(assets/terrain/{이름}.png)와 맵 물건(assets/objects/{이름}.png)\n'

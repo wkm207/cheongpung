@@ -1,6 +1,6 @@
 // 실사풍 사람 그림(AI로 그린 그림을 tools/art_import.py 로 다듬은 것, assets/people/)
 // 직업·성별마다 여러 생김새가 있고, 플레이어는 그중 하나(player.look)를 고른다. 그림이 없으면 도트 그림을 쓴다.
-import { LOOKS, NPC_PHOTOS, MOB_PHOTOS } from '../data/looks.js';
+import { LOOKS, NPC_PHOTOS, MOB_PHOTOS, VIEW_PHOTOS } from '../data/looks.js';
 import { isPhoto } from './artmode.js';
 
 const images = new Map();
@@ -46,6 +46,24 @@ export function npcPhoto(look) {
   return img.complete && img.naturalWidth ? img : null;
 }
 
+const HAS_VIEW = new Set(VIEW_PHOTOS ?? []);
+
+/**
+ * 바라보는 쪽에 맞는 그림: 위로 가면 뒷모습(_up), 옆으로 가면 오른쪽을 보는 옆모습(_side, 왼쪽이면 뒤집기),
+ * 아래로 가거나 방향 그림이 없으면 앞모습. { img, flip } 또는 null
+ */
+export function photoView(cls, gender, look, dir) {
+  const front = photoOf(cls, gender, look);
+  if (!front) return null;
+  const base = photoSrc(cls, gender, photoLook(cls, gender, look)).replace(/^assets\/people\/|\.png$/g, '');
+  const view = dir === 'up' ? '_up' : dir === 'left' || dir === 'right' ? '_side' : '';
+  if (view && HAS_VIEW.has(base + view)) {
+    const img = preload(`assets/people/${base}${view}.png`);
+    if (img.complete && img.naturalWidth) return { img, flip: dir === 'left' };
+  }
+  return { img: front, flip: false, front: true };
+}
+
 /** 그림 하나를 불러 두기(이미 있으면 그대로) */
 function preload(src) {
   if (!images.has(src)) {
@@ -62,7 +80,10 @@ export function preloadPhotos(onDone) {
   const jobs = [];
   for (const [cls, byG] of Object.entries(LOOKS)) {
     for (const [g, list] of Object.entries(byG)) {
-      for (const n of list) jobs.push(preload(photoSrc(cls, g, n)).decode?.().catch(() => {}) ?? Promise.resolve());
+      for (const n of list) {
+        jobs.push(preload(photoSrc(cls, g, n)).decode?.().catch(() => {}) ?? Promise.resolve());
+        for (const v of ['_up', '_side']) if (HAS_VIEW.has(`${cls}_${g}${n}${v}`)) preload(`assets/people/${cls}_${g}${n}${v}.png`);
+      }
     }
   }
   for (const look of HAS_NPC) preload(`assets/people/npc_${look}.png`);

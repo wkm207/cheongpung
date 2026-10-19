@@ -10,7 +10,7 @@ import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { photoMapReady, renderPhotoMap, photoTree } from './photomap.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
-import { photoOf, npcPhoto, mobPhoto, drawPhoto, PHOTO_H } from './photos.js';
+import { photoOf, photoView, npcPhoto, mobPhoto, drawPhoto, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -486,9 +486,13 @@ export class Renderer {
    * 실사 그림으로 플레이어 그리기: 걸으면 들썩이며 살짝 흔들리고, 공격하면 앞으로 내딛고,
    * 마법을 쓰면 떠오르듯 올라가고, 쓰러지면 눕고, 구르면 한 바퀴, 말 위에서는 허리 위만
    */
-  drawPhotoPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop, photo) {
+  drawPhotoPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop, photoFront) {
     const dir = riding && rideView === 'side' ? this.rideFace : pe.dir;
-    const flip = dir === 'right';
+    // 방향별 그림(앞·뒤·옆)이 있으면 그것, 없으면 앞모습을 좌우로 뒤집는다
+    const p = game.player;
+    const view = photoView(p.cls, p.gender, p.look, dir) ?? { img: photoFront, flip: false, front: true };
+    const photo = view.img;
+    const flip = view.front ? dir === 'right' : view.flip;
     const cx = x + 16;
     const foot = y + 31;
     if (game.dead || rollT < 1) {
@@ -515,7 +519,7 @@ export class Renderer {
       tilt = Math.sin(game.now / 110) * 0.035;
     } else dy = Math.sin(game.now / 600) * 0.5;
     if (!riding) {
-      if (pe.dir === 'up') ctx.filter = 'brightness(0.82)';
+      if (pe.dir === 'up' && view.front) ctx.filter = 'brightness(0.82)';
       drawPhoto(ctx, photo, cx + dx, foot + dy, { flip, tilt });
       ctx.filter = 'none';
       return;
