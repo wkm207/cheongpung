@@ -220,8 +220,7 @@ function setPlaying(playing) {
 }
 
 function updateInsets() {
-  renderer.bottomInset = $('#console').hidden ? 0 : $('#console').offsetHeight;
-  renderer.rightInset = sidebar.active ? $('#sidebar').offsetWidth : 0;
+  renderer.setInsets(sidebar.active ? $('#sidebar').offsetWidth : 0, $('#console').hidden ? 0 : $('#console').offsetHeight);
 }
 
 function startGame(player, i) {

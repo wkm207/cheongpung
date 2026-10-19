@@ -129,8 +129,8 @@ export class Renderer {
     this.camX = 0;
     this.camY = 0;
     this.lastTs = 0;
-    this.bottomInset = 0; // 아래 상태 막대에 가려지는 높이(css px)
-    this.rightInset = 0; // 오른쪽 상태창에 가려지는 폭(css px)
+    this.bottomInset = 0; // 아래 상태 막대가 덮는 높이(css px): 그 아래는 그리지 않는다
+    this.rightInset = 0; // 오른쪽 상태창이 덮는 폭(css px)
     this.ambient = new Ambient();
     this.resize();
   }
@@ -138,16 +138,27 @@ export class Renderer {
   resize() {
     // 화면 배율은 2배까지만: 3배 폰에서도 도트 그림은 그대로 또렷하고, 칠할 픽셀은 절반 가까이 준다
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-    this.cssW = window.innerWidth;
-    this.cssH = window.innerHeight;
+    // 캔버스는 아래 상태 막대·오른쪽 상태창에 가려지지 않는 곳만 덮는다(가려질 곳까지 매 프레임 칠하지 않음)
+    this.cssW = Math.max(1, window.innerWidth - this.rightInset);
+    this.cssH = Math.max(1, window.innerHeight - this.bottomInset);
     this.dpr = dpr;
+    this.canvas.style.width = `${this.cssW}px`;
+    this.canvas.style.height = `${this.cssH}px`;
     this.canvas.width = Math.round(this.cssW * dpr);
     this.canvas.height = Math.round(this.cssH * dpr);
-    // 원작풍은 더 멀리서 내려다본다(한 화면에 더 많은 칸)
+    // 원작풍은 더 멀리서 내려다본다(한 화면에 더 많은 칸). 확대 배율은 창 전체 크기로 정한다
     // 새 도트 모드는 원작처럼 가깝게: 짧은 변에 10~15칸(폰 세로 화면은 10~11칸), 옛 원작풍 도트는 멀리서
-    const short = Math.min(this.cssW, this.cssH);
+    const short = Math.min(window.innerWidth, window.innerHeight);
     const tiles = isClassic() && !isNinja() ? CLASSIC_VIEW_TILES : Math.max(10, Math.min(VIEW_TILES, Math.round(short / 34)));
     this.scale = short / (tiles * TILE);
+  }
+
+  /** 상태 막대·상태창이 덮는 크기가 바뀌면 캔버스 크기를 맞춘다 */
+  setInsets(right, bottom) {
+    if (right === this.rightInset && bottom === this.bottomInset) return;
+    this.rightInset = right;
+    this.bottomInset = bottom;
+    this.resize();
   }
 
   screenToTile(cssX, cssY) {
@@ -162,9 +173,11 @@ export class Renderer {
     this.lastTs = ts;
     const ctx = this.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#0b0d14';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    if (!game) return;
+    if (!game) {
+      ctx.fillStyle = '#0b0d14';
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
+    }
 
     const ninja = isNinja() && ninjaReady();
     const mapKey = `${game.mapId}:${isClassic()}:${ninja}`;
@@ -190,12 +203,9 @@ export class Renderer {
     const mapW = game.map.w * TILE;
     const mapH = game.map.h * TILE;
     const pp = lerpPos(game.pe);
-    // 아래 상태 막대를 뺀 영역의 가운데에 캐릭터가 오도록, 맵 끝도 막대 위로 보이게 한다
-    const inset = this.bottomInset / this.scale;
-    const visibleH = viewH - inset;
-    const visibleW = viewW - this.rightInset / this.scale;
-    let camX = mapW <= visibleW ? (mapW - visibleW) / 2 : clamp(pp.x * TILE + TILE / 2 - visibleW / 2, 0, mapW - visibleW);
-    let camY = mapH <= visibleH ? (mapH - visibleH) / 2 : clamp(pp.y * TILE + TILE / 2 - visibleH / 2, 0, mapH - visibleH);
+    // 보이는 영역(캔버스)의 가운데에 캐릭터가 오도록, 맵 끝에서는 멈춘다
+    let camX = mapW <= viewW ? (mapW - viewW) / 2 : clamp(pp.x * TILE + TILE / 2 - viewW / 2, 0, mapW - viewW);
+    let camY = mapH <= viewH ? (mapH - viewH) / 2 : clamp(pp.y * TILE + TILE / 2 - viewH / 2, 0, mapH - viewH);
     if (game.shakeUntil > game.now) {
       camX += (Math.random() - 0.5) * 6;
       camY += (Math.random() - 0.5) * 6;
@@ -203,6 +213,11 @@ export class Renderer {
     this.camX = Math.round(camX * k) / k;
     this.camY = Math.round(camY * k) / k;
 
+    // 맵이 화면을 다 덮으면 바탕을 칠하지 않는다(화면 전체 칠하기 한 번 줄이기)
+    if (this.camX < 0 || this.camY < 0 || this.camX + viewW > mapW || this.camY + viewH > mapH) {
+      ctx.fillStyle = '#0b0d14';
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
     ctx.imageSmoothingEnabled = !isClassic();
     ctx.imageSmoothingQuality = 'high';
     ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
