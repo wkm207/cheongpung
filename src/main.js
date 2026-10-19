@@ -1,5 +1,6 @@
 import { isClassic, setClassic, isNinja, setNinja } from './render/artmode.js';
 import { loadNinja } from './render/ninja.js';
+import { loadFx } from './render/fxdots.js';
 import { Game, createPlayer } from './game.js';
 import { Renderer } from './render/renderer.js';
 import { Input } from './ui/input.js';
@@ -379,6 +380,7 @@ $('#minimap').addEventListener('click', () => openPanel('worldmap'));
 applySettings(getSettings());
 // 새 도트 타일 그림을 불러오면 맵을 다시 그린다
 loadNinja().then(() => { renderer.mapId = null; });
+loadFx();
 setPlaying(false);
 title.show();
 requestAnimationFrame(frame);

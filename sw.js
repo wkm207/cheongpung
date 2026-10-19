@@ -1,6 +1,6 @@
 // 오프라인 실행용 서비스 워커: 처음 접속할 때 모든 파일을 저장해 두고, 이후엔 저장본을 먼저 쓴다.
 // 게임 파일을 고치면 VERSION을 올려야 기기에 새 버전이 받아진다.
-const VERSION = 'cheongpung-v26';
+const VERSION = 'cheongpung-v27';
 const ASSETS = [
   './',
   './index.html',
@@ -42,7 +42,10 @@ const ASSETS = [
   './src/render/characters.js',
   './src/render/effects.js',
   './src/render/foes.js',
+  './src/render/fxdots.js',
   './src/render/chibi.js',
+  './src/render/mobdots.js',
+  './src/render/mobs.js',
   './src/render/ninja.js',
   './src/render/people.js',
   './src/render/renderer.js',
@@ -72,6 +75,21 @@ const ASSETS = [
   './assets/ninja/Nature.png',
   './assets/ninja/Relief.png',
   './assets/ninja/Water.png',
+  './assets/fx/aura.png',
+  './assets/fx/circle.png',
+  './assets/fx/claw.png',
+  './assets/fx/cut.png',
+  './assets/fx/cutx.png',
+  './assets/fx/explosion.png',
+  './assets/fx/ice.png',
+  './assets/fx/rock.png',
+  './assets/fx/slash.png',
+  './assets/fx/smoke.png',
+  './assets/fx/spark.png',
+  './assets/fx/sparkle.png',
+  './assets/fx/spirit.png',
+  './assets/fx/thunder.png',
+  './assets/fx/waterpillar.png',
 ];
 
 self.addEventListener('install', (event) => {

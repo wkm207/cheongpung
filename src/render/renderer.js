@@ -1,6 +1,7 @@
 import { TILE, VIEW_TILES, CLASSIC_VIEW_TILES } from '../config.js';
 import { renderMapCanvas } from './tiles.js';
-import { playerSprite, npcSprite, monsterSprite, monsterScale } from './sprites.js';
+import { playerSprite, npcSprite, monsterSprite, monsterScale, MONSTER_LOOK } from './sprites.js';
+import { mobSprite, mobStep, mobHover } from './mobs.js';
 import { drawEffect } from './effects.js';
 import { Ambient } from './ambient.js';
 import { treeSprite } from './trees.js';
@@ -790,26 +791,35 @@ export class Renderer {
   drawMonster(ctx, game, m, x, y) {
     const d = MONSTERS[m.type];
     const scale = monsterScale(m.type);
-    const img = monsterSprite(m.type);
-    const size = Math.round(32 * scale);
+    // 새 도트 모드: 네 방향·걸음이 있는 도트(바라보는 쪽은 그림에 들어 있다)
+    const dot = isNinja();
     const stunned = game.now < m.stunUntil;
+    const img = dot ? mobSprite(m.type, m.dir ?? 'down', stunned ? 0 : mobStep(m, game.now)) : monsterSprite(m.type);
+    const size = Math.round(32 * scale);
+    const w = dot ? img.lw : size;
+    const h = dot ? img.lh : size;
     const telegraph = m.strikeAt > game.now;
     let bob = 0;
-    if (m.moving) bob = m.stepT < 0.5 ? -1 : 0;
+    if (m.moving) bob = dot ? 0 : m.stepT < 0.5 ? -1 : 0;
     else if (!stunned) bob = Math.sin((game.now + m.id * 300) / 260) > 0.7 ? -1.5 : 0;
     const jitter = telegraph ? (Math.random() - 0.5) * 2 : 0;
-    const dx = x + 16 - size / 2 + jitter;
-    const dy = y + 32 - size + bob;
-    shadow(ctx, x + 16, y + 29, 9 * scale);
+    const dx = Math.round(x + 16 - w / 2 + jitter);
+    const dy = Math.round(y + 32 - h + bob - (dot ? mobHover(m, game.now) : 0));
+    shadow(ctx, x + 16, y + 29, dot ? Math.min(w * 0.36, 9 * scale) : 9 * scale);
     drawFoeCasting(ctx, game, m, x + 16, y + 28, scale);
-    if (telegraph) drawStrikeTell(ctx, x + 16, dy + size / 2, size, game.now);
+    if (telegraph) drawStrikeTell(ctx, x + 16, dy + h / 2, Math.max(w, h), game.now);
     const flashing = game.now - m.hitAt < 120;
-    ctx.globalAlpha = flashing ? 0.55 : 1;
-    drawSprite(ctx, img, dx, dy, m.face === 'right');
+    ctx.globalAlpha = (flashing ? 0.55 : 1) * (dot ? MONSTER_LOOK[m.type].alpha ?? 1 : 1);
+    if (dot) {
+      const smooth = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = false;
+      drawSprite(ctx, img, dx, dy, false);
+      ctx.imageSmoothingEnabled = smooth;
+    } else drawSprite(ctx, img, dx, dy, m.face === 'right');
     ctx.globalAlpha = 1;
     if (stunned) {
       ctx.fillStyle = 'rgba(133, 193, 233, 0.3)';
-      ctx.fillRect(dx, dy, size, size);
+      ctx.fillRect(dx, dy, w, h);
       for (let i = 0; i < 3; i++) {
         const a = game.now / 200 + (i * Math.PI * 2) / 3;
         ctx.fillStyle = '#fff27a';

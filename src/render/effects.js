@@ -1,4 +1,6 @@
 import { TILE } from '../config.js';
+import { isNinja } from './artmode.js';
+import { drawFxDot } from './fxdots.js';
 
 const DIR_ANGLE = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 };
 const center = (v) => v * TILE + 16;
@@ -384,6 +386,7 @@ export function drawEffect(ctx, e, now) {
   if (!draw || now < e.start) return;
   const f = Math.min(1, (now - e.start) / e.dur);
   ctx.save();
-  draw(ctx, e, f, center(e.x), center(e.y));
+  // 새 도트 모드면 FX 시트 그림을 먼저 써 보고, 없으면 원래 그림
+  if (!(isNinja() && drawFxDot(ctx, e, f, center(e.x), center(e.y)))) draw(ctx, e, f, center(e.x), center(e.y));
   ctx.restore();
 }
