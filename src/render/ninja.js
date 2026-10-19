@@ -2,6 +2,7 @@
 // 바닥(풀·흙·눈·모래·굴), 물 웅덩이, 절벽 벽, 나무, 꽃·덤불·바위를 맡고, 나머지(집·실내 등)는 기존 그림을 쓴다.
 import { TILE } from '../config.js';
 import { hash2 } from '../core/rng.js';
+import { gradePixels } from './colorgrade.js';
 
 const FILES = {
   floor: 'assets/ninja/Floor.png',
@@ -12,6 +13,19 @@ const FILES = {
 };
 const atlas = {};
 let ready = false;
+// 풀이 든 시트는 원작풍 누런 올리브빛, 나무·덤불 시트는 짙은 초록으로 색을 옮겨 둔다
+const GRADED = new Map([['floor', 'ground'], ['relief', 'ground'], ['nature', 'foliage']]);
+function graded(img, mode) {
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, c.width, c.height);
+  gradePixels(data.data, mode);
+  ctx.putImageData(data, 0, 0);
+  return c;
+}
 export const ninjaReady = () => ready;
 
 export function loadNinja() {
@@ -19,7 +33,7 @@ export function loadNinja() {
   const jobs = Object.entries(FILES).map(([key, src]) => new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
-      atlas[key] = img;
+      atlas[key] = GRADED.has(key) ? graded(img, GRADED.get(key)) : img;
       resolve();
     };
     img.onerror = () => resolve();

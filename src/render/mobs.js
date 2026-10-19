@@ -1,10 +1,11 @@
-// 새 도트 모드의 몬스터: mobdots.js 의 도트 칸을 캔버스로 만들어 두고, 사람과 같은 1.5배(보스는 더 크게)로 그린다.
+// 새 도트 모드의 몬스터: mobdots.js 의 도트 칸을 캔버스로 만들어 두고, 보통 2배(작은 짐승은 사람과 같은 1.5배, 보스는 더 크게)로 그린다.
 import { mobFrame } from './mobdots.js';
-import { MONSTER_LOOK } from './sprites.js';
+import { MONSTER_LOOK, monsterScale } from './sprites.js';
 
 const cache = new Map();
 // 사람 도트와 같은 배율: 도트 한 개 = 게임 1.5칸 픽셀
 const MOB_SCALE = 1.5;
+const MOB_BIG = 2;
 // 늘 움직이는 몸(치맛자락·날갯짓): 서 있어도 걸음 칸을 돈다
 const FLOATERS = new Set(['ghost', 'bat', 'bird', 'egg']);
 
@@ -18,7 +19,8 @@ export function mobSprite(type, dir, step) {
   c.width = f.w;
   c.height = f.h;
   c.getContext('2d').putImageData(new ImageData(f.data, f.w, f.h), 0, 0);
-  const k = MOB_SCALE * (look.scale ?? 1);
+  // 원작처럼 몬스터는 사람보다 크게: 보통 2배, 작은 짐승(쥐·토끼 등)은 사람과 같은 1.5배, 보스는 정해진 만큼 더
+  const k = look.scale ? MOB_SCALE * look.scale : monsterScale(type) > 1 ? MOB_BIG : MOB_SCALE;
   c.lw = f.w * k;
   c.lh = f.h * k;
   cache.set(key, c);

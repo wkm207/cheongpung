@@ -135,7 +135,10 @@ export class Renderer {
     this.canvas.width = Math.round(this.cssW * dpr);
     this.canvas.height = Math.round(this.cssH * dpr);
     // 원작풍은 더 멀리서 내려다본다(한 화면에 더 많은 칸)
-    this.scale = Math.min(this.cssW, this.cssH) / ((isClassic() ? CLASSIC_VIEW_TILES : VIEW_TILES) * TILE);
+    // 새 도트 모드는 원작처럼 가깝게: 짧은 변에 10~15칸(폰 세로 화면은 10~11칸), 옛 원작풍 도트는 멀리서
+    const short = Math.min(this.cssW, this.cssH);
+    const tiles = isClassic() && !isNinja() ? CLASSIC_VIEW_TILES : Math.max(10, Math.min(VIEW_TILES, Math.round(short / 34)));
+    this.scale = short / (tiles * TILE);
   }
 
   screenToTile(cssX, cssY) {
