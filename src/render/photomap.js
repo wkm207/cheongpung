@@ -62,7 +62,7 @@ function kindAt(tiles, x, y) {
   if (KIND_OF[ch]) return usable(KIND_OF[ch]);
   if (!OVERLAY.has(ch)) return null;
   for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
-    const k = KIND_OF[tiles[y + dy]?.[x + dx]];
+    const k = usable(KIND_OF[tiles[y + dy]?.[x + dx]]);
     if (k && k !== 'water') return k;
   }
   return 'grass';
@@ -84,6 +84,8 @@ function patternFor(ctx, kind) {
  * 가장자리는 칸 경계에서 반 칸 안팎으로 섞이고, 칸마다 조금씩 흔들어 반듯한 네모가 덜 보이게 한다.
  */
 function layKind(ctx, tiles, kinds, kind, w, h) {
+  // 무늬 그림이 없는 지형은 건너뛴다(밑그림이 그대로 보인다) — 없는 그림을 그리려다 멈추지 않게
+  if (!tex[kind]) return;
   const R = 4; // 한 칸을 4×4 로 나눠 가장자리를 들쭉날쭉하게
   const small = Object.assign(document.createElement('canvas'), { width: w * R, height: h * R });
   const sc = small.getContext('2d');
