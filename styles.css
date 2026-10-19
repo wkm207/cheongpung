@@ -91,6 +91,18 @@ input, textarea {
 textarea { width: 100%; min-height: 110px; font-size: 12px; resize: vertical; }
 
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+/* 햇빛과 가장자리 그늘: 왼쪽 위에서 따뜻한 빛이 들고 화면 가장자리는 살짝 어둡게.
+   캔버스에 매 프레임 칠하지 않고 게임 화면 위에 얹은 판으로 둔다(브라우저가 합성만 한다) */
+#game-light { display: none; }
+body.playing #game-light {
+  display: block;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle farthest-corner at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(10, 6, 20, 0.32) 100%),
+    linear-gradient(to bottom right, rgba(255, 236, 190, 0.16), rgba(255, 236, 190, 0) 50%, rgba(30, 20, 60, 0.12));
+}
 
 /* 금빛 테두리를 두른 칠기 나무 판 */
 .lacquer {

@@ -205,7 +205,6 @@ export class Renderer {
     for (const e of game.effects) drawEffect(ctx, e, game.now);
     this.ambient.update(game.mapId, { x: this.camX, y: this.camY, w: viewW, h: viewH }, dt);
     this.ambient.draw(ctx, ts);
-    this.drawLight();
     this.drawScreenFlash(game);
     this.drawDarkness(game, pp, k);
     ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
@@ -255,30 +254,6 @@ export class Renderer {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.fillStyle = `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a * 0.32})`;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-  }
-
-  /** 햇빛과 가장자리 그늘: 왼쪽 위에서 따뜻한 빛이 들고 화면 가장자리는 살짝 어둡게 */
-  drawLight() {
-    const W = this.canvas.width;
-    const H = this.canvas.height;
-    if (!this.light || this.light.width !== W || this.light.height !== H) {
-      this.light = Object.assign(document.createElement('canvas'), { width: W, height: H });
-      const l = this.light.getContext('2d');
-      const sun = l.createLinearGradient(0, 0, W, H);
-      sun.addColorStop(0, 'rgba(255, 236, 190, 0.16)');
-      sun.addColorStop(0.5, 'rgba(255, 236, 190, 0)');
-      sun.addColorStop(1, 'rgba(30, 20, 60, 0.12)');
-      l.fillStyle = sun;
-      l.fillRect(0, 0, W, H);
-      const r = Math.hypot(W, H) / 2;
-      const vig = l.createRadialGradient(W / 2, H / 2, r * 0.55, W / 2, H / 2, r);
-      vig.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      vig.addColorStop(1, 'rgba(10, 6, 20, 0.32)');
-      l.fillStyle = vig;
-      l.fillRect(0, 0, W, H);
-    }
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.drawImage(this.light, 0, 0);
   }
 
   drawDarkness(game, pp, k) {
