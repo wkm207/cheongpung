@@ -312,10 +312,14 @@ for (const btn of $$('[data-open]')) {
   });
 }
 
+// 그리는 간격: 120Hz 화면에서도 1초에 60번만, 가운데 창이 열려 게임이 멈춘 동안은 1초에 10번만(배터리·발열 줄이기)
+const MIN_FRAME_MS = 10;
+const PAUSED_FRAME_MS = 100;
 let last = performance.now();
 function frame(ts) {
   // 예외가 나도 루프가 멈추지 않도록 다음 프레임을 먼저 예약한다
   requestAnimationFrame(frame);
+  if (ts - last < (game && panels.isOpen ? PAUSED_FRAME_MS : MIN_FRAME_MS)) return;
   const dt = Math.min(50, ts - last);
   last = ts;
   if (game) {

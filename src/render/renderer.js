@@ -18,6 +18,7 @@ import { MAP_DEFS } from '../data/maps.js';
 
 const GOLD_ID = '__gold'; // game.js 의 바닥 돈 표시
 const MAX_DPR = 2;
+const MAP_CACHE_SIZE = 3; // 바닥 그림을 기억해 둘 맵 수(한 장에 수 MB라 몇 개만)
 const ITEM_DOT_SCALE = 1.5; // 바닥 아이템 도트 한 개 = 게임 1.5픽셀(사람 도트와 같다)
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -123,6 +124,7 @@ export class Renderer {
     this.ctx = canvas.getContext('2d');
     this.mapCanvas = null;
     this.mapId = null;
+    this.mapCache = new Map(); // 맵 열쇠 → { canvas, trees }, 오래 안 간 것부터 버린다
     this.camX = 0;
     this.camY = 0;
     this.lastTs = 0;
@@ -166,11 +168,20 @@ export class Renderer {
     const ninja = isNinja() && ninjaReady();
     const mapKey = `${game.mapId}:${isClassic()}:${ninja}`;
     if (mapKey !== this.mapId) {
-      // 새 타일 → 기존 그림 위에 덧그림, 원작풍 → 도트 그대로, 매끈 → 계단을 둥글리고 살짝 번지게
-      if (ninja) this.mapCanvas = renderNinjaMap(game.map.tiles, renderMapCanvas(game.map.tiles));
-      else this.mapCanvas = isClassic() ? renderMapCanvas(game.map.tiles) : smoothMap(renderMapCanvas(game.map.tiles));
+      // 최근 맵 몇 개는 바닥 그림을 기억해 두어, 오갈 때 다시 그리지 않는다(맵 이동 끊김 줄이기)
+      let built = this.mapCache.get(mapKey);
+      if (built) this.mapCache.delete(mapKey);
+      else {
+        // 새 타일 → 기존 그림 위에 덧그림, 원작풍 → 도트 그대로, 매끈 → 계단을 둥글리고 살짝 번지게
+        const canvas = ninja ? renderNinjaMap(game.map.tiles, renderMapCanvas(game.map.tiles))
+          : isClassic() ? renderMapCanvas(game.map.tiles) : smoothMap(renderMapCanvas(game.map.tiles));
+        built = { canvas, trees: this.findTrees(game.map.tiles) };
+      }
+      this.mapCache.set(mapKey, built);
+      if (this.mapCache.size > MAP_CACHE_SIZE) this.mapCache.delete(this.mapCache.keys().next().value);
+      this.mapCanvas = built.canvas;
+      this.trees = built.trees;
       this.mapId = mapKey;
-      this.trees = this.findTrees(game.map.tiles);
     }
     const k = this.scale * this.dpr;
     const viewW = this.cssW / this.scale;

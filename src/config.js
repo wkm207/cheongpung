@@ -1,5 +1,5 @@
 export const TILE = 32;
-export const GAME_VERSION = 'v39';      // sw.js 의 VERSION 과 같이 올린다(화면에 보여 줘서 새 버전인지 확인)
+export const GAME_VERSION = 'v40';      // sw.js 의 VERSION 과 같이 올린다(화면에 보여 줘서 새 버전인지 확인)
 export const VIEW_TILES = 15;
 export const CLASSIC_VIEW_TILES = 20;      // 원작풍 그래픽: 더 멀리서 보기            // 화면의 짧은 변에 보이는 타일 수
 export const PLAYER_STEP_MS = 205;
