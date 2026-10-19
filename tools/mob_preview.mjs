@@ -6,7 +6,7 @@ import { MONSTER_LOOK } from '../src/render/sprites.js';
 
 const COLS = [['down', 0], ['down', 1], ['down', 2], ['left', 0], ['left', 1], ['left', 2], ['right', 0], ['up', 0], ['up', 1]];
 const S = Number(process.env.S ?? 3);
-const CELL = 44;
+const CELL = Number(process.env.CELL ?? 70);
 const types = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(MONSTER_LOOK);
 const PER = Number(process.env.PER ?? 3); // 한 줄에 몬스터 수
 const W = PER * COLS.length * CELL * S;

@@ -21,8 +21,9 @@ export function mobSprite(type, dir, step) {
   c.getContext('2d').putImageData(new ImageData(f.data, f.w, f.h), 0, 0);
   // 원작처럼 몬스터는 사람보다 크게: 보통 2배, 작은 짐승(쥐·토끼 등)은 사람과 같은 1.5배, 보스는 정해진 만큼 더
   const k = look.scale ? MOB_SCALE * look.scale : monsterScale(type) > 1 ? MOB_BIG : MOB_SCALE;
-  c.lw = f.w * k;
-  c.lh = f.h * k;
+  // 2배 해상도 그림이면 그만큼 나눠 예전 도트와 같은 크기로
+  c.lw = (f.w * k) / (f.res ?? 1);
+  c.lh = (f.h * k) / (f.res ?? 1);
   cache.set(key, c);
   return c;
 }

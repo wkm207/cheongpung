@@ -85,22 +85,27 @@ export function personCanvas(look, dir, opts = {}, { res = DOT_RES, padTop = 0 }
   return out;
 }
 
-// 원작처럼 사람이 칸보다 크게(게임 좌표로 1.5배 — 2배 해상도 도트라 그림 한 칸은 0.75)
+// 원작처럼 사람이 칸보다 크게(게임 좌표로 1.5배 — 3배 해상도 그림이라 그림 한 칸은 0.5)
 export const PERSON_SCALE = 1.5 / DOT_RES;
 
 /**
  * 게임 칸(x,y: 32px 칸 왼쪽 위)에 발이 칸 아래쪽에 닿게 그린다. lift 만큼 띄운다.
- * 도트 한 칸이 화면 픽셀 정수배가 되도록 배율과 자리를 맞춘다(어중간한 배율이면 도트가 들쭉날쭉해 얼굴이 일그러진다).
+ * 도트 한 칸이 화면 픽셀 정수배에 가까우면 그 배율로 또렷하게, 아니면 부드럽게 줄여 그린다(어중간한 배율로 도트가 들쭉날쭉하지 않게).
  */
 export function drawPerson(ctx, look, dir, opts, x, y, lift = 0) {
   const t = ctx.getTransform();
   const k = Math.hypot(t.a, t.b) || 1;
-  const s = Math.max(1, Math.round(PERSON_SCALE * k)) / k;
+  const want = PERSON_SCALE * k;
+  const crisp = Math.abs(want - Math.round(want)) < 0.2 && want >= 0.8;
+  const s = crisp ? Math.round(want) / k : PERSON_SCALE;
   const snap = (v) => Math.round(v * k) / k;
   const smooth = ctx.imageSmoothingEnabled;
-  ctx.imageSmoothingEnabled = false;
+  const quality = ctx.imageSmoothingQuality;
+  ctx.imageSmoothingEnabled = !crisp;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(personCanvas(look, dir, opts), snap(x + 16 - (CW * s) / 2), snap(y + 31 - FOOT_ROW * s - lift), CW * s, CH * s);
   ctx.imageSmoothingEnabled = smooth;
+  ctx.imageSmoothingQuality = quality;
 }
 
 /** 걷기 걸음: 서기 0, 걸으면 1·0·2·0 */

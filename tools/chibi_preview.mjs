@@ -18,7 +18,7 @@ const COLS = [
   ['left', { pose: 'attack', phase: 0 }], ['left', { pose: 'attack', phase: 2 }],
   ['down', { pose: 'cast' }], ['right', { pose: 'cast' }],
 ];
-const S = 4;
+const S = Number(process.env.S ?? 4);
 const W = COLS.length * CW * S;
 const H = LOOKS.length * CH * S;
 const img = new Uint8Array(W * H * 4);

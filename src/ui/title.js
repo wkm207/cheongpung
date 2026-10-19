@@ -3,7 +3,7 @@ import { GAME_VERSION } from '../config.js';
 import { CLASSES } from '../data/classes.js';
 import { MAP_DEFS } from '../data/maps.js';
 import { titleOf } from '../data/tiers.js';
-import { playerSprite } from '../render/sprites.js';
+import { portraitSprite } from '../render/sprites.js';
 import { accountBar, loginView, conflictView } from './accountView.js';
 
 const NAME_MAX = 8;
@@ -201,7 +201,7 @@ export class Title {
     for (const canvas of this.root.querySelectorAll('[data-preview]')) {
       const ctx = canvas.getContext('2d');
       const save = canvas.dataset.side ? this.sides?.[canvas.dataset.side] : canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)] : null;
-      const img = playerSprite(canvas.dataset.preview, { gender: save?.gender ?? this.gender, equip: save?.equip ?? {} });
+      const img = portraitSprite(canvas.dataset.preview, save?.equip ?? {}, save?.gender ?? this.gender);
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
