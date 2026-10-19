@@ -1,6 +1,6 @@
 // 오프라인 실행용 서비스 워커: 처음 접속할 때 모든 파일을 저장해 두고, 이후엔 저장본을 먼저 쓴다.
 // 게임 파일을 고치면 VERSION을 올려야 기기에 새 버전이 받아진다.
-const VERSION = 'cheongpung-v45';
+const VERSION = 'cheongpung-v46';
 const ASSETS = [
   './',
   './index.html',
@@ -245,6 +245,20 @@ const ASSETS = [
   './assets/icons/sword_8.png',
   './assets/icons/sword_9.png',
   './src/data/itemart.js',
+  './assets/people/mage_f2.png',
+  './assets/people/mage_f3.png',
+  './assets/people/mage_f4.png',
+  './assets/people/mage_m1.png',
+  './assets/people/mage_m2.png',
+  './assets/people/mage_m3.png',
+  './assets/people/priest_f1.png',
+  './assets/people/priest_f2.png',
+  './assets/people/priest_m1.png',
+  './assets/people/rogue_f2.png',
+  './assets/people/rogue_f3.png',
+  './assets/people/rogue_f4.png',
+  './assets/people/rogue_m2.png',
+  './assets/people/rogue_m3.png',
   './src/render/renderer.js',
   './src/render/smooth.js',
   './src/render/sprites.js',
