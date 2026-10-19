@@ -7,6 +7,8 @@ import { CloudSync, CLOUD_PUSH_MS } from '../src/core/sync.js';
 import { readSlotText, writeSlotText, loadSave, deleteSave } from '../src/core/save.js';
 import { FIREBASE_CONFIG } from '../src/firebase-config.js';
 
+const EMPTY_CONFIG = { apiKey: '', authDomain: '', projectId: '', appId: '' };
+
 const CONFIG = { apiKey: 'k', authDomain: 'x.firebaseapp.com', projectId: 'x', appId: '1:2:web:3' };
 
 const memoryStorage = () => {
@@ -100,10 +102,11 @@ test('Firebase 오류는 한국어로 바뀐다', () => {
 });
 
 test('설정값이 비어 있으면 로그인을 쓰지 않는다', () => {
-  assert.equal(isConfigured(FIREBASE_CONFIG), false);
+  assert.equal(isConfigured(EMPTY_CONFIG), false);
   assert.equal(isConfigured({}), false);
   assert.equal(isConfigured({ ...CONFIG, apiKey: ' ' }), false);
   assert.equal(isConfigured(CONFIG), true);
+  assert.equal(typeof isConfigured(FIREBASE_CONFIG), 'boolean');
 });
 
 // ---------- 최근 저장 고르기 ----------
@@ -256,7 +259,7 @@ test('잘못된 아이디·비밀번호는 한국어 오류로 알려 준다', a
 
 test('설정값이 없으면 SDK 를 아예 부르지 않는다', async () => {
   let calls = 0;
-  const cloud = createCloud(FIREBASE_CONFIG, { importer: async () => { calls++; return {}; } });
+  const cloud = createCloud(EMPTY_CONFIG, { importer: async () => { calls++; return {}; } });
   assert.equal(cloud.enabled, false);
   assert.equal(await cloud.ready(), false);
   assert.equal(calls, 0);
