@@ -1,6 +1,7 @@
 // 실사풍 사람 그림(AI로 그린 그림을 tools/art_import.py 로 다듬은 것, assets/people/)
 // 직업·성별마다 여러 생김새가 있고, 플레이어는 그중 하나(player.look)를 고른다. 그림이 없으면 도트 그림을 쓴다.
 import { LOOKS, NPC_PHOTOS, MOB_PHOTOS } from '../data/looks.js';
+import { isPhoto } from './artmode.js';
 
 const images = new Map();
 const portraits = new Map();
@@ -21,7 +22,7 @@ const HAS_MOB = new Set(MOB_PHOTOS);
 
 /** 몬스터 실사 그림(왼쪽을 보는 그림, 없거나 아직이면 null) */
 export function mobPhoto(type) {
-  if (!HAS_MOB.has(type) || typeof Image === 'undefined') return null;
+  if (!isPhoto() || !HAS_MOB.has(type) || typeof Image === 'undefined') return null;
   const src = `assets/mobs/${type}.png`;
   if (!images.has(src)) {
     const img = new Image();
@@ -34,7 +35,7 @@ export function mobPhoto(type) {
 
 /** 마을 사람 실사 그림(없거나 아직 못 불러왔으면 null) */
 export function npcPhoto(look) {
-  if (!HAS_NPC.has(look) || typeof Image === 'undefined') return null;
+  if (!isPhoto() || !HAS_NPC.has(look) || typeof Image === 'undefined') return null;
   const src = `assets/people/npc_${look}.png`;
   if (!images.has(src)) {
     const img = new Image();
@@ -45,27 +46,33 @@ export function npcPhoto(look) {
   return img.complete && img.naturalWidth ? img : null;
 }
 
-/** 모든 생김새 그림을 미리 불러 둔다(다 불러오면 onDone) */
+/** 그림 하나를 불러 두기(이미 있으면 그대로) */
+function preload(src) {
+  if (!images.has(src)) {
+    const img = new Image();
+    img.src = src;
+    images.set(src, img);
+  }
+  return images.get(src);
+}
+
+/** 실사 그림 모드일 때 모든 생김새·마을 사람·몬스터 그림을 미리 불러 둔다(다 불러오면 onDone) */
 export function preloadPhotos(onDone) {
-  if (typeof Image === 'undefined') return;
+  if (typeof Image === 'undefined' || !isPhoto()) return;
   const jobs = [];
   for (const [cls, byG] of Object.entries(LOOKS)) {
     for (const [g, list] of Object.entries(byG)) {
-      for (const n of list) {
-        photoOf(cls, g, n);
-        const img = images.get(photoSrc(cls, g, n));
-        jobs.push(img.decode?.().catch(() => {}) ?? Promise.resolve());
-      }
+      for (const n of list) jobs.push(preload(photoSrc(cls, g, n)).decode?.().catch(() => {}) ?? Promise.resolve());
     }
   }
-  for (const look of HAS_NPC) npcPhoto(look);
-  for (const type of HAS_MOB) mobPhoto(type);
+  for (const look of HAS_NPC) preload(`assets/people/npc_${look}.png`);
+  for (const type of HAS_MOB) preload(`assets/mobs/${type}.png`);
   Promise.all(jobs).then(() => onDone?.());
 }
 
 /** 불러온 그림(아직이거나 없으면 null — 불러오기는 시작해 둔다) */
 export function photoOf(cls, gender, look) {
-  if (typeof Image === 'undefined') return null;
+  if (!isPhoto() || typeof Image === 'undefined') return null;
   const n = photoLook(cls, gender, look);
   if (!n) return null;
   const src = photoSrc(cls, gender, n);

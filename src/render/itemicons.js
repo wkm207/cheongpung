@@ -1,14 +1,14 @@
 // 새 도트 모드의 아이템 아이콘: itemdots.js 의 16×16 도트를 캔버스로 만들어 두고, 화면 글(HTML)에는 <img>로 넣는다.
 // 다른 그래픽 모드에서는 지금까지처럼 이모지를 쓴다.
 import { itemFrame } from './itemdots.js';
-import { isNinja } from './artmode.js';
+import { isNinja, isPhoto } from './artmode.js';
 import { ITEMS, SLOT_ICONS } from '../data/items.js';
 import { ITEM_ART } from '../data/itemart.js';
 import { ICON_FILES } from '../data/looks.js';
 
 // 실사 아이콘(AI 그림, assets/icons/)이 있으면 그것을 먼저 쓴다
 const HAS_ICON = new Set(ICON_FILES);
-const artOf = (id) => (HAS_ICON.has(ITEM_ART[id]) ? ITEM_ART[id] : null);
+const artOf = (id) => (isPhoto() && HAS_ICON.has(ITEM_ART[id]) ? ITEM_ART[id] : null);
 const photos = new Map();
 
 /** 바닥에 그릴 실사 아이콘 그림(불러오는 중이거나 없으면 null) */

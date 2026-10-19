@@ -3,11 +3,12 @@
 import { TILE } from '../config.js';
 import { hash2 } from '../core/rng.js';
 import { TERRAIN_FILES, OBJECT_FILES } from '../data/looks.js';
+import { isPhoto } from './artmode.js';
 
 const tex = {};
 const obj = {};
 let ready = false;
-export const photoMapReady = () => ready;
+export const photoMapReady = () => ready && isPhoto();
 
 export function loadPhotoMap() {
   if (typeof Image === 'undefined' || !TERRAIN_FILES.includes('grass')) return Promise.resolve(false);
@@ -257,7 +258,7 @@ const TREE_OF = { green: 'tree', blossom: 'blossom', pine: 'pine', snow: 'snowpi
 
 /** 실사 나무(캐릭터와 같은 층에서 그린다). 준비 전이면 null. lw·lh 는 게임 좌표 크기 */
 export function photoTree(kind, variant) {
-  if (!ready) return null;
+  if (!ready || !isPhoto()) return null;
   const name = kind === 'green' && variant === 3 ? 'blossom' : TREE_OF[kind] ?? 'tree';
   const im = obj[name];
   if (!im) return null;

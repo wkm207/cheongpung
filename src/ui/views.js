@@ -20,6 +20,7 @@ import { countOf } from '../core/inventory.js';
 import { exportText } from '../core/save.js';
 import { KEY_PANELS } from './input.js';
 import { looksFor, photoLook, photoSrc } from '../render/photos.js';
+import { isPhoto } from '../render/artmode.js';
 
 const KEY_OF = Object.fromEntries(Object.entries(KEY_PANELS).filter(([k]) => k !== 'Backquote').map(([k, v]) => [v, k.replace('Key', '')]));
 
@@ -436,7 +437,7 @@ const KEY_HELP = [
 
 /** 메뉴의 생김새 바꾸기(실사 그림이 2개 이상일 때) */
 function lookRow(p) {
-  const list = looksFor(p.cls, p.gender);
+  const list = isPhoto() ? looksFor(p.cls, p.gender) : [];
   if (list.length < 2) return '';
   const cur = photoLook(p.cls, p.gender, p.look);
   const btns = list.map((n) => `<button class="look-pick${n === cur ? ' sel' : ''}" data-act="setLook" data-look="${n}"><img src="${photoSrc(p.cls, p.gender, n)}" alt="${n}번 생김새"></button>`).join('');
@@ -479,6 +480,7 @@ export function menuView(game, state, settings) {
       <div class="row">
         <span class="grow">그래픽</span>
         <button class="${settings.graphics === 'ninja' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="ninja">새 도트 타일</button>
+        <button class="${settings.graphics === 'photo' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="photo">실사 그림</button>
         <button class="${settings.graphics === 'classic' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="classic">원작풍 도트</button>
         <button class="${settings.graphics === 'smooth' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="smooth">매끈한 그림</button>
       </div>

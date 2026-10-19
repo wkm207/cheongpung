@@ -1,5 +1,6 @@
 import { esc, readFileText, formatPlayTime } from './dom.js';
 import { looksFor, photoLook, photoSrc } from '../render/photos.js';
+import { isPhoto } from '../render/artmode.js';
 import { GAME_VERSION } from '../config.js';
 import { CLASSES } from '../data/classes.js';
 import { MAP_DEFS } from '../data/maps.js';
@@ -131,7 +132,7 @@ export class Title {
 
   /** 고른 직업·성별의 실사 생김새 고르기(그림이 있을 때만) */
   lookPicker() {
-    const list = this.cls ? looksFor(this.cls, this.gender) : [];
+    const list = this.cls && isPhoto() ? looksFor(this.cls, this.gender) : [];
     if (!list.length) return '';
     const btns = list.map((n) => `<button class="look-pick${n === this.look ? ' sel' : ''}" data-act="look" data-look="${n}"><img src="${photoSrc(this.cls, this.gender, n)}" alt="${n}번 생김새"></button>`).join('');
     return `<div class="look-row"><span>생김새</span>${btns}</div>`;

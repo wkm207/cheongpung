@@ -11,7 +11,7 @@ function read() {
       minimap: typeof raw.minimap === 'boolean' ? raw.minimap : DEFAULTS.minimap,
       music: typeof raw.music === 'boolean' ? raw.music : DEFAULTS.music,
       // 그래픽 설정은 새 타일이 나온 뒤(gv 2)에 고른 값만 따른다
-      graphics: raw.gv === 2 && ['ninja', 'classic', 'smooth'].includes(raw.graphics) ? raw.graphics : DEFAULTS.graphics,
+      graphics: raw.gv === 2 && ['ninja', 'classic', 'smooth', 'photo'].includes(raw.graphics) ? raw.graphics : DEFAULTS.graphics,
     };
   } catch {
     return { ...DEFAULTS };

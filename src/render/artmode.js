@@ -3,6 +3,7 @@
 
 let classic = true;
 let ninja = true;
+let photo = false;
 export const isClassic = () => classic;
 /** 새 타일(닌자 어드벤처) 그림을 쓰는가 */
 export const isNinja = () => ninja;
@@ -11,6 +12,11 @@ export function setClassic(on) {
 }
 export function setNinja(on) {
   ninja = !!on;
+}
+/** 실사 그림(AI로 그린 사람·몬스터·아이템·맵)을 쓰는가 — 새 도트 위에 얹는 선택 사항 */
+export const isPhoto = () => photo;
+export function setPhoto(on) {
+  photo = !!on;
 }
 
 const OUTLINE = [28, 18, 12];

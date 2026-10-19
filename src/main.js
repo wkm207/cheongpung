@@ -1,4 +1,4 @@
-import { isClassic, setClassic, isNinja, setNinja } from './render/artmode.js';
+import { isClassic, setClassic, isNinja, setNinja, isPhoto, setPhoto } from './render/artmode.js';
 import { loadNinja } from './render/ninja.js';
 import { loadFx } from './render/fxdots.js';
 import { Game, createPlayer } from './game.js';
@@ -47,10 +47,14 @@ function saveAndSync(force = false) {
 
 function applySettings(settings) {
   const classic = settings.graphics !== 'smooth';
-  const ninja = settings.graphics === 'ninja';
-  if (classic !== isClassic() || ninja !== isNinja()) {
+  // 실사 그림은 새 도트 화면 위에 얹는다
+  const photo = settings.graphics === 'photo';
+  const ninja = settings.graphics === 'ninja' || photo;
+  if (classic !== isClassic() || ninja !== isNinja() || photo !== isPhoto()) {
     setClassic(classic);
     setNinja(ninja);
+    setPhoto(photo);
+    if (photo) preloadPhotos();
     renderer.mapId = null;
     renderer.resize();
     hud.portraitKey = '';
