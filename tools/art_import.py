@@ -4,6 +4,7 @@
 
 - 캐릭터 `{직업}_{m|f}{번호}.(png|jpg)` → 흰 바탕을 지우고 몸에 맞춰 잘라 높이 256px 로
   assets/people/{직업}_{m|f}{번호}.png, 목록은 src/data/looks.js 에 쓴다.
+- 마을 사람 `npc_{생김새}` → assets/people/npc_{생김새}.png (목록은 looks.js 의 NPC_PHOTOS)
 - 아이콘 묶음 `icons_{종류}.(png|jpg)` → 흰 바탕 위 그림을 하나씩 떼어(읽는 순서) 64px 칸에 맞춰
   assets/icons/{종류}_{번호}.png
 """
@@ -176,11 +177,14 @@ def write_looks():
         for g in c.values():
             g.sort()
     icons = sorted(p.stem for p in ICONS.glob('*.png')) if ICONS.exists() else []
+    npcs = sorted(p.stem[len('npc_'):] for p in PEOPLE.glob('npc_*.png'))
     LOOKS_JS.write_text(
         '// tools/art_import.py 가 만든다. 직업·성별마다 고를 수 있는 생김새 번호(assets/people/{직업}_{m|f}{번호}.png)\n'
         f'export const LOOKS = {json.dumps(looks, ensure_ascii=False)};\n'
         '// 실사 아이템 아이콘(assets/icons/{이름}.png)\n'
-        f'export const ICON_FILES = {json.dumps(icons)};\n',
+        f'export const ICON_FILES = {json.dumps(icons)};\n'
+        '// 실사 마을 사람(assets/people/npc_{생김새}.png)\n'
+        f'export const NPC_PHOTOS = {json.dumps(npcs)};\n',
         encoding='utf-8')
     print('목록', LOOKS_JS.relative_to(ROOT))
 
@@ -191,7 +195,7 @@ def main():
         print('art/inbox 에 그림이 없습니다.')
     for p in files:
         stem = p.stem.lower()
-        if re.fullmatch(r'(warrior|rogue|mage|priest)_[mf]\d+', stem):
+        if re.fullmatch(r'(warrior|rogue|mage|priest)_[mf]\d+', stem) or re.fullmatch(r'npc_[a-z]+', stem):
             import_person(p, stem)
         elif stem.startswith('icons_'):
             import_icons(p, stem[len('icons_'):])

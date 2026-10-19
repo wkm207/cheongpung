@@ -9,7 +9,7 @@ import { smoothMap } from './smooth.js';
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
-import { photoOf, drawPhoto, PHOTO_H } from './photos.js';
+import { photoOf, npcPhoto, drawPhoto, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
@@ -838,10 +838,15 @@ export class Renderer {
     shadow(ctx, x + 16, y + 30, n.look === 'cat' ? 7 : 9);
     const img = npcSprite(n.look, spriteDir(n.dir), blinking(game.now, n.x * 3 + n.y));
     const flip = n.look === 'cat' ? n.face === 'right' : n.dir === 'right';
-    const dot = isNinja() && npcLook(n.look);
-    const tall = dot || (img.lh ?? img.height) > 32;
-    const top = dot ? PERSON_LABEL : tall ? 18 : 2;
-    if (dot) drawPerson(ctx, dot, n.dir ?? 'down', { step: walkStep(n.moving, game.now, 160) }, x, y);
+    // 새 도트 모드: 실사 그림이 있으면 그것(걸으면 들썩), 없으면 사람 도트
+    const photo = isNinja() && npcPhoto(n.look);
+    const dot = !photo && isNinja() && npcLook(n.look);
+    const tall = photo || dot || (img.lh ?? img.height) > 32;
+    const top = photo ? PHOTO_H - 27 : dot ? PERSON_LABEL : tall ? 18 : 2;
+    if (photo) {
+      const bob = n.moving ? -Math.abs(Math.sin(game.now / 120)) * 1.5 : 0;
+      drawPhoto(ctx, photo, x + 16, y + 31 + bob, { flip, tilt: n.moving ? Math.sin(game.now / 120) * 0.03 : 0 });
+    } else if (dot) drawPerson(ctx, dot, n.dir ?? 'down', { step: walkStep(n.moving, game.now, 160) }, x, y);
     else drawSprite(ctx, img, x, y - top, flip);
     label(ctx, n.name, x + 16, y - top, '#ffe08a');
     if (n.speech && n.speech.until > game.now) bubble(ctx, n.speech.text, x + 16, y - top - 8);

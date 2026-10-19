@@ -1,6 +1,6 @@
 // 실사풍 사람 그림(AI로 그린 그림을 tools/art_import.py 로 다듬은 것, assets/people/)
 // 직업·성별마다 여러 생김새가 있고, 플레이어는 그중 하나(player.look)를 고른다. 그림이 없으면 도트 그림을 쓴다.
-import { LOOKS } from '../data/looks.js';
+import { LOOKS, NPC_PHOTOS } from '../data/looks.js';
 
 const images = new Map();
 const portraits = new Map();
@@ -16,6 +16,21 @@ export function photoLook(cls, gender, look) {
 
 export const photoSrc = (cls, gender, n) => `assets/people/${cls}_${gender === 'f' ? 'f' : 'm'}${n}.png`;
 
+const HAS_NPC = new Set(NPC_PHOTOS);
+
+/** 마을 사람 실사 그림(없거나 아직 못 불러왔으면 null) */
+export function npcPhoto(look) {
+  if (!HAS_NPC.has(look) || typeof Image === 'undefined') return null;
+  const src = `assets/people/npc_${look}.png`;
+  if (!images.has(src)) {
+    const img = new Image();
+    img.src = src;
+    images.set(src, img);
+  }
+  const img = images.get(src);
+  return img.complete && img.naturalWidth ? img : null;
+}
+
 /** 모든 생김새 그림을 미리 불러 둔다(다 불러오면 onDone) */
 export function preloadPhotos(onDone) {
   if (typeof Image === 'undefined') return;
@@ -29,6 +44,7 @@ export function preloadPhotos(onDone) {
       }
     }
   }
+  for (const look of HAS_NPC) npcPhoto(look);
   Promise.all(jobs).then(() => onDone?.());
 }
 
