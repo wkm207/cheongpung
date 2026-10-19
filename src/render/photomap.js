@@ -32,18 +32,34 @@ export function loadPhotoMap() {
 // 칸 글자 → 바닥 무늬
 const KIND_OF = {
   '.': 'grass', ',': 'grass', ':': 'grass', F: 'grass', ';': 'dark', u: 'dirt', '=': 'dirt',
-  S: 'stone', w: 'stone', '*': 'snow', d: 'sand', b: 'sand', c: 'cave', a: 'cave', '~': 'water',
+  S: 'stone', w: 'stone', '*': 'snow', d: 'sand', b: 'sand', c: 'cave', a: 'ash', '~': 'water',
+  P: 'maru', U: 'maru', V: 'maru', g: 'oldfloor', L: 'lava',
 };
+// 그림이 아직 없을 때 대신 쓸 바닥
+const FALLBACK = { ash: 'cave', maru: null, oldfloor: null, lava: null };
+// 벽: 칸을 무늬로 채우고 위는 밝게, 아래(벽면)는 그늘지게
+const WALL_OF = { X: 'rockwall', M: 'redrock', Q: 'stonewall', N: 'mudwall', H: 'indoorwall' };
 // 위에 놓이는 것들(나무·바위·울타리·집 등)은 주변 바닥을 따라간다
-const OVERLAY = new Set(['T', 'O', 'f', 'K', 'R', 'Y', 'W', 'D', 'J', 'G', 'Z', 'Q']);
+const OVERLAY = new Set(['T', 'O', 'f', 'K', 'R', 'Y', 'W', 'D', 'J', 'G', 'Z', 'Q', 'C']);
 // 아래에서 위로 덮는 순서(뒤에 오는 것이 위)
-const ORDER = ['grass', 'dark', 'sand', 'snow', 'dirt', 'stone', 'cave', 'water'];
+const ORDER = ['grass', 'dark', 'sand', 'snow', 'dirt', 'stone', 'cave', 'ash', 'maru', 'oldfloor', 'water', 'lava'];
 // 무늬 한 장이 덮는 크기(게임 좌표): 몇 칸마다 되풀이되는지
-const REPEAT = { grass: 5, dark: 5, dirt: 4, stone: 3, snow: 5, sand: 5, cave: 4, water: 5 };
+const REPEAT = {
+  grass: 5, dark: 5, dirt: 4, stone: 3, snow: 5, sand: 5, cave: 4, water: 5, ash: 4, maru: 3, oldfloor: 3, lava: 4,
+  rockwall: 3, redrock: 3, stonewall: 2, mudwall: 3, indoorwall: 2,
+};
+// 반듯한 경계로 깔 것(나무 마루·돌바닥·벽)
+const HARD = new Set(['stone', 'maru', 'oldfloor', 'rockwall', 'redrock', 'stonewall', 'mudwall', 'indoorwall']);
+
+/** 그림이 있는 바닥만(없으면 대신할 바닥, 그것도 없으면 null) */
+function usable(kind) {
+  if (!kind || tex[kind]) return kind;
+  return FALLBACK[kind] && tex[FALLBACK[kind]] ? FALLBACK[kind] : null;
+}
 
 function kindAt(tiles, x, y) {
   const ch = tiles[y]?.[x];
-  if (KIND_OF[ch]) return KIND_OF[ch];
+  if (KIND_OF[ch]) return usable(KIND_OF[ch]);
   if (!OVERLAY.has(ch)) return null;
   for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
     const k = KIND_OF[tiles[y + dy]?.[x + dx]];
@@ -80,7 +96,7 @@ function layKind(ctx, tiles, kinds, kind, w, h) {
       let on = kinds[ty][tx] === kind;
       // 경계 근처 작은 칸은 이웃 지형 쪽으로 조금 먹어 들어가거나 물러난다
       const edge = x % R === 0 || x % R === R - 1 || y % R === 0 || y % R === R - 1;
-      if (edge && kind !== 'stone') {
+      if (edge && !HARD.has(kind)) {
         const nx = tx + (x % R === 0 ? -1 : x % R === R - 1 ? 1 : 0);
         const ny = ty + (y % R === 0 ? -1 : y % R === R - 1 ? 1 : 0);
         const other = kinds[ny]?.[nx];
@@ -104,7 +120,7 @@ function layKind(ctx, tiles, kinds, kind, w, h) {
   lc.globalCompositeOperation = 'destination-in';
   lc.imageSmoothingEnabled = true;
   lc.imageSmoothingQuality = 'high';
-  lc.filter = `blur(${kind === 'stone' ? 1 : 3}px)`;
+  lc.filter = `blur(${HARD.has(kind) ? 0.6 : 3}px)`;
   lc.drawImage(small, 0, 0, layer.width, layer.height);
   lc.filter = 'none';
   // 물가는 살짝 어둡게(물이 땅보다 낮아 보이게)
@@ -114,6 +130,41 @@ function layKind(ctx, tiles, kinds, kind, w, h) {
     lc.fillRect(0, 0, layer.width, layer.height);
   }
   ctx.drawImage(layer, 0, 0);
+}
+
+/** 벽 칸: 무늬로 채우고, 위가 트인 쪽은 밝은 윗면, 아래가 트인 쪽은 그늘진 벽면으로 높이를 낸다 */
+function drawWalls(ctx, tiles, w, h) {
+  const kinds = tiles.map((row) => [...row].map((ch) => (WALL_OF[ch] && tex[WALL_OF[ch]] ? WALL_OF[ch] : null)));
+  for (const kind of new Set(kinds.flat().filter(Boolean))) layKind(ctx, tiles, kinds, kind, w, h);
+  for (let ty = 0; ty < h; ty++) {
+    for (let tx = 0; tx < w; tx++) {
+      if (!kinds[ty][tx]) continue;
+      const x = tx * TILE;
+      const y = ty * TILE;
+      if (!kinds[ty + 1]?.[tx]) {
+        // 아래가 트였으면 벽면: 아래로 갈수록 어둡게 + 바닥에 드리운 그림자
+        const g = ctx.createLinearGradient(0, y + TILE * 0.35, 0, y + TILE);
+        g.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        g.addColorStop(1, 'rgba(0, 0, 0, 0.45)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x, y + TILE * 0.35, TILE, TILE * 0.65);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+        ctx.fillRect(x, y + TILE, TILE, 6);
+      }
+      if (!kinds[ty - 1]?.[tx]) {
+        ctx.fillStyle = 'rgba(255, 245, 220, 0.16)';
+        ctx.fillRect(x, y, TILE, 4);
+      }
+      if (!kinds[ty][tx - 1]) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        ctx.fillRect(x, y, 2, TILE);
+      }
+      if (!kinds[ty][tx + 1]) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        ctx.fillRect(x + TILE - 2, y, 2, TILE);
+      }
+    }
+  }
 }
 
 /** 물건을 칸 (tx,ty) 바닥 가운데에 크기 size(긴 쪽)로 세운다 */
@@ -173,7 +224,8 @@ export function renderPhotoMap(tiles, base) {
     if (kind === 'grass') {
       const any = kinds.some((r) => r.some(Boolean));
       if (!any) continue;
-      layKind(ctx, tiles, kinds.map((r) => r.map((k) => (k ? 'grass' : null))), 'grass', w, h);
+      // 실내 마루 밑에는 풀을 깔지 않는다
+      layKind(ctx, tiles, kinds.map((r) => r.map((k) => (k && k !== 'maru' && k !== 'oldfloor' ? 'grass' : null))), 'grass', w, h);
     } else layKind(ctx, tiles, kinds, kind, w, h);
   }
   for (let ty = 0; ty < h; ty++) {
@@ -184,9 +236,16 @@ export function renderPhotoMap(tiles, base) {
       else if (ch === 'K') stand(ctx, 'jar', tx, ty, 26);
       else if (ch === 'w') stand(ctx, 'well', tx, ty, 34, 2);
       else if (ch === 'f') stand(ctx, 'fence', tx, ty, 36, 0);
+      else if (ch === 'U') stand(ctx, 'table', tx, ty, 34, 1);
+      else if (ch === 'V') stand(ctx, 'shelf', tx, ty, 36, 0);
+      else if (ch === 'Z') stand(ctx, 'bamboo', tx, ty, 44, 0);
+      else if (ch === 'G') stand(ctx, 'gatepost', tx, ty, 44, 0);
+      else if (ch === 'J') stand(ctx, 'jangseung', tx, ty, 40, 0);
+      else if (ch === 'C') stand(ctx, 'coral', tx, ty, 30, 1);
       else if (kinds[ty][tx] === 'grass' && ch === '.' && hash2(tx, ty, 12) < 0.035) stand(ctx, 'bush', tx, ty, 26, 2);
     }
   }
+  drawWalls(ctx, tiles, w, h);
   drawHouses(ctx, tiles);
   return canvas;
 }
