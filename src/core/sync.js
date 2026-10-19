@@ -1,4 +1,4 @@
-// 로그인한 계정의 서버 저장과 이 기기 저장(슬롯 4칸)을 맞춘다.
+// 로그인한 계정의 서버 저장과 이 기기 저장(슬롯 8칸)을 맞춘다.
 // 서버에 못 닿으면(비행기 모드, SDK 를 못 불러옴) 조용히 기다렸다가 연결되면 다시 맞춘다.
 import { SAVE_SLOTS, readSlotText, writeSlotText, importText } from './save.js';
 import { normalizeId, checkPassword, idToEmail, authErrorMessage, savedAtOf, decideSlot, newerSide } from './account.js';
@@ -32,6 +32,9 @@ function writeJson(storage, key, value) {
     // 저장소가 막혀 있으면 다음 실행 때 다시 맞춘다
   }
 }
+
+/** 이름이나 직업이 다르면 다른 캐릭터(같은 캐릭터를 두 기기에서 따로 진행한 것과 구별) */
+const differentCharacter = (a, b) => a.name !== b.name || a.cls !== b.cls;
 
 const tryImport = (text) => {
   try {
@@ -174,7 +177,7 @@ export class CloudSync {
     await this.syncAll(activeSlot);
   }
 
-  /** 슬롯 4칸을 모두 서버와 맞춘다. activeSlot 은 지금 플레이 중이라 덮어쓰지 않는다. */
+  /** 슬롯을 모두 서버와 맞춘다. activeSlot 은 지금 플레이 중이라 덮어쓰지 않는다. */
   syncAll(activeSlot = null) {
     return this.run(async () => {
       if (!this.loggedIn) return;
@@ -220,7 +223,29 @@ export class CloudSync {
     else if (active) this.conflicts[n] = { text: remoteEntry?.text ?? null, savedAt: remoteAt };  // 플레이 중인 칸은 덮지 않고 묻는다
     else if (action === 'download') this.takeRemote(n, remoteEntry, remoteAt);
     else if (action === 'deleteLocal') this.takeRemote(n, null, null);
-    else this.conflicts[n] = { text: remoteEntry.text, savedAt: remoteAt };
+    else {
+      // 서로 다른 캐릭터면 묻지 않고 이 기기 캐릭터를 빈 칸으로 옮겨 둘 다 남긴다
+      const spare = differentCharacter(localPlayer, remotePlayer) ? this.spareSlot(n) : null;
+      if (spare !== null && this.keepBoth(n, remoteEntry, remoteAt, spare)) await this.syncSlot(spare, this.remote[spare] ?? null, false);
+      else this.conflicts[n] = { text: remoteEntry.text, savedAt: remoteAt };
+    }
+  }
+
+  /** 이 기기와 서버 모두 비어 있는(갈림도 없는) 칸. 없거나 서버 내용을 모르면 null */
+  spareSlot(except) {
+    if (!this.remote) return null;
+    for (let k = 0; k < SAVE_SLOTS; k++) {
+      if (k === except || this.conflicts[k]) continue;
+      if (readSlotText(k, this.storage) === null && !this.remote[k]) return k;
+    }
+    return null;
+  }
+
+  /** n 칸의 이 기기 캐릭터를 빈 칸 spare 로 옮기고, n 칸에는 서버 것을 받는다(올리기는 따로) */
+  keepBoth(n, remoteEntry, remoteAt, spare) {
+    if (!writeSlotText(spare, readSlotText(n, this.storage), this.storage)) return false;
+    this.takeRemote(n, remoteEntry, remoteAt);
+    return true;
   }
 
   takeRemote(n, entry, savedAt) {
@@ -280,15 +305,37 @@ export class CloudSync {
     const localText = readSlotText(n, this.storage);
     const local = localText ? tryImport(localText) : null;
     const localAt = local ? savedAtOf(localText) : null;
-    return { local, localAt, remote: c.text ? tryImport(c.text) : null, remoteAt: c.savedAt, newer: newerSide(localAt, c.savedAt) };
+    const remote = c.text ? tryImport(c.text) : null;
+    const spare = local && remote ? this.spareSlot(n) : null;
+    return { local, localAt, remote, remoteAt: c.savedAt, newer: newerSide(localAt, c.savedAt), spare };
   }
 
-  /** 사용자가 고른 쪽으로 맞춘다. side: 'local' | 'remote'. 오프라인이어도 고를 수 있고 올리기는 나중에 한다. */
+  /** 사용자가 고른 쪽으로 맞춘다. side: 'local' | 'remote' | 'both'(이 기기 쪽을 빈 칸으로 옮김). 오프라인이어도 고를 수 있고 올리기는 나중에 한다. */
   resolve(n, side) {
     return this.run(async () => {
       const c = this.conflicts[n];
       if (!c) return;
       delete this.conflicts[n];
+      if (side === 'both') {
+        const spare = this.spareSlot(n);
+        if (spare === null || !c.text || !this.keepBoth(n, c, c.savedAt, spare)) {
+          this.conflicts[n] = c;
+          this.emit();
+          return;
+        }
+        this.emit();
+        if (!this.verified || !(await this.cloud.ready())) {
+          this.setStatus('offline');
+          return;
+        }
+        try {
+          await this.syncSlot(spare, this.remote?.[spare] ?? null, false);
+          this.setStatus('synced');
+        } catch (err) {
+          this.fail(err);
+        }
+        return;
+      }
       if (side === 'remote') {
         this.takeRemote(n, c.text ? c : null, c.savedAt);
         this.emit();

@@ -122,7 +122,7 @@ test('저장 슬롯 4칸에 따로 쓰고 읽고 지울 수 있다', () => {
   assert.equal(loadSave(0, storage), null);
   assert.equal(writeSave(basePlayer(), 0, storage), true);
   assert.equal(writeSave({ ...basePlayer(), name: '둘째' }, 2, storage), true);
-  assert.deepEqual(listSaves(storage).map((p) => p?.name ?? null), ['테스터', null, '둘째', null]);
+  assert.deepEqual(listSaves(storage).map((p) => p?.name ?? null), ['테스터', null, '둘째', null, null, null, null, null]);
   deleteSave(0, storage);
   assert.equal(loadSave(0, storage), null);
   const broken = { setItem: () => { throw new Error('quota'); } };

@@ -67,10 +67,11 @@ function sideCard(side, player, at, newer) {
 export function conflictView(slot, info) {
   return `
     <h2>${slot + 1}번 슬롯 · 어느 저장을 쓸까요?</h2>
-    <p class="sub">이 기기와 서버(다른 기기에서 한 것)의 저장이 서로 다릅니다. 고르지 않은 쪽은 사라집니다.</p>
+    <p class="sub">이 기기와 서버(다른 기기에서 한 것)의 저장이 서로 다릅니다. 한쪽만 고르면 다른 쪽은 사라집니다.</p>
     <div class="slot-grid">
       ${sideCard('local', info.local, info.localAt, info.newer === 'local')}
       ${sideCard('remote', info.remote, info.remoteAt, info.newer === 'remote')}
     </div>
+    ${info.spare !== null ? `<div class="title-buttons"><button data-act="useBoth">둘 다 남기기 (이 기기 쪽을 ${info.spare + 1}번 칸으로 옮김)</button></div>` : ''}
     <div class="title-buttons row"><button data-act="back">나중에 고르기</button></div>`;
 }

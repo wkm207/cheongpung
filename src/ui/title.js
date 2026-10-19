@@ -243,8 +243,12 @@ export class Title {
       case 'conflict': this.slot = slot; this.view = 'conflict'; break;
       case 'useLocal':
       case 'useRemote':
-        this.account?.resolve(this.slot, el.dataset.act === 'useLocal' ? 'local' : 'remote').then(() => this.afterSync(`${this.slot + 1}번 슬롯 저장을 골랐습니다.`));
+      case 'useBoth': {
+        const side = { useLocal: 'local', useRemote: 'remote', useBoth: 'both' }[el.dataset.act];
+        const note = side === 'both' ? '두 캐릭터를 모두 남겼습니다.' : `${this.slot + 1}번 슬롯 저장을 골랐습니다.`;
+        this.account?.resolve(this.slot, side).then(() => this.afterSync(note));
         return;
+      }
       case 'back': this.view = 'main'; this.note = ''; break;
       case 'pick': this.cls = el.dataset.cls; break;
       case 'gender': this.gender = el.dataset.g; break;

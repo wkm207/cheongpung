@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Country of Wind 서버 저장: users/{uid}/slots/{0~3}
+// Country of Wind 서버 저장: users/{uid}/slots/{0~7}
 // 로그인한 사람은 자기 uid 아래 저장만 읽고 쓸 수 있다. 그 밖의 모든 문서는 막는다.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -10,7 +10,7 @@ service cloud.firestore {
       }
       allow read, delete: if isOwner();
       allow create, update: if isOwner()
-        && slot in ['0', '1', '2', '3']
+        && slot in ['0', '1', '2', '3', '4', '5', '6', '7']
         && request.resource.data.text is string
         && request.resource.data.text.size() < 500000
         && request.resource.data.savedAt is string;

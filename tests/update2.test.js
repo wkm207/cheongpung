@@ -187,7 +187,7 @@ test('숫자 뒤 조사도 읽는 소리대로 붙는다', () => {
 
 test('저장소 접근이 막힌 환경에서도 예외 없이 동작한다', () => {
   const blocked = { getItem() { throw new Error('SecurityError'); }, setItem() { throw new Error('SecurityError'); }, removeItem() { throw new Error('SecurityError'); } };
-  assert.deepEqual(listSaves(blocked), [null, null, null, null]);
+  assert.deepEqual(listSaves(blocked), Array(8).fill(null));
   assert.equal(writeSave(createPlayer('a', 'warrior'), 0, blocked), false);
   assert.equal(deleteSave(0, blocked), false);
 });

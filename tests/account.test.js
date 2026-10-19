@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { normalizeId, checkPassword, idToEmail, isConfigured, authErrorMessage, savedAtOf, decideSlot, newerSide } from '../src/core/account.js';
 import { createCloud } from '../src/core/cloud.js';
 import { CloudSync, CLOUD_PUSH_MS } from '../src/core/sync.js';
-import { readSlotText, writeSlotText, loadSave, deleteSave } from '../src/core/save.js';
+import { readSlotText, writeSlotText, loadSave, deleteSave, listSaves, SAVE_SLOTS } from '../src/core/save.js';
 import { FIREBASE_CONFIG } from '../src/firebase-config.js';
 
 const EMPTY_CONFIG = { apiKey: '', authDomain: '', projectId: '', appId: '' };
@@ -155,29 +155,30 @@ test('처음 로그인: 이 기기에만 있는 칸은 올리고, 서버에만 �
   assert.deepEqual(sync.conflicts, {});
 });
 
-test('양쪽이 다르면 고르게 하고, 고른 쪽으로 맞춘다', async () => {
+test('같은 캐릭터를 따로 진행했으면 고르게 하고, 고른 쪽으로 맞춘다', async () => {
   const storage = memoryStorage();
   const cloud = fakeCloud();
   const sync = new CloudSync(cloud, { storage });
   await sync.signUp('kangmin', '123456', '123456');
-  cloud.db.set('uid-1/0', { text: saveText('폰캐릭', T2, 5), savedAt: T2 });
-  cloud.db.set('uid-1/1', { text: saveText('폰둘째', T2, 7), savedAt: T2 });
-  writeSlotText(0, saveText('패드캐릭', T1, 3), storage);
-  writeSlotText(1, saveText('패드둘째', T3, 9), storage);
+  cloud.db.set('uid-1/0', { text: saveText('홍길동', T2, 5), savedAt: T2 });
+  cloud.db.set('uid-1/1', { text: saveText('임꺽정', T2, 7), savedAt: T2 });
+  writeSlotText(0, saveText('홍길동', T1, 3), storage);
+  writeSlotText(1, saveText('임꺽정', T3, 9), storage);
   await sync.syncAll();
   assert.deepEqual(Object.keys(sync.conflicts).sort(), ['0', '1']);
   assert.match(sync.statusText(), /2개/);
 
   const info = sync.conflictInfo(0);
-  assert.equal(info.local.name, '패드캐릭');
-  assert.equal(info.remote.name, '폰캐릭');
+  assert.equal(info.local.level, 3);
+  assert.equal(info.remote.level, 5);
   assert.equal(info.newer, 'remote');
+  assert.equal(info.spare, 2, '빈 칸이 있으면 둘 다 남기기도 고를 수 있다');
   assert.equal(sync.conflictInfo(1).newer, 'local');
 
   await sync.resolve(0, 'remote');
-  assert.equal(loadSave(0, storage).name, '폰캐릭');
+  assert.equal(loadSave(0, storage).level, 5);
   await sync.resolve(1, 'local');
-  assert.equal(JSON.parse(cloud.db.get('uid-1/1').text).player.name, '패드둘째');
+  assert.equal(JSON.parse(cloud.db.get('uid-1/1').text).player.level, 9);
   assert.deepEqual(sync.conflicts, {});
 
   // 고른 뒤 다시 맞춰도 조용하다
@@ -380,4 +381,68 @@ test('새 파일은 오프라인 캐시 목록에 있고, 서비스 워커는 �
   assert.match(sw, /origin !== self\.location\.origin\) return;/);
   const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
   assert.match(rules, /request\.auth\.uid == uid/);
+});
+
+test('같은 번호에 서로 다른 캐릭터가 있으면 묻지 않고 빈 칸으로 옮겨 둘 다 남긴다', async () => {
+  // 컴퓨터: 0·1번에 2명을 올려 둠 / 폰: 0·1·2번에 3명 → 모두 5명이 남는다
+  const cloud = fakeCloud();
+  const pc = memoryStorage();
+  writeSlotText(0, saveText('컴하나', T1), pc);
+  writeSlotText(1, saveText('컴둘', T1), pc);
+  await new CloudSync(cloud, { storage: pc }).signUp('kangmin', '123456', '123456');
+
+  const phone = memoryStorage();
+  writeSlotText(0, saveText('폰하나', T2), phone);
+  writeSlotText(1, saveText('폰둘', T2), phone);
+  writeSlotText(2, saveText('폰셋', T2), phone);
+  const sync = new CloudSync(cloud, { storage: phone });
+  await sync.signIn('kangmin', '123456');
+  assert.deepEqual(sync.conflicts, {});
+  const names = listSaves(phone).map((p) => p?.name ?? null);
+  assert.deepEqual(names.filter(Boolean).sort(), ['컴둘', '컴하나', '폰둘', '폰셋', '폰하나'].sort());
+  assert.equal(names[0], '컴하나');
+  assert.equal(names[1], '컴둘');
+  assert.equal(cloud.db.size, 5, '서버에도 5명');
+
+  // 컴퓨터가 다시 맞추면 폰 캐릭터를 받아 온다
+  const back = new CloudSync(cloud, { storage: pc });
+  await back.reconnect();
+  assert.equal(listSaves(pc).filter(Boolean).length, 5);
+  assert.deepEqual(back.conflicts, {});
+});
+
+test('빈 칸이 없으면 서로 다른 캐릭터라도 고르게 한다', async () => {
+  const cloud = fakeCloud();
+  const pc = memoryStorage();
+  for (let n = 0; n < SAVE_SLOTS; n++) writeSlotText(n, saveText(`컴${n}`, T1), pc);
+  await new CloudSync(cloud, { storage: pc }).signUp('kangmin', '123456', '123456');
+  const phone = memoryStorage();
+  writeSlotText(3, saveText('폰캐릭', T2), phone);
+  const sync = new CloudSync(cloud, { storage: phone });
+  await sync.signIn('kangmin', '123456');
+  assert.deepEqual(Object.keys(sync.conflicts), ['3']);
+  assert.equal(sync.conflictInfo(3).spare, null);
+});
+
+test('고르기 화면에서 둘 다 남기기를 고르면 이 기기 쪽을 빈 칸으로 옮긴다', async () => {
+  const storage = memoryStorage();
+  const cloud = fakeCloud();
+  const sync = new CloudSync(cloud, { storage });
+  await sync.signUp('kangmin', '123456', '123456');
+  cloud.db.set('uid-1/0', { text: saveText('홍길동', T2, 20), savedAt: T2 });
+  writeSlotText(0, saveText('홍길동', T1, 3), storage);
+  await sync.syncAll();
+  assert.ok(sync.conflicts[0]);
+  await sync.resolve(0, 'both');
+  assert.deepEqual(sync.conflicts, {});
+  assert.equal(loadSave(0, storage).level, 20);
+  assert.equal(loadSave(1, storage).level, 3);
+  assert.equal(JSON.parse(cloud.db.get('uid-1/1').text).player.level, 3);
+});
+
+test('저장 슬롯은 8칸이고 서버 규칙도 0~7번을 허락한다', () => {
+  assert.equal(SAVE_SLOTS, 8);
+  const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
+  for (let n = 0; n < SAVE_SLOTS; n++) assert.ok(rules.includes(`'${n}'`), `규칙에 ${n}번 칸`);
+  assert.ok(!rules.includes(`'${SAVE_SLOTS}'`));
 });

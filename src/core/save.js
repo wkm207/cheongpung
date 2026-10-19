@@ -130,7 +130,7 @@ export function importText(text) {
   return validatePlayer(data.player);
 }
 
-export const SAVE_SLOTS = 4;
+export const SAVE_SLOTS = 8;
 const slotKey = (slot) => `${SAVE_KEY}-slot${slot}`;
 
 /** 슬롯이 생기기 전의 저장(하나짜리)을 빈 슬롯으로 옮긴다. */
@@ -171,7 +171,7 @@ export function isCorrupt(slot, storage = store()) {
   }
 }
 
-/** 슬롯 4칸의 캐릭터(없으면 null) */
+/** 슬롯 8칸의 캐릭터(없으면 null) */
 export function listSaves(storage = store()) {
   return Array.from({ length: SAVE_SLOTS }, (_, slot) => loadSave(slot, storage));
 }
