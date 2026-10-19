@@ -4,11 +4,53 @@ import { hash2 } from '../core/rng.js';
 // 각 타일을 16x16 도트(2px 단위)로 그린다. n(dx, dy)는 이웃 타일 문자.
 const P = 2;
 
-function painter(ctx, ox, oy) {
-  return (x, y, w, h, color) => {
-    ctx.fillStyle = color;
-    ctx.fillRect(ox + x * P, oy + y * P, w * P, h * P);
-  };
+// 바닥 그림은 캔버스에 작은 네모를 수만 번 칠하는 대신, 메모리의 픽셀 판에 직접 채운 뒤 한 번에 올린다(맵 그리기가 몇 배 빠르다).
+const colorCache = new Map();
+/** '#rrggbb' · '#rgb' · 'rgba(r, g, b, a)' → [r, g, b, a(0~1)] */
+function parseColor(color) {
+  let c = colorCache.get(color);
+  if (c) return c;
+  if (color[0] === '#') {
+    const hex = color.length === 4 ? [...color.slice(1)].map((d) => d + d).join('') : color.slice(1, 7);
+    c = [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16), 1];
+  } else {
+    const [r, g, b, a = 1] = color.slice(color.indexOf('(') + 1, -1).split(',').map(Number);
+    c = [r, g, b, a];
+  }
+  colorCache.set(color, c);
+  return c;
+}
+
+/** 픽셀 판에 네모 칠하기(반투명은 캔버스처럼 겹쳐 섞는다) */
+function fillBuf(buf, x0, y0, w, h, color) {
+  const { data, u32, width, height } = buf;
+  const [r, g, b, a] = parseColor(color);
+  if (a <= 0) return;
+  const xs = Math.max(0, x0);
+  const ys = Math.max(0, y0);
+  const xe = Math.min(width, x0 + w);
+  const ye = Math.min(height, y0 + h);
+  if (xs >= xe || ys >= ye) return;
+  if (a >= 1) {
+    const v = ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0;
+    for (let y = ys; y < ye; y++) u32.fill(v, y * width + xs, y * width + xe);
+    return;
+  }
+  for (let y = ys; y < ye; y++) {
+    for (let i = (y * width + xs) * 4, end = (y * width + xe) * 4; i < end; i += 4) {
+      const da = data[i + 3] / 255;
+      const oa = a + da * (1 - a);
+      const k = (da * (1 - a)) / oa;
+      data[i] = r * (a / oa) + data[i] * k;
+      data[i + 1] = g * (a / oa) + data[i + 1] * k;
+      data[i + 2] = b * (a / oa) + data[i + 2] * k;
+      data[i + 3] = oa * 255;
+    }
+  }
+}
+
+function painter(buf, ox, oy) {
+  return (x, y, w, h, color) => fillBuf(buf, ox + x * P, oy + y * P, w * P, h * P, color);
 }
 
 function speckle(r, tx, ty, count, colors, salt = 0) {
@@ -423,11 +465,13 @@ export function renderMapCanvas(tiles) {
   canvas.width = w * TILE;
   canvas.height = h * TILE;
   const ctx = canvas.getContext('2d');
+  const data = new Uint8ClampedArray(canvas.width * canvas.height * 4);
+  const buf = { data, u32: new Uint32Array(data.buffer), width: canvas.width, height: canvas.height };
   for (let ty = 0; ty < h; ty++) {
     for (let tx = 0; tx < w; tx++) {
       const ch = tiles[ty][tx];
       const n = (dx, dy) => tiles[ty + dy]?.[tx + dx] ?? ch;
-      (PAINTERS[ch] ?? grass)(painter(ctx, tx * TILE, ty * TILE), tx, ty, n);
+      (PAINTERS[ch] ?? grass)(painter(buf, tx * TILE, ty * TILE), tx, ty, n);
     }
   }
   // 풀밭과 흙의 경계(원작풍 언덕): 풀밭 아래쪽에 흙 비탈과 그늘, 옆·위는 짙은 테두리와 삐죽한 풀
@@ -436,7 +480,7 @@ export function renderMapCanvas(tiles) {
   for (let ty = 0; ty < h; ty++) {
     for (let tx = 0; tx < w; tx++) {
       const ch = tiles[ty][tx];
-      const r = painter(ctx, tx * TILE, ty * TILE);
+      const r = painter(buf, tx * TILE, ty * TILE);
       const at = (dx, dy) => tiles[ty + dy]?.[tx + dx];
       if (GRASSY.has(ch)) {
         if (DIRT.has(at(0, 1))) {
@@ -454,8 +498,7 @@ export function renderMapCanvas(tiles) {
       } else if (DIRT.has(ch)) {
         if (GRASSY.has(at(0, -1))) {
           // 비탈 아래 흙에 드리운 그늘
-          ctx.fillStyle = 'rgba(60, 25, 5, 0.35)';
-          ctx.fillRect(tx * TILE, ty * TILE, TILE, 6);
+          r(0, 0, 16, 3, 'rgba(60, 25, 5, 0.35)');
         }
         for (let i = 0; i < 16; i++) {
           const depth = 1 + Math.floor(hash2(tx, ty, 90 + i) * 2);
@@ -466,6 +509,7 @@ export function renderMapCanvas(tiles) {
       }
     }
   }
+  ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
   // 벽·지붕 바로 아래 칸에 그늘을 드리워 높이감을 준다
   for (let ty = 1; ty < h; ty++) {
     for (let tx = 0; tx < w; tx++) {
