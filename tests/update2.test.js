@@ -378,6 +378,13 @@ test('바닥에 떨어진 돈도 그릴 수 있다(그리기 오류로 캐릭터
   const { GOLD_ID } = await import('../src/game.js');
   const ctx = new Proxy({}, { get: (t, k) => (k in t ? t[k] : () => {}), set: (t, k, v) => { t[k] = v; return true; } });
   const fake = { now: 0, groundItems: [{ id: GOLD_ID, qty: 10, x: 1, y: 1, spawnAt: 0, expiresAt: 60000 }, { id: 'herb', qty: 1, x: 2, y: 1, spawnAt: 0, expiresAt: 60000 }] };
+  const { setNinja } = await import('../src/render/artmode.js');
+  setNinja(false);
+  assert.doesNotThrow(() => Renderer.prototype.drawGroundItems.call({}, ctx, fake));
+  // 새 도트 모드: 아이템 도트 캔버스로 그린다(노드에는 캔버스가 없어 흉내만 낸다)
+  globalThis.ImageData ??= class { constructor(data, w, h) { Object.assign(this, { data, w, h }); } };
+  globalThis.document ??= { createElement: () => ({ getContext: () => ({ putImageData() {} }) }) };
+  setNinja(true);
   assert.doesNotThrow(() => Renderer.prototype.drawGroundItems.call({}, ctx, fake));
 });
 

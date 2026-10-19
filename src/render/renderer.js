@@ -13,9 +13,11 @@ import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './f
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
 import { ITEMS } from '../data/items.js';
+import { itemCanvas } from './itemicons.js';
 import { MAP_DEFS } from '../data/maps.js';
 
 const GOLD_ID = '__gold'; // game.js 의 바닥 돈 표시
+const ITEM_DOT_SCALE = 1.5; // 바닥 아이템 도트 한 개 = 게임 1.5픽셀(사람 도트와 같다)
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -356,6 +358,13 @@ export class Renderer {
       if (blink) continue;
       const age = game.now - (g.spawnAt ?? -1e9);
       const bounce = age < 450 ? -Math.sin((age / 450) * Math.PI) * 12 : Math.sin((game.now + g.x * 100) / 300);
+      if (isNinja()) {
+        // 새 도트 모드: 아이템 도트(사람 도트와 같은 배율)
+        const img = itemCanvas(g.id === GOLD_ID ? '__gold' : g.id);
+        const s = img.width * ITEM_DOT_SCALE;
+        ctx.drawImage(img, Math.round(cx - s / 2), Math.round(cy + 9 - s + bounce), s, s);
+        continue;
+      }
       ctx.fillText(g.id === GOLD_ID ? '💰' : ITEMS[g.id]?.icon ?? '❔', cx, cy - 1 + bounce);
     }
   }

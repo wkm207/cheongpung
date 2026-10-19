@@ -3,7 +3,8 @@ import { esc, formatPlayTime } from './dom.js';
 import { josa } from '../core/josa.js';
 import { CLASSES } from '../data/classes.js';
 import { SKILLS, KIND_LABELS, learnCost, SPELL_LETTERS, hotkeyLabel } from '../data/skills.js';
-import { ITEMS, EQUIP_SLOTS, SLOT_LABELS, SLOT_ICONS, isEquipment, isStackable, itemStatText, sellPrice } from '../data/items.js';
+import { ITEMS, EQUIP_SLOTS, SLOT_LABELS, isEquipment, isStackable, itemStatText, sellPrice } from '../data/items.js';
+import { itemIcon, slotIcon } from '../render/itemicons.js';
 import { MONSTERS } from '../data/monsters.js';
 import { MAP_DEFS } from '../data/maps.js';
 import { QUEST_CHAINS, QUEST_GIVERS, rewardItems } from '../data/quests.js';
@@ -47,7 +48,7 @@ export function inventoryView(game, state) {
     const id = p.equip[slot];
     const sel = state.selEquip === slot ? ' sel' : '';
     return `<button class="eq-slot${id ? '' : ' empty'}${sel}" data-act="selEquip" data-slot="${slot}">
-      <span class="eq-icon">${id ? ITEMS[id].icon : SLOT_ICONS[slot]}</span><small>${id ? esc(ITEMS[id].name) : SLOT_LABELS[slot]}${p.enhance?.[slot] ? ` +${p.enhance[slot]}` : ''}${awakenLabel(p, slot) ? ` ${awakenLabel(p, slot)}` : ''}</small></button>`;
+      <span class="eq-icon">${id ? itemIcon(id) : slotIcon(slot)}</span><small>${id ? esc(ITEMS[id].name) : SLOT_LABELS[slot]}${p.enhance?.[slot] ? ` +${p.enhance[slot]}` : ''}${awakenLabel(p, slot) ? ` ${awakenLabel(p, slot)}` : ''}</small></button>`;
   }).join('');
   const recent = game.lastDiff && game.now - game.lastDiff.at < 8000
     ? `<div class="banner">✨ ${esc(game.lastDiff.title)} ${shortCompare(game.lastDiff.rows) || ''}</div>` : '';
@@ -90,7 +91,7 @@ function inventoryRow(game, slot, i, state) {
   const qty = isStackable(slot.id) ? ` <span class="muted">×${slot.qty}</span>` : '';
   const selected = state.selected === i;
   return `<div class="list-row clickable${selected ? ' sel' : ''}" data-act="select" data-i="${i}">
-      <span class="tag">${it.icon}</span>
+      <span class="tag">${itemIcon(slot.id)}</span>
       <span class="grow"><span class="line1"><b>${esc(it.name)}</b>${qty} ${badge}</span><span class="line2">${esc(itemStatText(slot.id))}</span></span>
       <span class="price">${sellPrice(slot.id).toLocaleString()}전</span>
     </div>${selected ? itemDetail(game, slot, i, state) : ''}`;
@@ -105,7 +106,7 @@ function itemDetail(game, slot, i, state) {
   if (isEquipment(slot.id)) {
     const check = canEquip(p, slot.id);
     const cmp = compareEquip(p, slot.id);
-    const current = cmp.current ? `지금 착용: ${ITEMS[cmp.current].icon} ${esc(ITEMS[cmp.current].name)}` : `지금 ${SLOT_LABELS[cmp.slot]} 칸은 비어 있음`;
+    const current = cmp.current ? `지금 착용: ${itemIcon(cmp.current, 'sm')} ${esc(ITEMS[cmp.current].name)}` : `지금 ${SLOT_LABELS[cmp.slot]} 칸은 비어 있음`;
     return `<div class="detail">
       <div class="muted">${current}</div>
       ${compareHtml(cmp.rows)}
@@ -128,7 +129,7 @@ function equippedDetail(game, slot) {
   const id = game.player.equip[slot];
   if (!id) return `<div class="detail" style="margin-left:0"><p class="hint">${SLOT_LABELS[slot]} 칸이 비어 있습니다. 아래 소지품에서 장비를 눌러 착용하세요.</p></div>`;
   return `<div class="detail" style="margin-left:0">
-    <b>${ITEMS[id].icon} ${esc(ITEMS[id].name)}</b>${equipTags(game.player, slot)} <span class="muted">${esc(itemStatText(id, slotMult(game.player, slot)))}</span>
+    <b>${itemIcon(id, 'sm')} ${esc(ITEMS[id].name)}</b>${equipTags(game.player, slot)} <span class="muted">${esc(itemStatText(id, slotMult(game.player, slot)))}</span>
     <div class="muted" style="margin-top:4px">벗으면:</div>
     ${compareHtml(compareUnequip(game.player, slot))}
     <div class="row"><button data-act="unequip" data-slot="${slot}">벗기</button></div>
@@ -236,7 +237,7 @@ export function characterView(game) {
   ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   const equip = EQUIP_SLOTS.map((slot) => {
     const id = p.equip[slot];
-    const body = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b>${equipTags(p, slot)} <small class="muted">${esc(itemStatText(id, slotMult(p, slot)))}</small>` : '<span class="muted">없음</span>';
+    const body = id ? `${itemIcon(id, 'sm')} <b>${esc(ITEMS[id].name)}</b>${equipTags(p, slot)} <small class="muted">${esc(itemStatText(id, slotMult(p, slot)))}</small>` : '<span class="muted">없음</span>';
     return `<div class="list-row"><span class="badge eq">${SLOT_LABELS[slot]}</span><span class="grow">${body}</span></div>`;
   }).join('');
   const a = p.alloc ?? {};
@@ -269,7 +270,7 @@ const goalText = (q) => (q.goal.type === 'kill'
   : `${ITEMS[q.goal.target].name} ${q.goal.count}개 모아 오기`);
 
 export function rewardHtml(q, cls) {
-  const items = rewardItems(q, cls).map(([id, n]) => `<span>${ITEMS[id].icon} ${esc(ITEMS[id].name)}${n > 1 ? ` ×${n}` : ''}</span>`).join('');
+  const items = rewardItems(q, cls).map(([id, n]) => `<span>${itemIcon(id, 'sm')} ${esc(ITEMS[id].name)}${n > 1 ? ` ×${n}` : ''}</span>`).join('');
   return `<div class="reward-list"><span>💰 ${q.reward.gold.toLocaleString()}전</span><span>✨ 경험치 ${q.reward.exp.toLocaleString()}</span>${items}</div>`;
 }
 
@@ -328,7 +329,7 @@ export function advancePage(game, npc, state) {
       <div><b>⚜️ ${info.next.tier}차 승급: ${esc(game.title())} → ${esc(info.title)}</b></div>
       <div class="muted" style="margin:4px 0">기본 능력치가 크게 오르고, ${info.next.tier}차 기술을 배울 수 있으며, ${info.next.tier}차 장비를 착용할 수 있습니다.</div>
       ${checks}
-      <div class="muted" style="margin-top:4px">승급 기념 선물: ${ITEMS[reward].icon} ${esc(ITEMS[reward].name)}</div>
+      <div class="muted" style="margin-top:4px">승급 기념 선물: ${itemIcon(reward, 'sm')} ${esc(ITEMS[reward].name)}</div>
     </div>
     <div class="row end" style="margin:8px -10px -10px"><button class="primary" data-act="advance" ${info.ok ? '' : 'disabled'}>승급하기</button><button data-act="close">닫기</button></div>`;
 }
@@ -386,7 +387,7 @@ export function shopBuyList(game, npc) {
     const note = isEquipment(id) && !check.ok ? `<span class="badge no">${esc(check.reason)}</span>` : cmp;
     const ten = isStackable(id) ? `<button data-act="buy" data-id="${id}" data-n="10">10개</button>` : '';
     return `<div class="list-row${it.wtype && it.wtype !== CLASSES[p.cls].weapon ? ' locked' : ''}">
-      <span class="tag">${it.icon}</span>
+      <span class="tag">${itemIcon(id)}</span>
       <span class="grow"><span class="line1"><b>${esc(it.name)}</b> ${note}</span><span class="line2">${esc(itemStatText(id))}</span></span>
       <span class="price${poor ? ' warn' : ''}">${it.price.toLocaleString()}전</span>
       <button class="primary" data-act="buy" data-id="${id}" data-n="1">사기</button>${ten}
@@ -401,7 +402,7 @@ export function shopSellList(game) {
     const it = ITEMS[s.id];
     const all = s.qty > 1 ? `<button data-act="sell" data-i="${i}" data-n="${s.qty}">전부</button>` : '';
     return `<div class="list-row">
-      <span class="tag">${it.icon}</span>
+      <span class="tag">${itemIcon(s.id)}</span>
       <span class="grow"><span class="line1"><b>${esc(it.name)}</b>${s.qty > 1 ? ` <span class="muted">×${s.qty}</span>` : ''}</span><span class="line2">${esc(itemStatText(s.id))}</span></span>
       <span class="price">${sellPrice(s.id).toLocaleString()}전</span>
       <button class="primary" data-act="sell" data-i="${i}" data-n="1">팔기</button>${all}
@@ -416,7 +417,7 @@ export function forgeList(game) {
     const id = p.equip[slot];
     const plus = p.enhance?.[slot] ?? 0;
     const info = enhanceInfo(p, slot);
-    const name = id ? `${ITEMS[id].icon} <b>${esc(ITEMS[id].name)}</b>${plus ? ` <span class="good">+${plus}</span>` : ''}` : '<span class="muted">장비 없음</span>';
+    const name = id ? `${itemIcon(id, 'sm')} <b>${esc(ITEMS[id].name)}</b>${plus ? ` <span class="good">+${plus}</span>` : ''}` : '<span class="muted">장비 없음</span>';
     let right = '<span class="muted">-</span>';
     if (id && plus >= MAX_ENHANCE) right = '<span class="good">최대 강화</span>';
     else if (info) right = `<span class="price${p.gold < info.cost ? ' warn' : ''}">${info.cost.toLocaleString()}전 · 성공 ${Math.round(info.rate * 100)}%</span><button class="primary" data-act="enhance" data-slot="${slot}">+${info.next} 강화</button>`;
@@ -515,7 +516,7 @@ export function gmView(game, state) {
   const groups = [['consume', '소모품'], ['weapon', '무기'], ['armor', '갑옷'], ['helmet', '투구'], ['shield', '방패'], ['necklace', '목걸이'], ['ring', '반지'], ['aux', '보조'], ['loot', '전리품']];
   const itemRow = ([id, it]) => {
     const ten = isStackable(id) ? btn(`/아이템 ${id} 10`, '+10') : '';
-    return `<div class="list-row"><span class="tag">${it.icon}</span><span class="grow">${esc(it.name)} <small class="muted">${esc(itemStatText(id))}</small></span>${btn(`/아이템 ${id} 1`, '+1')}${ten}</div>`;
+    return `<div class="list-row"><span class="tag">${itemIcon(id)}</span><span class="grow">${esc(it.name)} <small class="muted">${esc(itemStatText(id))}</small></span>${btn(`/아이템 ${id} 1`, '+1')}${ten}</div>`;
   };
   const byLevel = (a, b) => (a[1].level ?? 0) - (b[1].level ?? 0);
   const subGroup = (title, list) => (list.length ? `<div class="inv-group">${title}</div>${list.sort(byLevel).map(itemRow).join('')}` : '');

@@ -1,8 +1,9 @@
 // 넓은 화면에서 오른쪽에 붙는 상태창: 캐릭터 그림과 장비 칸, 탭(상태·가방·마법·기술·퀘스트).
 // 탭 내용은 가운데 창과 같은 화면을 그대로 쓰고(Panels), 열려 있어도 게임은 계속 흐른다.
 import { $, $$, esc } from './dom.js';
-import { ITEMS, SLOT_ICONS, SLOT_LABELS } from '../data/items.js';
+import { ITEMS, SLOT_LABELS } from '../data/items.js';
 import { portraitSprite } from '../render/sprites.js';
+import { itemIcon, slotIcon } from '../render/itemicons.js';
 import { awakenLabel } from '../core/dragon.js';
 import { Panels } from './panels.js';
 
@@ -96,7 +97,7 @@ export class Sidebar {
       const plus = `${p.enhance?.[slot] ? `<small class="plus">+${p.enhance[slot]}</small>` : ''}${awaken ? `<small class="awk">🐲${p.dragonStage}</small>` : ''}`;
       s.classList.toggle('empty', !id);
       s.title = id ? `${ITEMS[id].name}${awaken ? ` ${awaken}` : ''}` : SLOT_LABELS[slot];
-      s.innerHTML = `${id ? ITEMS[id].icon : SLOT_ICONS[slot]}${plus}<span>${esc(id ? ITEMS[id].name : SLOT_LABELS[slot])}</span>`;
+      s.innerHTML = `${id ? itemIcon(id) : slotIcon(slot)}${plus}<span>${esc(id ? ITEMS[id].name : SLOT_LABELS[slot])}</span>`;
     }
   }
 }
