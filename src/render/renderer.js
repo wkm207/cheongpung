@@ -32,10 +32,12 @@ function darknessFor(game) {
   if (t < 0.9) return 0.5;
   return (1 - (t - 0.9) / 0.1) * 0.5;
 }
-const FONT = "-apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
+const BASE_FONT = "-apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
+// 원작풍 모드의 머리 위 이름·말풍선은 도트 글꼴(갈무리11)
+const fontFor = () => (isClassic() ? `'Galmuri11', ${BASE_FONT}` : BASE_FONT);
 
 function label(ctx, text, x, y, color, size = 8) {
-  ctx.font = `bold ${size}px ${FONT}`;
+  ctx.font = `bold ${size}px ${fontFor()}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.lineWidth = 2.5;
@@ -47,7 +49,7 @@ function label(ctx, text, x, y, color, size = 8) {
 
 /** 머리 위 말풍선 */
 function bubble(ctx, text, x, y, { bg = '#fffdf5', fg = '#3b2a1a', size = 8 } = {}) {
-  ctx.font = `bold ${size}px ${FONT}`;
+  ctx.font = `bold ${size}px ${fontFor()}`;
   const w = ctx.measureText(text).width + 8;
   const h = size + 6;
   const bx = x - w / 2;

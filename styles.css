@@ -26,6 +26,10 @@
   --font: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Dotum', 'Gulim', 'Noto Sans KR', sans-serif;
 }
 
+/* 갈무리11(Galmuri11, Lee Minseo, SIL OFL 1.1 — assets/fonts/OFL.txt): 옛 온라인 게임 같은 도트 한글 글꼴 */
+@font-face { font-family: 'Galmuri11'; src: url('assets/fonts/Galmuri11.woff2') format('woff2'); font-weight: normal; font-display: swap; }
+@font-face { font-family: 'Galmuri11'; src: url('assets/fonts/Galmuri11-Bold.woff2') format('woff2'); font-weight: bold; font-display: swap; }
+
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
@@ -856,6 +860,8 @@ body.classic #portrait { image-rendering: pixelated; }
 
 /* ── 원작풍 화면 틀(새 도트 모드): 주홍 칠 틀과 금빛 모서리 장식, 한지빛 오른쪽 판, 보랏빛 대화창 ── */
 body.classic {
+  --font: 'Galmuri11', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Gulim', sans-serif;
+  -webkit-font-smoothing: none;
   --frame: #a8361a;
   --frame-dark: #5e1608;
   --frame-hi: #e0704a;
