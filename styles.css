@@ -461,6 +461,7 @@ body.control-joystick #dpad { display: none; }
 /* 새 도트 모드의 아이템 아이콘(16×16 도트): 목록은 2배, 글 사이는 1배 */
 .idot { width: 32px; height: 32px; image-rendering: pixelated; vertical-align: middle; display: inline-block; }
 .idot.sm { width: 16px; height: 16px; vertical-align: -3px; }
+.idot.photo { image-rendering: auto; }
 .tag .idot { display: block; margin: 0 auto; }
 .grow { flex: 1; min-width: 0; font-size: 13px; }
 

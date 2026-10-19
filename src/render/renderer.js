@@ -14,7 +14,7 @@ import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './f
 import { lerpPos } from '../world/dirs.js';
 import { MONSTERS } from '../data/monsters.js';
 import { ITEMS } from '../data/items.js';
-import { itemCanvas } from './itemicons.js';
+import { itemCanvas, itemPhoto } from './itemicons.js';
 import { MAP_DEFS } from '../data/maps.js';
 
 const GOLD_ID = '__gold'; // game.js 의 바닥 돈 표시
@@ -338,8 +338,10 @@ export class Renderer {
       const bounce = age < 450 ? -Math.sin((age / 450) * Math.PI) * 12 : Math.sin((game.now + g.x * 100) / 300);
       if (isNinja() && typeof document !== 'undefined') {
         // 새 도트 모드: 아이템 도트(사람 도트와 같은 배율). 캔버스가 없는 노드(테스트)에서는 이모지로 그린다
-        const img = itemCanvas(g.id === GOLD_ID ? '__gold' : g.id);
-        const s = img.width * ITEM_DOT_SCALE;
+        // 실사 아이콘이 있으면 그것(한 칸보다 조금 작게), 없으면 아이템 도트
+        const photo = g.id !== GOLD_ID && itemPhoto(g.id);
+        const img = photo || itemCanvas(g.id === GOLD_ID ? '__gold' : g.id);
+        const s = photo ? 24 : img.width * ITEM_DOT_SCALE;
         ctx.drawImage(img, Math.round(cx - s / 2), Math.round(cy + 9 - s + bounce), s, s);
         continue;
       }

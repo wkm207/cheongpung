@@ -3,6 +3,26 @@
 import { itemFrame } from './itemdots.js';
 import { isNinja } from './artmode.js';
 import { ITEMS, SLOT_ICONS } from '../data/items.js';
+import { ITEM_ART } from '../data/itemart.js';
+import { ICON_FILES } from '../data/looks.js';
+
+// 실사 아이콘(AI 그림, assets/icons/)이 있으면 그것을 먼저 쓴다
+const HAS_ICON = new Set(ICON_FILES);
+const artOf = (id) => (HAS_ICON.has(ITEM_ART[id]) ? ITEM_ART[id] : null);
+const photos = new Map();
+
+/** 바닥에 그릴 실사 아이콘 그림(불러오는 중이거나 없으면 null) */
+export function itemPhoto(id) {
+  const art = artOf(id);
+  if (!art || typeof Image === 'undefined') return null;
+  if (!photos.has(art)) {
+    const img = new Image();
+    img.src = `assets/icons/${art}.png`;
+    photos.set(art, img);
+  }
+  const img = photos.get(art);
+  return img.complete && img.naturalWidth ? img : null;
+}
 
 const canvases = new Map();
 const urls = new Map();
@@ -26,6 +46,8 @@ const dotImg = (key, cls) => {
 /** 아이템 아이콘 HTML. cls 'sm' 은 글 사이에 넣는 작은 아이콘 */
 export function itemIcon(id, cls = '') {
   if (!isNinja() || !ITEMS[id]) return ITEMS[id]?.icon ?? '❔';
+  const art = artOf(id);
+  if (art) return `<img class="idot photo${cls ? ` ${cls}` : ''}" src="assets/icons/${art}.png" alt="">`;
   return dotImg(id, cls);
 }
 

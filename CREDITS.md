@@ -11,6 +11,6 @@
 - 쓴 곳: 원작풍 화면의 글씨(창·대화창·머리 위 이름)
 
 ## 실사풍 사람 그림
-- `assets/people/`: AI 그림 도구(Canva AI·Gemini 등)로 만든 그림을 `tools/art_import.py`로 바탕을 지워 다듬은 것
+- `assets/people/`, `assets/icons/`: AI 그림 도구(Canva AI·Gemini)로 만든 사람·아이템 그림을 `tools/art_import.py`로 바탕을 지우고 잘라 다듬은 것
 
 사람·몬스터 도트(`src/render/chibi.js`, `src/render/mobdots.js`)를 비롯한 그 밖의 그림·음악·효과음은 이 프로젝트에서 코드로 직접 만든 것입니다.

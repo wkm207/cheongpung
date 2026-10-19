@@ -21,7 +21,7 @@ PEOPLE = ROOT / 'assets' / 'people'
 ICONS = ROOT / 'assets' / 'icons'
 LOOKS_JS = ROOT / 'src' / 'data' / 'looks.js'
 CLASSES = ('warrior', 'rogue', 'mage', 'priest')
-PERSON_H = 256
+PERSON_H = 400
 ICON = 64
 
 
@@ -44,11 +44,64 @@ def background_mask(im, tol=34):
     return bg
 
 
-def cutout(path):
-    """흰 바탕을 지운 RGBA(가장자리 한 칸 깎고 살짝 부드럽게)"""
+def erase_grid(im):
+    """아이콘 묶음에 그려진 옅은 회색 칸 줄(가로·세로로 길게 이어진 줄)을 흰색으로 지운다"""
+    w, h = im.size
+    px = im.load()
+
+    def grid(c):
+        return max(c) - min(c) < 14 and 180 <= c[0] <= 238
+
+    cols = [x for x in range(w) if sum(grid(px[x, y]) for y in range(0, h, 4)) > h / 4 * 0.45]
+    rows = [y for y in range(h) if sum(grid(px[x, y]) for x in range(0, w, 4)) > w / 4 * 0.45]
+    for x in cols:
+        for y in range(h):
+            if grid(px[x, y]):
+                px[x, y] = (255, 255, 255)
+    for y in rows:
+        for x in range(w):
+            if grid(px[x, y]):
+                px[x, y] = (255, 255, 255)
+    return im
+
+
+def enclosed_white(im, bg, min_area):
+    """바탕과 이어지지 않았지만 넓고 새하얀 곳(목걸이 고리 안 등)도 바탕으로"""
+    w, h = im.size
+    px = im.load()
+    seen = bytearray(w * h)
+    for y0 in range(h):
+        for x0 in range(w):
+            i0 = y0 * w + x0
+            if bg[i0] or seen[i0] or min(px[x0, y0]) < 246:
+                continue
+            q = deque([(x0, y0)])
+            seen[i0] = 1
+            region = []
+            while q:
+                x, y = q.popleft()
+                region.append(y * w + x)
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h:
+                        j = ny * w + nx
+                        if not bg[j] and not seen[j] and min(px[nx, ny]) >= 246:
+                            seen[j] = 1
+                            q.append((nx, ny))
+            if len(region) >= min_area:
+                for j in region:
+                    bg[j] = 1
+    return bg
+
+
+def cutout(path, sheet=False):
+    """흰 바탕을 지운 RGBA(가장자리 한 칸 깎고 살짝 부드럽게). sheet: 아이콘 묶음(칸 줄·고리 안 흰 곳도 지움)"""
     im = Image.open(path).convert('RGB')
     w, h = im.size
+    if sheet:
+        im = erase_grid(im)
     bg = background_mask(im)
+    if sheet:
+        bg = enclosed_white(im, bg, (w * h) // 3000)
     mask = Image.new('L', (w, h), 255)
     mask.putdata([0 if b else 255 for b in bg])
     blur = max(0.5, w / 1500)
@@ -98,7 +151,7 @@ def components(alpha, min_px):
 
 
 def import_icons(path, group):
-    out = cutout(path)
+    out = cutout(path, sheet=True)
     boxes = components(out.getchannel('A'), min_px=(out.width * out.height) // 900)
     ICONS.mkdir(parents=True, exist_ok=True)
     for old in ICONS.glob(f'{group}_*.png'):
