@@ -156,15 +156,15 @@ def keep_main(rgba, ratio=0.08):
     return out
 
 
-def import_mob(path, mob_id, box=None, size=320):
-    """몬스터 한 마리(box 가 있으면 그 부분만) → 긴 쪽 size px, assets/mobs/{id}.png"""
+def import_mob(path, mob_id, box=None, size=320, holes=False):
+    """몬스터 한 마리(box 가 있으면 그 부분만) → 긴 쪽 size px, assets/mobs/{id}.png. holes: 똬리 안 흰 곳도 지움"""
     im = Image.open(path).convert('RGB')
     if box:
         im = im.crop(box)
     MOBS.mkdir(parents=True, exist_ok=True)
     tmp = MOBS / f'_{mob_id}.png'
     im.save(tmp)
-    out = keep_main(cutout(tmp))
+    out = keep_main(cutout(tmp, sheet=holes))
     tmp.unlink()
     out = out.crop(out.getbbox())
     k = size / max(out.size)
