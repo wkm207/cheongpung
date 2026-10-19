@@ -46,7 +46,7 @@ const OVERLAY = new Set(['T', 'O', 'f', 'K', 'R', 'Y', 'W', 'D', 'J', 'G', 'Z', 
 const ORDER = ['grass', 'dark', 'sand', 'snow', 'dirt', 'stone', 'cave', 'ash', 'maru', 'oldfloor', 'water', 'lava'];
 // 무늬 한 장이 덮는 크기(게임 좌표): 몇 칸마다 되풀이되는지
 const REPEAT = {
-  grass: 5, dark: 5, dirt: 4, stone: 3, snow: 5, sand: 5, cave: 4, water: 5, ash: 4, maru: 3, oldfloor: 3, lava: 4,
+  grass: 3, dark: 3, dirt: 4, stone: 3, snow: 4, sand: 4, cave: 4, water: 5, ash: 4, maru: 3, oldfloor: 3, lava: 4,
   rockwall: 3, redrock: 3, stonewall: 2, mudwall: 3, indoorwall: 2,
 };
 // 반듯한 경계로 깔 것(나무 마루·돌바닥·벽)
@@ -180,6 +180,17 @@ function stand(ctx, name, tx, ty, size, dy = 0) {
   ctx.drawImage(im, tx * TILE + TILE / 2 - w / 2, ty * TILE + TILE - h + dy, w, h);
 }
 
+/** 대문 그림(기둥 두 개와 지붕)을 반으로 나눠, 길 왼쪽 기둥 칸에는 왼쪽 반, 오른쪽 칸에는 오른쪽 반을 세운다 */
+function gateHalf(ctx, tx, ty, half) {
+  const im = obj.gatepost;
+  if (!im) return;
+  const sw = im.width / 2;
+  const h = 56;
+  const w = (sw * h) / im.height;
+  const x = half ? tx * TILE : tx * TILE + TILE - w;
+  ctx.drawImage(im, sw * half, 0, sw, im.height, x, ty * TILE + TILE - h, w, h);
+}
+
 const HOUSE_CH = new Set(['R', 'Y', 'W', 'D']);
 
 /** 드나드는 문: 나무 문틀과 어두운 문간, 돌 디딤돌 */
@@ -268,7 +279,7 @@ export function renderPhotoMap(tiles, base) {
       else if (ch === 'U') stand(ctx, 'table', tx, ty, 34, 1);
       else if (ch === 'V') stand(ctx, 'shelf', tx, ty, 36, 0);
       else if (ch === 'Z') stand(ctx, 'bamboo', tx, ty, 44, 0);
-      else if (ch === 'G') stand(ctx, 'gatepost', tx, ty, 44, 0);
+      else if (ch === 'G') gateHalf(ctx, tx, ty, tiles[ty][tx - 1] === '=' ? 1 : 0);
       else if (ch === 'J') stand(ctx, 'jangseung', tx, ty, 40, 0);
       else if (ch === 'C') stand(ctx, 'coral', tx, ty, 30, 1);
       else if (kinds[ty][tx] === 'grass' && ch === '.' && hash2(tx, ty, 12) < 0.035) stand(ctx, 'bush', tx, ty, 26, 2);

@@ -125,9 +125,10 @@ function mobPhotoBox(type) {
 }
 
 // 손그림 몬스터 중 오른쪽을 보는 그림(나머지는 왼쪽), 앞을 보고 서 있는 그림(걸을 때 발을 번갈아 든다)
-const MOB_FACES_RIGHT = new Set(['eggGhost', 'goblin', 'rabbit', 'skeletonSword']);
-const MOB_FRONT = new Set(['dueok', 'pigKing', 'redOgre', 'skeleton', 'skeletonGeneral', 'turtleGeneral', 'yeti',
-  'zodiacGeneral', 'zodiacOx', 'zodiacRat', 'zodiacTiger', 'waterImp', 'fishSoldier', 'goblin', 'skeletonArcher', 'skeletonSword']);
+const MOB_FACES_RIGHT = new Set(['goblin']);
+const MOB_FRONT = new Set(['dueok', 'pigKing', 'goblin', 'bat', 'redOgre', 'waterImp', 'flameSpirit', 'yeti', 'iceSpirit',
+  'zodiacRat', 'zodiacOx', 'zodiacTiger', 'zodiacGeneral', 'turtleGeneral', 'skeleton', 'skeletonSword', 'skeletonArcher',
+  'skeletonGeneral', 'eggGhost', 'maidenGhost', 'bachelorGhost', 'grudgeLord']);
 
 // 실사 말 키(게임 좌표)
 const HORSE_H = 56;

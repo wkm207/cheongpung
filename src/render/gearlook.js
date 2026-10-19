@@ -42,8 +42,9 @@ export function gearLook(img, equip) {
   ctx.translate(PAD, PAD);
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  if (weapon) drawWeapon(ctx, weapon, anchor);
+  if (weapon && !anchor.over) drawWeapon(ctx, weapon, anchor);
   ctx.drawImage(bare, 0, 0);
+  if (weapon && anchor.over) drawWeapon(ctx, weapon, anchor);
   if (helmet) drawHat(ctx, helmet, anchor.head, key.endsWith('_side'), key.endsWith('_up'));
   c.hScale = c.height / bare.height;
   c.gearTag = ck;
