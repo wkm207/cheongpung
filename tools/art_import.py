@@ -173,6 +173,88 @@ def import_mob(path, mob_id, box=None, size=320, holes=False):
     print('몬스터', mob_id, out.size)
 
 
+TERRAIN = ROOT / 'assets' / 'terrain'
+OBJECTS = ROOT / 'assets' / 'objects'
+TERRAIN_NAMES = ['grass', 'dark', 'dirt', 'stone', 'snow', 'sand', 'cave', 'water']
+OBJECT_NAMES = ['tree', 'pine', 'blossom', 'snowpine', 'deadtree', 'bush', 'rock', 'flowers',
+                'thatch', 'tilehouse', 'fence', 'jar', 'well']
+
+
+def seamless(im):
+    """이어 붙여도 이음새가 안 보이게: 반 칸 민 그림과 가장자리 쪽에서 섞는다"""
+    import numpy as np
+    a = np.asarray(im.convert('RGB'), dtype=np.float32)
+    h, w, _ = a.shape
+    rolled = np.roll(np.roll(a, h // 2, axis=0), w // 2, axis=1)
+    yy = np.minimum(np.arange(h), h - 1 - np.arange(h)) / (h / 2)
+    xx = np.minimum(np.arange(w), w - 1 - np.arange(w)) / (w / 2)
+    m = np.minimum.outer(yy, xx)
+    m = np.clip(m * 2.2, 0, 1)
+    m = m * m * (3 - 2 * m)
+    out = a * m[..., None] + rolled * (1 - m[..., None])
+    return Image.fromarray(out.clip(0, 255).astype('uint8'))
+
+
+def import_terrain(path, names=TERRAIN_NAMES, size=256):
+    """바닥 무늬 묶음(흰 여백으로 나뉜 네모들) → 읽는 순서대로 assets/terrain/{이름}.png(이음새 없는 무늬)"""
+    im = Image.open(path).convert('RGB')
+    w, h = im.size
+    bg = background_mask(im, tol=18)
+    mask = Image.new('L', (w, h))
+    mask.putdata([0 if b else 255 for b in bg])
+    boxes = components(mask, min_px=(w * h) // 60)
+    TERRAIN.mkdir(parents=True, exist_ok=True)
+    for name, (x1, y1, x2, y2) in zip(names, boxes):
+        inset = max(4, (x2 - x1) // 20)
+        tile = im.crop((x1 + inset, y1 + inset, x2 - inset, y2 - inset)).resize((size, size), Image.LANCZOS)
+        seamless(tile).save(TERRAIN / f'{name}.png', optimize=True)
+        print('바닥', name)
+
+
+# 흰색이 그림의 일부인 물건(눈 덮인 나무)은 흰 점 지우기를 건너뛴다
+KEEP_WHITE = {'snowpine'}
+
+
+def drop_white(rgba):
+    """잎 사이에 남은 흰 바탕 점과 가장자리의 하얀 테두리를 지운다(흰색이 없는 그림에만)"""
+    import numpy as np
+    a = np.asarray(rgba, dtype=np.int16).copy()
+    rgb = a[..., :3]
+    white = (rgb.min(axis=2) >= 228) & ((rgb.max(axis=2) - rgb.min(axis=2)) < 22)
+    a[..., 3][white] = 0
+    # 투명한 곳과 맞닿은 밝은 가장자리 한 겹도 지운다
+    alpha = a[..., 3]
+    clear = alpha < 128
+    near = np.zeros_like(clear)
+    near[1:, :] |= clear[:-1, :]
+    near[:-1, :] |= clear[1:, :]
+    near[:, 1:] |= clear[:, :-1]
+    near[:, :-1] |= clear[:, 1:]
+    light = rgb.min(axis=2) >= 190
+    a[..., 3][near & light & ~clear] = 0
+    return Image.fromarray(a.clip(0, 255).astype('uint8'), 'RGBA')
+
+
+def import_objects(path, names=OBJECT_NAMES, size=256, boxes=None):
+    """맵 물건 묶음 → 읽는 순서대로(또는 boxes 로 정한 자리) assets/objects/{이름}.png"""
+    OBJECTS.mkdir(parents=True, exist_ok=True)
+    if boxes is None:
+        out = cutout(path)
+        boxes = components(out.getchannel('A'), min_px=(out.width * out.height) // 1500)
+    for name, box in zip(names, boxes):
+        tmp = OBJECTS / f'_{name}.png'
+        Image.open(path).convert('RGB').crop(box).save(tmp)
+        piece = keep_main(cutout(tmp, sheet=True))
+        tmp.unlink()
+        if name not in KEEP_WHITE:
+            piece = drop_white(piece)
+        piece = piece.crop(piece.getbbox())
+        k = size / max(piece.size)
+        piece = piece.resize((max(1, round(piece.width * k)), max(1, round(piece.height * k))), Image.LANCZOS)
+        piece.save(OBJECTS / f'{name}.png', optimize=True)
+        print('물건', name, piece.size)
+
+
 def components(alpha, min_px):
     """불투명 덩어리들의 상자(읽는 순서: 위 줄부터 왼→오)"""
     w, h = alpha.size
@@ -238,7 +320,10 @@ def write_looks():
         '// 실사 마을 사람(assets/people/npc_{생김새}.png)\n'
         f'export const NPC_PHOTOS = {json.dumps(npcs)};\n'
         '// 실사 몬스터(assets/mobs/{몬스터 id}.png)\n'
-        f'export const MOB_PHOTOS = {json.dumps(mobs)};\n',
+        f'export const MOB_PHOTOS = {json.dumps(mobs)};\n'
+        '// 실사 맵: 바닥 무늬(assets/terrain/{이름}.png)와 맵 물건(assets/objects/{이름}.png)\n'
+        f'export const TERRAIN_FILES = {json.dumps(sorted(p.stem for p in TERRAIN.glob("*.png")) if TERRAIN.exists() else [])};\n'
+        f'export const OBJECT_FILES = {json.dumps(sorted(p.stem for p in OBJECTS.glob("*.png") if not p.stem.startswith("_")) if OBJECTS.exists() else [])};\n',
         encoding='utf-8')
     print('목록', LOOKS_JS.relative_to(ROOT))
 

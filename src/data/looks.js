@@ -6,3 +6,6 @@ export const ICON_FILES = ["armor_1", "armor_10", "armor_11", "armor_12", "armor
 export const NPC_PHOTOS = ["cat", "chief", "ferryman", "forger", "guard", "herbalist", "horse", "innkeeper", "lord", "master", "peddler", "smith", "stable", "tailor", "traveler"];
 // 실사 몬스터(assets/mobs/{몬스터 id}.png)
 export const MOB_PHOTOS = ["bachelorGhost", "bat", "bigRat", "blackDragon", "blueGuardian", "boar", "bulgasari", "dueok", "eggGhost", "eightSerpent", "fireLizard", "firebird", "fishSoldier", "flameSpirit", "forestPig", "fox", "goblin", "greatSnake", "grudgeLord", "gumiho", "iceDragon", "iceSpirit", "imugi", "jangsanbeom", "maidenGhost", "pigKing", "rabbit", "rat", "ratKing", "redGuardian", "redOgre", "seaDragon", "sewerRat", "skeleton", "skeletonArcher", "skeletonGeneral", "skeletonSword", "snake", "snowWolf", "squirrel", "turtleGeneral", "viper", "waterGhost", "waterImp", "whiteSnake", "wildPig", "wolf", "yeti", "zodiacGeneral", "zodiacOx", "zodiacRat", "zodiacTiger"];
+// 실사 맵: 바닥 무늬(assets/terrain/{이름}.png)와 맵 물건(assets/objects/{이름}.png)
+export const TERRAIN_FILES = ["cave", "dark", "dirt", "grass", "sand", "snow", "stone", "water"];
+export const OBJECT_FILES = ["blossom", "bush", "deadtree", "fence", "flowers", "jar", "pine", "rock", "snowpine", "thatch", "tilehouse", "tree", "well"];

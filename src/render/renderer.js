@@ -8,6 +8,7 @@ import { treeSprite } from './trees.js';
 import { smoothMap } from './smooth.js';
 import { isClassic, isNinja, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
+import { photoMapReady, renderPhotoMap, photoTree } from './photomap.js';
 import { playerLook, npcLook, drawPerson, walkStep } from './people.js';
 import { photoOf, npcPhoto, mobPhoto, drawPhoto, PHOTO_H } from './photos.js';
 import { drawHazards, drawEnemyShots, drawFoeCasting, drawStrikeTell } from './foes.js';
@@ -191,14 +192,17 @@ export class Renderer {
     }
 
     const ninja = isNinja() && ninjaReady();
-    const mapKey = `${game.mapId}:${isClassic()}:${ninja}`;
+    const photoMap = ninja && photoMapReady();
+    const mapKey = `${game.mapId}:${isClassic()}:${ninja}:${photoMap}`;
     if (mapKey !== this.mapId) {
       // 최근 맵 몇 개는 바닥 그림을 기억해 두어, 오갈 때 다시 그리지 않는다(맵 이동 끊김 줄이기)
       let built = this.mapCache.get(mapKey);
       if (built) this.mapCache.delete(mapKey);
       else {
         // 새 타일 → 기존 그림 위에 덧그림, 원작풍 → 도트 그대로, 매끈 → 계단을 둥글리고 살짝 번지게
-        const canvas = ninja ? renderNinjaMap(game.map.tiles, renderMapCanvas(game.map.tiles))
+        // 실사 맵이 준비되면 새 타일 그림 위에 실사 바닥·물건을 얹는다
+        const ninjaCanvas = ninja && renderNinjaMap(game.map.tiles, renderMapCanvas(game.map.tiles));
+        const canvas = photoMap ? renderPhotoMap(game.map.tiles, ninjaCanvas) : ninja ? ninjaCanvas
           : isClassic() ? renderMapCanvas(game.map.tiles) : smoothMap(renderMapCanvas(game.map.tiles));
         built = { canvas, trees: this.findTrees(game.map.tiles) };
       }
@@ -392,8 +396,10 @@ export class Renderer {
         // 플레이어가 나무 바로 뒤에 있으면 잎을 반투명하게
         const behind = game.pe.x === e.x && (game.pe.y === e.y - 1);
         ctx.globalAlpha = behind ? 0.55 : 1;
-        const big = isNinja() ? ninjaTree(e.look, e.variant) : null;
-        if (big) ctx.drawImage(big, x + 16 - big.lw / 2, y + 34 - big.lh, big.lw, big.lh);
+        const photoT = isNinja() && photoTree(e.look, e.variant);
+        const big = !photoT && isNinja() ? ninjaTree(e.look, e.variant) : null;
+        if (photoT) ctx.drawImage(photoT.img, x + 16 - photoT.lw / 2, y + 34 - photoT.lh, photoT.lw, photoT.lh);
+        else if (big) ctx.drawImage(big, x + 16 - big.lw / 2, y + 34 - big.lh, big.lw, big.lh);
         else ctx.drawImage(treeSprite(e.look, e.variant), x, y - 22, 32, 48);
         ctx.globalAlpha = 1;
         continue;

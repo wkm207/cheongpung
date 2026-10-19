@@ -1,6 +1,6 @@
 // 오프라인 실행용 서비스 워커: 처음 접속할 때 모든 파일을 저장해 두고, 이후엔 저장본을 먼저 쓴다.
 // 게임 파일을 고치면 VERSION을 올려야 기기에 새 버전이 받아진다.
-const VERSION = 'cheongpung-v51';
+const VERSION = 'cheongpung-v52';
 const ASSETS = [
   './',
   './index.html',
@@ -330,6 +330,28 @@ const ASSETS = [
   './assets/mobs/zodiacTiger.png',
   './assets/people/npc_cat.png',
   './assets/people/npc_horse.png',
+  './src/render/photomap.js',
+  './assets/terrain/cave.png',
+  './assets/terrain/dark.png',
+  './assets/terrain/dirt.png',
+  './assets/terrain/grass.png',
+  './assets/terrain/sand.png',
+  './assets/terrain/snow.png',
+  './assets/terrain/stone.png',
+  './assets/terrain/water.png',
+  './assets/objects/blossom.png',
+  './assets/objects/bush.png',
+  './assets/objects/deadtree.png',
+  './assets/objects/fence.png',
+  './assets/objects/flowers.png',
+  './assets/objects/jar.png',
+  './assets/objects/pine.png',
+  './assets/objects/rock.png',
+  './assets/objects/snowpine.png',
+  './assets/objects/thatch.png',
+  './assets/objects/tilehouse.png',
+  './assets/objects/tree.png',
+  './assets/objects/well.png',
   './src/render/renderer.js',
   './src/render/smooth.js',
   './src/render/sprites.js',

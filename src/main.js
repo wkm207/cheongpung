@@ -24,6 +24,7 @@ import { FIREBASE_CONFIG } from './firebase-config.js';
 import { createCloud } from './core/cloud.js';
 import { CloudSync } from './core/sync.js';
 import { preloadPhotos } from './render/photos.js';
+import { loadPhotoMap } from './render/photomap.js';
 
 const renderer = new Renderer($('#game'));
 const hud = new Hud();
@@ -410,6 +411,8 @@ $('#minimap').addEventListener('click', () => openPanel('worldmap'));
 applySettings(getSettings());
 // 새 도트 타일 그림을 불러오면 맵을 다시 그린다
 loadNinja().then(() => { renderer.mapId = null; });
+// 실사 맵 그림(바닥 무늬·집·나무)을 불러오면 맵을 다시 그린다
+loadPhotoMap().then(() => { renderer.mapId = null; });
 // 실사 생김새 그림을 미리 불러 두고, 다 오면 타이틀 그림을 다시 그린다
 preloadPhotos(() => { if (!$('#title').hidden) title.render(); });
 loadFx();
