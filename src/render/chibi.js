@@ -1,6 +1,6 @@
-// 한복 입은 사람 도트(약 3.3등신). 2배 해상도(64×80) 칸에 머리·몸·팔다리를 둥근 덩어리로 찍고,
-// 왼쪽 위에서 오는 빛으로 덩어리마다 4~5단 음영을 넣어 입체감을 낸다. 부위마다 그 색의 진한 테두리를 두른다.
-// 얼굴은 눈(흰자·눈동자·반짝임)·눈썹·코 그늘·입·볼을 한 칸씩 찍어 또렷하게 한다.
+// 한복 입은 사람 도트(원작처럼 머리가 큰 약 2.6등신). 2배 해상도(64×80) 칸에 머리·몸·팔다리를 둥근 덩어리로 찍고,
+// 왼쪽 위 빛으로 덩어리마다 음영을 넣어 입체감을 낸다. 바깥 둘레는 진한 테두리, 부위가 겹치는 안쪽은 연한 선.
+// 얼굴은 큰 눈(눈동자·반짝임)·눈썹·코·작은 입·볼 홍조, 머리는 앞머리 가닥과 윤기 띠.
 // 캔버스 없이 RGBA 배열을 돌려주므로 브라우저(ImageData)와 노드(미리보기 PNG·테스트) 둘 다에서 쓴다.
 export const CW = 64;
 export const CH = 80;
@@ -15,18 +15,20 @@ const mul = (a, k) => a.map((v) => Math.max(0, Math.min(255, Math.round(v * k)))
 
 // 빛: 왼쪽 위 앞에서
 const L = (() => {
-  const v = [-0.55, -0.65, 0.75];
+  const v = [-0.5, -0.6, 0.8];
   const n = Math.hypot(...v);
   return v.map((x) => x / n);
 })();
-const COOL = [52, 40, 88];
-const WARM = [255, 246, 224];
-/** 바탕색 → 음영 다섯 단(짙은 그늘·그늘·바탕·밝음·반짝임) */
-function tones(base) {
-  return [mix(mul(base, 0.56), COOL, 0.22), mix(mul(base, 0.76), COOL, 0.1), base, mix(mul(base, 1.08), WARM, 0.14), mix(mul(base, 1.12), WARM, 0.42)];
+const COOL = [60, 50, 96];
+const WARM_SHADOW = [196, 112, 96];
+const WARM = [255, 248, 232];
+/** 바탕색 → 음영 다섯 단(짙은 그늘·그늘·바탕·밝음·반짝임). warm: 살처럼 그늘을 붉게 */
+function tones(base, warm) {
+  const sh = warm ? WARM_SHADOW : COOL;
+  return [mix(mul(base, 0.66), sh, 0.25), mix(mul(base, 0.84), sh, 0.12), base, mix(mul(base, 1.05), WARM, 0.12), mix(mul(base, 1.1), WARM, 0.45)];
 }
-const toneOf = (lit) => (lit < -0.05 ? 0 : lit < 0.3 ? 1 : lit < 0.64 ? 2 : lit < 0.86 ? 3 : 4);
-const edgeOf = (base) => mix(mul(base, 0.32), [22, 12, 10], 0.45);
+const toneOf = (lit) => (lit < 0.05 ? 0 : lit < 0.38 ? 1 : lit < 0.7 ? 2 : lit < 0.9 ? 3 : 4);
+const OUTLINE = [34, 22, 20];
 
 // ── 덩어리(픽셀 목록 + 겉면 방향) ──
 function norm(nx, ny, nz) {
@@ -77,9 +79,9 @@ function trunk(y0, y1, xl, xr) {
     const b = xr(y);
     const cx = (a + b) / 2;
     const hw = (b - a) / 2 || 1;
-    const ny = -0.25 + 0.5 * ((y - y0) / Math.max(1, y1 - y0));
+    const ny = -0.3 + 0.6 * ((y - y0) / Math.max(1, y1 - y0));
     for (let x = Math.round(a); x < Math.round(b); x++) {
-      const nx = Math.max(-0.98, Math.min(0.98, (x + 0.5 - cx) / hw));
+      const nx = Math.max(-0.97, Math.min(0.97, (x + 0.5 - cx) / hw));
       out.push([x, y, nx, ny, Math.sqrt(1 - nx * nx)]);
     }
   }
@@ -89,63 +91,68 @@ function trunk(y0, y1, xl, xr) {
 // ── 그리기 판 ──
 function canvas() {
   const px = new Uint8ClampedArray(CW * CH * 4);
+  const filled = (x, y) => x >= 0 && y >= 0 && x < CW && y < CH && px[(y * CW + x) * 4 + 3] > 0;
   const set = (x, y, c) => {
     if (x < 0 || y < 0 || x >= CW || y >= CH) return;
     px.set([c[0], c[1], c[2], 255], (y * CW + x) * 4);
   };
-  /** 덩어리를 음영으로 칠한다. edge: 둘레에 진한 테두리, max: 가장 밝은 단(4면 반짝임) */
-  const paint = (pts, base, { edge = true, max = 3, flat = false, edgeColor } = {}) => {
-    const t = tones(base);
+  /**
+   * 덩어리를 음영으로 칠한다. edge: 둘레 선(빈 곳 쪽은 진한 테두리, 다른 부위 위는 연한 선),
+   * max: 가장 밝은 단(4면 반짝임), warm: 살 그늘
+   */
+  const paint = (pts, base, { edge = true, max = 3, warm = false } = {}) => {
+    const t = tones(base, warm);
     if (edge) {
       const inside = new Set(pts.map(([x, y]) => y * CW + x));
-      const ec = edgeColor ?? edgeOf(base);
+      const soft = mix(mul(base, 0.5), OUTLINE, 0.35);
+      const marks = [];
       for (const [x, y] of pts) {
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
           const X = x + dx;
           const Y = y + dy;
-          if (!inside.has(Y * CW + X)) set(X, Y, ec);
+          if (!inside.has(Y * CW + X)) marks.push([X, Y, filled(X, Y) ? soft : OUTLINE]);
         }
       }
+      for (const [X, Y, c] of marks) set(X, Y, c);
     }
     for (const [x, y, nx, ny, nz] of pts) {
       const n = norm(nx, ny, nz);
-      set(x, y, flat ? base : t[Math.min(max, toneOf(n[0] * L[0] + n[1] * L[1] + n[2] * L[2]))]);
+      set(x, y, t[Math.min(max, toneOf(n[0] * L[0] + n[1] * L[1] + n[2] * L[2]))]);
     }
   };
   /** 글자 그림 찍기(얼굴 등). pal: 글자 → 색 */
   const stamp = (rows, ox, oy, pal) => rows.forEach((row, y) => [...row].forEach((ch, x) => pal[ch] && set(ox + x, oy + y, pal[ch])));
-  return { px, set, paint, stamp };
+  return { px, set, paint, stamp, filled };
 }
 
-// ── 얼굴 글자 그림 ──
-// k 속눈썹·윤곽, w 흰자, 1 반짝임, I 눈동자 가운데, i 눈동자
-const EYE_FRONT = ['kkkk', 'w1Iw', 'wIIw', '.ii.'];
-const EYE_SIDE = ['kkk', 'I1w', 'IIw', 'ii.'];
-const EYE_SIDE_F = ['kkkk', 'I1w.', 'IIw.', 'ii..'];
+// ── 얼굴 글자 그림: k 속눈썹, I 눈동자, i 눈동자 아래 밝은 쪽, 1 반짝임 ──
+const EYE_FRONT = ['.kkk', 'kI1I', 'kIII', '.iIi', '..i.'];
+const EYE_FRONT_R = ['kkk.', 'I1Ik', 'IIIk', 'iIi.', '.i..'];
+const EYE_SIDE = ['kkk', 'I1I', 'III', 'iIi', '.i.'];
 
 /** 템플릿 줄 길이가 고른지(테스트용) */
 export function checkTemplates() {
   const bad = [];
-  for (const [name, rows] of Object.entries({ EYE_FRONT, EYE_SIDE, EYE_SIDE_F })) {
+  for (const [name, rows] of Object.entries({ EYE_FRONT, EYE_FRONT_R, EYE_SIDE })) {
     if (rows.some((r) => r.length !== rows[0].length)) bad.push(name);
   }
   return bad;
 }
 
-const SKIN = [246, 204, 166];
-const LIP = [160, 72, 62];
-const LIP_F = [214, 72, 74];
-const BLUSH = [255, 140, 130];
-const SHOE = [72, 52, 40];
-const SOCK = [240, 236, 224];
-const WHITE = [246, 242, 230];
-const EYE_PAL = { k: [40, 24, 18], w: [250, 250, 246], 1: [255, 255, 255], I: [22, 12, 8], i: [70, 42, 28] };
+const SKIN = [252, 214, 180];
+const LIP = [196, 96, 86];
+const LIP_F = [226, 86, 96];
+const BLUSH = [255, 150, 150];
+const SHOE = [66, 46, 38];
+const SOCK = [244, 240, 230];
+const WHITE = [248, 245, 236];
+const EYE_PAL = { k: [36, 22, 20], I: [40, 26, 22], i: [124, 78, 52], 1: [255, 255, 255] };
 const WOOD = [118, 78, 42];
 const GUARD = [228, 186, 80];
 const BEAD = [212, 150, 70];
 
-// 무기 길이(칸), 손 자리, 바라보는 각도
-const WEAPON_LEN = { sword: 24, dagger: 14, staff: 32, fan: 12, spear: 36 };
+// 무기 길이(칸), 바라보는 각도
+const WEAPON_LEN = { sword: 22, dagger: 13, staff: 30, fan: 11, spear: 34 };
 const FACE = { down: 90, up: -90, left: 180, right: 0 };
 const IDLE_ANGLE = { down: 105, up: -60, left: 135 };
 const SWING = [-115, -55, 5, 45];
@@ -161,7 +168,7 @@ function drawWeapon(g, [hx, hy], angle, w) {
   const at = (t) => [hx + c * t, hy + s * t];
   if (w.wtype === 'staff' || w.wtype === 'spear') {
     const tip = w.wtype === 'spear' ? len - 7 : len;
-    g.paint(capsule(...at(-8), ...at(tip), 1.2), WOOD);
+    g.paint(capsule(...at(-7), ...at(tip), 1.2), WOOD);
     if (w.wtype === 'spear') g.paint(capsule(...at(tip - 1), ...at(len), 2, 0.4), tint, { max: 4 });
     else g.paint(ellipsoid(...at(len + 1.5), 2.8, 2.8), tint, { max: 4 });
     return;
@@ -179,175 +186,188 @@ function drawWeapon(g, [hx, hy], angle, w) {
         pts.push([x, y, 0, 0, 1, Math.round((a + 0.62) / 0.155) % 2]);
       }
     }
-    g.paint(pts, tint, { flat: true });
-    for (const [x, y, , , , rib] of pts) if (rib) g.set(x, y, mul(tint, 0.8));
+    g.paint(pts, tint);
+    for (const [x, y, , , , rib] of pts) if (rib) g.set(x, y, mul(tint, 0.82));
     return;
   }
   g.paint(capsule(...at(-2), ...at(3), 1.1), WOOD);
-  g.paint(capsule(hx + c * 3 - s * 3.2, hy + s * 3 + c * 3.2, hx + c * 3 + s * 3.2, hy + s * 3 - c * 3.2, 1), GUARD, { max: 4 });
+  g.paint(capsule(hx + c * 3 - s * 3, hy + s * 3 + c * 3, hx + c * 3 + s * 3, hy + s * 3 - c * 3, 1), GUARD, { max: 4 });
   g.paint(capsule(...at(4.5), ...at(len), 1.5, 0.6), tint, { max: 4 });
 }
 
-/** 생김새 → 쓰는 색들 */
+/** 생김새 → 쓰는 색들. 아주 어두운 머리색은 윤기가 보이게 살짝 띄운다 */
 function colors(look) {
+  const hair = HEX(look.hair ?? '#2b211d');
   return {
     cloth: HEX(look.cloth),
     trim: HEX(look.trim ?? '#c0392b'),
     pants: HEX(look.pants ?? '#e9e2cf'),
     skirt: HEX(look.skirt ?? look.trim ?? '#c0392b'),
-    hair: HEX(look.hair ?? '#2b211d'),
+    hair: hair.reduce((a, b) => a + b) < 180 ? mix(hair, [86, 70, 92], 0.32) : hair,
     pin: HEX(look.pin ?? '#e8c060'),
     hat: HEX(look.hat?.color ?? '#2a2a2a'),
   };
 }
 
-// ── 부위 그리기(왼쪽을 보는 옆모습은 'left' 로 그리고 오른쪽은 뒤집는다) ──
+// ── 부위 그리기(옆모습은 왼쪽을 보는 그림으로 그리고 오른쪽은 뒤집는다) ──
 
-/** 바지 다리 하나: 엉덩이 → 발목, 대님, 버선, 신 */
+/** 바지 다리 하나: 엉덩이 → 발목, 대님, 신 */
 function leg(g, col, hx, fx, lift, side) {
   const fy = 71 - lift;
-  g.paint(capsule(hx, 51, fx, fy - 6, 5.4, 4.1), col.pants);
-  g.paint(capsule(fx, fy - 5.5, fx, fy - 4.5, 3.4), col.trim);
-  g.paint(capsule(fx, fy - 3.5, fx, fy - 2, 2.6), SOCK, { edge: false });
-  g.paint(ellipsoid(fx - (side ? 1 : 0), fy, side ? 4.4 : 3.8, 2.6), SHOE, { max: 4 });
+  g.paint(capsule(hx, 52, fx, fy - 5, 4.8, 3.6), col.pants);
+  g.paint(capsule(fx, fy - 4, fx, fy - 3.4, 2.9), mix(col.trim, col.pants, 0.25));
+  g.paint(ellipsoid(fx - (side ? 1 : 0), fy, side ? 4 : 3.4, 2.4), SHOE, { max: 4 });
 }
 
 /** 치마: 가슴 아래에서 넓게 퍼진다. 주름 줄을 넣는다 */
 function skirt(g, col, side, step) {
   const sway = side ? [0, -1, 1][step] : 0;
   const pts = side
-    ? trunk(40, 72, (y) => 24 - (y - 40) * 0.16 + sway * ((y - 40) / 32), (y) => 39 + (y - 40) * 0.14)
-    : trunk(40, 72, (y) => 22 - (y - 40) * 0.2, (y) => 42 + (y - 40) * 0.2);
+    ? trunk(41, 72, (y) => 25 - (y - 41) * 0.2 + sway * ((y - 41) / 31), (y) => 39 + (y - 41) * 0.16)
+    : trunk(41, 72, (y) => 23 - (y - 41) * 0.24, (y) => 41 + (y - 41) * 0.24);
   g.paint(pts, col.skirt);
-  const pleat = mul(col.skirt, 0.78);
-  for (const [x, y] of pts) if (y > 45 && y < 72 && (x + (side ? 1 : 0)) % 5 === 0) g.set(x, y, pleat);
+  const pleat = mul(col.skirt, 0.84);
+  for (const [x, y] of pts) if (y > 46 && y < 72 && (x + (side ? 1 : 0)) % 5 === 0) g.set(x, y, pleat);
 }
 
-/** 신코만 보이는 발(치마 아래) */
+/** 버선코만 보이는 발(치마 아래) */
 function skirtFeet(g, side, step) {
   if (side) {
-    const fx = [25, 22, 28][step];
-    g.paint(ellipsoid(fx, 73, 3.4, 1.8), SHOE, { max: 4 });
+    g.paint(ellipsoid([25, 22, 28][step], 73, 3.2, 1.7), SOCK);
     return;
   }
-  if (step !== 1) g.paint(ellipsoid(28, 73, 2.8, 1.7), SOCK);
-  if (step !== 2) g.paint(ellipsoid(36, 73, 2.8, 1.7), SOCK);
+  if (step !== 1) g.paint(ellipsoid(28.5, 73, 2.7, 1.6), SOCK);
+  if (step !== 2) g.paint(ellipsoid(35.5, 73, 2.7, 1.6), SOCK);
 }
 
-/** 팔: 소매(어깨 → 손목), 끝동, 손 */
+/** 팔: 소매(어깨 → 손목, 끝으로 갈수록 넓은 배래), 끝동, 손 */
 function arm(g, col, sx, sy, hx, hy, female) {
-  g.paint(capsule(sx, sy, hx, hy - 1, 3.4, 3), col.cloth);
-  if (female) g.paint(capsule(hx + (sx - hx) * 0.18, hy - 1 + (sy - hy) * 0.18, hx, hy - 1, 3.1), col.trim);
-  g.paint(ellipsoid(hx, hy + 1, 2.4, 2.6), SKIN);
+  g.paint(capsule(sx, sy, hx, hy - 1.5, 2.7, 3.5), col.cloth);
+  if (female) g.paint(capsule(hx + (sx - hx) * 0.15, hy - 1.5 + (sy - hy) * 0.15, hx, hy - 1.5, 3.4), col.trim);
+  g.paint(ellipsoid(hx, hy + 0.8, 2.2, 2.3), SKIN, { warm: true });
 }
+
+/** 머리털 윤기 띠: 머리 위쪽 둥근 띠를 밝게 */
+function shine(g, col, pts, cx, cy, r) {
+  const hi = mix(col.hair, [255, 250, 240], 0.42);
+  for (const [x, y] of pts) {
+    const d = Math.hypot(x + 0.5 - cx, (y + 0.5 - cy) * 1.1);
+    if (Math.abs(d - r) < 0.9 && x + 0.5 < cx + r * 0.25 && y + 0.5 < cy) g.set(x, y, hi);
+  }
+}
+
+/** 앞머리 가닥: 이마 위로 들쑥날쑥 내려오는 끝 */
+const fringe = (x) => [0, 2, 3, 1, 0, 2, 1, 3][((x % 8) + 8) % 8];
 
 /** 머리털(앞·뒤·옆), 상투·쪽머리 */
 function hair(g, col, view, hy, female) {
   if (view === 'up') {
+    const pts = ellipsoid(32, hy - 1, 14, 13.5, (x, y) => y < hy + (female ? 11 : 9));
+    g.paint(pts, col.hair, { max: 4 });
+    shine(g, col, pts, 32, hy - 1, 9);
     if (female) {
-      g.paint(ellipsoid(32, hy - 1, 11, 11.5, (x, y) => y < hy + 9), col.hair, { max: 4 });
-      g.paint(ellipsoid(32, hy + 8, 4.6, 3.6), col.hair, { max: 4 });
-      g.paint(capsule(26, hy + 8, 38, hy + 8, 0.8), col.pin, { max: 4 });
-    } else {
-      g.paint(ellipsoid(32, hy - 2, 11, 11, (x, y) => y < hy + 7), col.hair, { max: 4 });
+      g.paint(ellipsoid(32, hy + 10, 5, 4), col.hair, { max: 4 });
+      g.paint(capsule(25.5, hy + 10, 38.5, hy + 10, 0.8), col.pin, { max: 4 });
     }
     return;
   }
   if (view === 'down') {
+    const top = hy - 4;
     const line = female
       ? (x, y) => {
         const dx = Math.abs(x + 0.5 - 32);
-        return y < hy - 4 + dx * 0.25 || (dx > 8.2 && y < hy + 7);
+        // 가운데 가르마에서 양옆으로 둥글게 넘긴 앞머리 + 귀 옆으로 내린 머리
+        return y < top + 1 + dx * 0.28 || (dx > 10.5 && y < hy + 9);
       }
       : (x, y) => {
         const dx = Math.abs(x + 0.5 - 32);
-        return y < hy - 5 + Math.max(0, dx - 6) * 1.7 && y < hy + 4;
+        return (y < top + fringe(x) && dx < 11) || (dx >= 11 && y < hy + 5);
       };
-    g.paint(ellipsoid(32, hy - 2, 11, 10.5, line), col.hair, { max: 4 });
-    if (female) for (let y = hy - 10; y < hy - 4; y++) g.set(32, y, mul(col.hair, 0.6)); // 가르마
+    const pts = ellipsoid(32, hy - 1.5, 14.2, 13.5, line);
+    g.paint(pts, col.hair, { max: 4 });
+    shine(g, col, pts, 32, hy - 1.5, 9.5);
+    if (female) for (let y = hy - 12; y < hy - 3; y++) g.set(32, y, mul(col.hair, 0.62)); // 가르마
     return;
   }
   // 옆(왼쪽을 본다): 앞머리와 정수리·뒤통수를 덮는다
-  const line = (x, y) => y < hy - 5 || x + 0.5 > 31 + (y - (hy - 5)) * 0.25;
-  g.paint(ellipsoid(32.5, hy - 2, 10.8, 10.5, (x, y) => line(x, y) && y < hy + (female ? 9 : 6)), col.hair, { max: 4 });
+  const line = (x, y) => (y < hy - 4 + (x < 26 ? fringe(x) : 0)) || x + 0.5 > 29 + (y - (hy - 4)) * 0.3;
+  const pts = ellipsoid(32, hy - 1.5, 14, 13.5, (x, y) => line(x, y) && y < hy + (female ? 11 : 8));
+  g.paint(pts, col.hair, { max: 4 });
+  shine(g, col, pts, 32, hy - 1.5, 9.5);
   if (female) {
-    g.paint(ellipsoid(40, hy + 7, 3.8, 3.6), col.hair, { max: 4 });
-    g.paint(capsule(37, hy + 7, 44, hy + 7, 0.8), col.pin, { max: 4 });
+    g.paint(ellipsoid(43, hy + 8, 4.2, 4), col.hair, { max: 4 });
+    g.paint(capsule(39, hy + 8, 48, hy + 8, 0.8), col.pin, { max: 4 });
   }
 }
 
-/** 얼굴: 눈썹·눈·코 그늘·입·볼 */
-function face(g, view, hy, female) {
-  const brow = [40, 26, 20];
-  const nose = tones(SKIN)[1];
-  const blush = mix(SKIN, BLUSH, 0.45);
+/** 얼굴: 큰 눈·눈썹·코·입·볼 */
+function face(g, view, hy, female, col) {
+  const brow = mul(col.hair, 0.7);
+  const nose = tones(SKIN, true)[1];
+  const blush = mix(SKIN, BLUSH, 0.55);
   const lip = female ? LIP_F : LIP;
   if (view === 'down') {
-    for (const [x, y] of [[25, hy - 2], [26, hy - 3], [27, hy - 3], [28, hy - 3], [36, hy - 3], [37, hy - 3], [38, hy - 3], [39, hy - 2]]) g.set(x, y, brow);
-    g.stamp(EYE_FRONT, 25, hy, EYE_PAL);
-    g.stamp(EYE_FRONT, 36, hy, EYE_PAL);
+    for (const [x, y] of [[23, hy - 1], [24, hy - 2], [25, hy - 2], [38, hy - 2], [39, hy - 2], [40, hy - 1]]) g.set(x, y, brow);
+    g.stamp(EYE_FRONT, 22, hy, EYE_PAL);
+    g.stamp(EYE_FRONT_R, 38, hy, EYE_PAL);
     if (female) {
-      // 눈꼬리 속눈썹
-      g.set(24, hy, EYE_PAL.k);
-      g.set(40, hy, EYE_PAL.k);
+      g.set(21, hy, EYE_PAL.k);
+      g.set(42, hy, EYE_PAL.k);
     }
-    g.set(33, hy + 5, nose);
     g.set(32, hy + 6, nose);
-    for (const x of [24, 25, 39, 40]) g.set(x, hy + 5, blush);
-    g.set(30, hy + 7, lip);
-    g.set(31, hy + 7, mul(lip, 0.8));
-    g.set(32, hy + 7, mul(lip, 0.8));
-    g.set(33, hy + 7, lip);
+    for (const x of [21, 22, 23, 40, 41, 42]) g.set(x, hy + 6, blush);
+    g.set(31, hy + 9, lip);
+    g.set(32, hy + 9, lip);
+    if (female) g.set(31, hy + 10, mul(lip, 0.85));
     return;
   }
   // 옆(왼쪽)
-  for (const [x, y] of [[23, hy - 3], [24, hy - 3], [25, hy - 3], [26, hy - 2]]) g.set(x, y, brow);
-  g.stamp(female ? EYE_SIDE_F : EYE_SIDE, 23, hy, EYE_PAL);
-  g.set(25, hy + 5, blush);
-  g.set(26, hy + 5, blush);
-  g.set(23, hy + 7, lip);
-  g.set(24, hy + 7, mul(lip, 0.8));
+  for (const [x, y] of [[20, hy - 2], [21, hy - 2], [22, hy - 1]]) g.set(x, y, brow);
+  g.stamp(EYE_SIDE, 20, hy, EYE_PAL);
+  for (const x of [22, 23, 24]) g.set(x, hy + 6, blush);
+  g.set(19, hy + 9, lip);
+  g.set(20, hy + 9, lip);
 }
 
 /** 쓰개: 갓·투구·관·두건 */
 function hat(g, col, view, hy, kind) {
   const c = col.hat;
   const side = view === 'left';
-  const cx = side ? 33 : 32;
+  const cx = 32;
   if (kind === 'gat') {
-    g.paint(trunk(hy - 17, hy - 8, () => cx - 6.5, () => cx + 6.5), c, { max: 4 });
-    g.paint(ellipsoid(cx, hy - 17, 6.5, 2), c, { max: 4 });
-    g.paint(ellipsoid(cx, hy - 7, 17.5, side ? 2.4 : 3.2), c, { max: 4 });
+    g.paint(trunk(hy - 21, hy - 11, () => cx - 6.5, () => cx + 6.5), c, { max: 4 });
+    g.paint(ellipsoid(cx, hy - 21, 6.5, 2), c, { max: 4 });
+    g.paint(ellipsoid(cx, hy - 10, 19, side ? 2.4 : 3.2), c, { max: 4 });
     if (view !== 'up') {
       // 갓끈 구슬
-      const [x0, x1] = side ? [27, 25] : [22, 26];
-      for (let t = 0; t <= 1; t += 0.12) g.set(Math.round(x0 + (x1 - x0) * t), Math.round(hy - 5 + 15 * t), BEAD);
-      if (!side) for (let t = 0; t <= 1; t += 0.12) g.set(Math.round(42 + (38 - 42) * t), Math.round(hy - 5 + 15 * t), BEAD);
+      const [x0, x1] = side ? [27, 24] : [20, 24];
+      for (let t = 0; t <= 1; t += 0.11) g.set(Math.round(x0 + (x1 - x0) * t), Math.round(hy - 8 + 19 * t), BEAD);
+      if (!side) for (let t = 0; t <= 1; t += 0.11) g.set(Math.round(44 + (40 - 44) * t), Math.round(hy - 8 + 19 * t), BEAD);
     }
     return;
   }
   if (kind === 'helm') {
-    g.paint(ellipsoid(cx, hy - 3, 11.8, 10.5, (x, y) => y < hy - 3), c, { max: 4 });
-    if (side) g.paint(capsule(cx + 9, hy - 3, cx + 10, hy + 8, 2), c);
+    g.paint(ellipsoid(cx, hy - 3, 15, 13, (x, y) => y < hy - 4), c, { max: 4 });
+    if (side) g.paint(capsule(cx + 12, hy - 4, cx + 12.5, hy + 8, 2.2), c);
     else {
-      g.paint(capsule(21, hy - 3, 21, hy + 8, 1.9), c);
-      g.paint(capsule(43, hy - 3, 43, hy + 8, 1.9), c);
+      g.paint(capsule(18.5, hy - 4, 18.5, hy + 8, 2.1), c);
+      g.paint(capsule(45.5, hy - 4, 45.5, hy + 8, 2.1), c);
     }
-    g.paint(capsule(cx - 11.5, hy - 4, cx + 11.5, hy - 4, 1.4), mul(c, 0.85), { max: 4 });
-    g.paint(ellipsoid(cx, hy - 14, 2, 2), GUARD, { max: 4 });
+    g.paint(capsule(cx - 15, hy - 5, cx + 15, hy - 5, 1.5), mul(c, 0.86), { max: 4 });
+    g.paint(ellipsoid(cx, hy - 17, 2.2, 2.2), GUARD, { max: 4 });
     return;
   }
   if (kind === 'crown') {
-    g.paint(trunk(hy - 14, hy - 9, () => cx - 6, () => cx + 6), c, { max: 4 });
-    for (const dx of [-5, 0, 5]) g.paint(ellipsoid(cx + dx, hy - 15.5, 1.6, 2), c, { max: 4 });
-    if (view !== 'up') g.paint(ellipsoid(cx, hy - 11.5, 1.4, 1.4), [214, 48, 64], { max: 4 });
+    g.paint(trunk(hy - 18, hy - 12, () => cx - 7, () => cx + 7), c, { max: 4 });
+    for (const dx of [-6, 0, 6]) g.paint(ellipsoid(cx + dx, hy - 19.5, 1.7, 2.1), c, { max: 4 });
+    if (view !== 'up') g.paint(ellipsoid(cx, hy - 15, 1.5, 1.5), [214, 48, 64], { max: 4 });
     return;
   }
   if (kind === 'band') {
     if (side) {
-      g.paint(capsule(22, hy - 6, 42, hy - 4, 1.4), c);
-      g.paint(capsule(42, hy - 4, 46, hy + 4, 1), c);
-    } else g.paint(capsule(21.5, hy - 5, 42.5, hy - 5, 1.4), c);
+      g.paint(capsule(19, hy - 6, 44, hy - 4, 1.5), c);
+      g.paint(capsule(44, hy - 4, 48, hy + 5, 1.1), c);
+    } else g.paint(capsule(18.5, hy - 5, 45.5, hy - 5, 1.5), c);
   }
 }
 
@@ -364,17 +384,16 @@ export function chibiFrame(look, dir, { step = 0, pose = 'stand', phase = 0 } = 
   const view = dir === 'right' ? 'left' : dir;
   const side = view === 'left';
   const bob = step ? 1 : 0;
-  const hy = 19 - bob; // 머리 가운데 줄
-  const sy = 35 - bob; // 어깨 줄
+  const hy = 21 - bob; // 머리 가운데 줄
+  const sy = 37 - bob; // 어깨 줄
   const weapon = look.weapon && pose !== 'cast' ? look.weapon : null;
 
   // 걸을 때 팔 흔들기, 공격할 때 손을 내민다
   const swing = side ? [0, 3, -3][step] : [0, 1, -1][step];
-  const faceDir = side ? 'left' : view;
-  const fwd = { down: [0, 1], up: [0, -1], left: [-1, 0] }[faceDir];
+  const fwd = { down: [0, 1], up: [0, -1], left: [-1, 0] }[view];
   const reach = pose === 'attack' ? REACH[phase] : 0;
   const swingSign = view === 'left' || view === 'up' ? -1 : 1;
-  const angle = pose === 'attack' ? FACE[faceDir] + swingSign * SWING[phase] : IDLE_ANGLE[faceDir];
+  const angle = pose === 'attack' ? FACE[view] + swingSign * SWING[phase] : IDLE_ANGLE[view];
 
   // 손 자리(무기 든 손 = 앞쪽 손)
   let main;
@@ -383,11 +402,11 @@ export function chibiFrame(look, dir, { step = 0, pose = 'stand', phase = 0 } = 
     main = [29 - swing + fwd[0] * reach, 49 - bob];
     off = [35 + swing, 48 - bob];
   } else if (view === 'down') {
-    main = [20 + reach * 0.3, 49 - bob - swing + fwd[1] * reach * 0.5];
-    off = [44, 49 - bob + swing];
+    main = [21 + reach * 0.3, 49 - bob - swing + fwd[1] * reach * 0.5];
+    off = [43, 49 - bob + swing];
   } else {
-    main = [44 - reach * 0.3, 49 - bob - swing];
-    off = [20, 49 - bob + swing];
+    main = [43 - reach * 0.3, 49 - bob - swing];
+    off = [21, 49 - bob + swing];
   }
 
   // ── 뒤쪽 ──
@@ -403,66 +422,65 @@ export function chibiFrame(look, dir, { step = 0, pose = 'stand', phase = 0 } = 
     skirtFeet(g, side, step);
     skirt(g, col, side, step);
   } else if (side) {
-    const [far, near] = [[33, 37, 31], [31, 26, 33]].map(([h, f1, f2]) => [h, [32, f1, f2][step]]);
-    leg(g, col, far[0], far[1], 0, true);
-    leg(g, col, near[0], near[1], 0, true);
+    leg(g, col, 33, [32, 36, 30][step], 0, true);
+    leg(g, col, 31, [31, 26, 33][step], 0, true);
   } else {
-    leg(g, col, 27, 27, step === 1 ? 2 : 0, false);
-    leg(g, col, 37, 37, step === 2 ? 2 : 0, false);
+    leg(g, col, 28, 28, step === 1 ? 2 : 0, false);
+    leg(g, col, 36, 36, step === 2 ? 2 : 0, false);
   }
 
-  // ── 몸통 ──
-  g.paint(capsule(32, 27 - bob, 32, 32 - bob, 3), SKIN, { edge: false });
-  const top = 32 - bob;
-  const bottom = (female ? 41 : 51) - bob;
+  // ── 몸통(저고리) ──
+  const top = 33 - bob;
+  const bottom = (female ? 42 : 52) - bob;
   const round = (y, a, b) => (y - top < 2 ? [a + 2 - (y - top), b - 2 + (y - top)] : [a, b]);
   if (side) {
-    g.paint(trunk(top, bottom, (y) => round(y, 25, 39)[0] - (y - top) * 0.05, (y) => round(y, 25, 39)[1] + (y - top) * 0.05), col.cloth);
-    g.paint(capsule(27, top + 1, 28.5, top + 6, 1.1), WHITE, { edge: false });
-    g.paint(capsule(26, top + 9, 25, top + (female ? 18 : 15), 1), col.trim);
+    g.paint(trunk(top, bottom, (y) => round(y, 25, 39)[0] - (y - top) * 0.08, (y) => round(y, 25, 39)[1] + (y - top) * 0.06), col.cloth);
+    g.paint(capsule(27, top + 1, 28.5, top + 5, 1.1), WHITE, { edge: false });
+    g.paint(capsule(25.5, top + 8, 24.5, top + (female ? 17 : 14), 1), col.trim);
   } else {
-    g.paint(trunk(top, bottom, (y) => round(y, 22, 42)[0] - (y - top) * 0.1, (y) => round(y, 22, 42)[1] + (y - top) * 0.1), col.cloth);
+    g.paint(trunk(top, bottom, (y) => round(y, 23, 41)[0] - (y - top) * 0.12, (y) => round(y, 23, 41)[1] + (y - top) * 0.12), col.cloth);
     if (view === 'down') {
       // 동정(흰 깃)과 고름
-      g.paint(capsule(36.5, top + 0.5, 29.5, top + 9, 1.2), WHITE, { edge: false });
-      g.paint(capsule(30, top + 9, 28, top + (female ? 19 : 16), 1), col.trim);
-      g.paint(capsule(31, top + 9, 32.5, top + (female ? 21 : 17), 1), col.trim);
-      g.paint(ellipsoid(30.5, top + 9, 1.8, 1.4), col.trim);
+      g.paint(capsule(36, top + 0.5, 30, top + 8, 1.2), WHITE, { edge: false });
+      g.paint(capsule(30.5, top + 8, 28.5, top + (female ? 18 : 15), 0.9), col.trim);
+      g.paint(capsule(31.5, top + 8, 33, top + (female ? 20 : 16), 0.9), col.trim);
+      g.paint(ellipsoid(31, top + 8, 1.7, 1.3), col.trim);
     }
   }
 
   // ── 팔(앞쪽) ──
   if (pose === 'cast' && !side) {
-    arm(g, col, 22.5, sy, 17, 24 - bob, female);
-    arm(g, col, 41.5, sy, 47, 24 - bob, female);
+    arm(g, col, 24, sy, 18, 26 - bob, female);
+    arm(g, col, 40, sy, 46, 26 - bob, female);
   } else if (pose === 'cast') {
-    arm(g, col, 31, sy, 19, 40 - bob, female);
+    arm(g, col, 31, sy, 19, 41 - bob, female);
   } else if (side) {
-    // 앞쪽 손은 무기 다음에 다시 찍어 주먹을 덮는다
     arm(g, col, 31, sy, main[0], main[1], female);
   } else {
-    arm(g, col, 22.5, sy, view === 'down' ? main[0] : off[0], view === 'down' ? main[1] : off[1], female);
-    arm(g, col, 41.5, sy, view === 'down' ? off[0] : main[0], view === 'down' ? off[1] : main[1], female);
+    arm(g, col, 24, sy, view === 'down' ? main[0] : off[0], view === 'down' ? main[1] : off[1], female);
+    arm(g, col, 40, sy, view === 'down' ? off[0] : main[0], view === 'down' ? off[1] : main[1], female);
   }
 
   // ── 머리 ──
   const hk = look.hat?.kind;
   if (!side) {
-    g.paint(ellipsoid(21.8, hy + 1, 1.8, 2.8), SKIN);
-    g.paint(ellipsoid(42.2, hy + 1, 1.8, 2.8), SKIN);
+    g.paint(ellipsoid(18.6, hy + 2, 1.8, 2.7), SKIN, { warm: true });
+    g.paint(ellipsoid(45.4, hy + 2, 1.8, 2.7), SKIN, { warm: true });
   }
-  if (!female && hk !== 'gat' && hk !== 'helm') g.paint(ellipsoid(side ? 33 : 32, hy - 12, 3.6, 3.6), col.hair, { max: 4 });
-  g.paint(ellipsoid(side ? 31 : 32, hy, 10.2, 11), SKIN);
-  if (side) g.paint(ellipsoid(21.4, hy + 3.5, 1.5, 1.9), SKIN);
-  if (view !== 'up') face(g, view, hy, female);
+  if (!female && hk !== 'gat' && hk !== 'helm') {
+    g.paint(ellipsoid(32, hy - 15, 3.8, 3.6), col.hair, { max: 4 });
+    g.paint(capsule(29, hy - 12.5, 35, hy - 12.5, 1), mul(col.hair, 0.75));
+  }
+  g.paint(ellipsoid(side ? 31 : 32, hy, 13.5, 13), SKIN, { warm: true });
+  if (view !== 'up') face(g, view, hy, female, col);
   hair(g, col, view, hy, female);
-  if (side) g.paint(ellipsoid(32.8, hy + 1.5, 1.6, 2.5), SKIN);
+  if (side) g.paint(ellipsoid(32.5, hy + 2, 1.7, 2.5), SKIN, { warm: true });
   if (hk) hat(g, col, view, hy, hk);
 
   // ── 앞쪽 무기 ──
   if (weapon && view !== 'up') {
     drawWeapon(g, main, angle, weapon);
-    g.paint(ellipsoid(main[0], main[1] + 1, 2.4, 2.6), SKIN);
+    g.paint(ellipsoid(main[0], main[1] + 0.8, 2.2, 2.3), SKIN, { warm: true });
   }
 
   if (dir === 'right') {
