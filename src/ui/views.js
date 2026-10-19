@@ -480,7 +480,7 @@ export function menuView(game, state, settings) {
       <div class="row">
         <span class="grow">그래픽</span>
         <button class="${settings.graphics === 'ninja' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="ninja">새 도트 타일</button>
-        <button class="${settings.graphics === 'photo' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="photo">실사 그림</button>
+        <button class="${settings.graphics === 'photo' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="photo">손그림</button>
         <button class="${settings.graphics === 'classic' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="classic">원작풍 도트</button>
         <button class="${settings.graphics === 'smooth' ? 'on' : ''}" data-act="setting" data-key="graphics" data-value="smooth">매끈한 그림</button>
       </div>
