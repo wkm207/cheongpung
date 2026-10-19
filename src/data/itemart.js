@@ -29,6 +29,8 @@ const FIXED = {
   luckyPouch: 'charm_1', paperCharm: 'charm_2', gourdBottle: 'charm_3', spiritBell: 'charm_4', incensePouch: 'charm_5',
   tigerClaw: 'charm_6', bronzeMirror: 'charm_7', thunderCharm: 'charm_12', jadeTablet: 'charm_8', foxTailCharm: 'charm_9',
   highAux55: 'charm_11', highAux65: 'charm_13', highAux75: 'charm_14', highAux85: 'charm_16',
+  woodTag: 'charm_10', rabbitFoot: 'charm_6', snakeShed: 'charm_5', boarTuskCharm: 'charm_6', eagleFeather: 'charm_4',
+  iceJade: 'charm_8', dragonScaleCharm: 'charm_9', zodiacCharm: 'charm_2', turtleShellCharm: 'charm_14', firebirdFeatherCharm: 'charm_16',
 };
 
 // 레벨 순으로 고르게 나눠 줄 무리: [고르는 조건, 묶음, 쓸 번호들]

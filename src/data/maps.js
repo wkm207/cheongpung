@@ -100,7 +100,7 @@ export const MAP_DEFS = {
         id: 'peddler', name: '방물장수 꽃분이', x: 23, y: 12, look: 'peddler',
         lines: ['어머, 손님! 고운 장신구 구경하고 가세요~', '목걸이 하나, 가락지 하나면 몸도 마음도 든든하답니다.'],
         shop: ['beadNecklace', 'boneNecklace', 'amberNecklace', 'pearlNecklace', 'copperRing', 'ironRing', 'jadeRing', 'silverRing',
-          'luckyPouch', 'paperCharm', 'gourdBottle', 'spiritBell', 'incensePouch'],
+          'luckyPouch', 'paperCharm', 'gourdBottle', 'spiritBell', 'incensePouch', 'grassRing', 'amethystRing', 'knotNorigae', 'woodTag'],
       },
       {
         id: 'forger', name: '명장 해림', x: 12, y: 13, look: 'forger', forge: true,
