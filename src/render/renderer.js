@@ -17,6 +17,7 @@ import { itemCanvas } from './itemicons.js';
 import { MAP_DEFS } from '../data/maps.js';
 
 const GOLD_ID = '__gold'; // game.js 의 바닥 돈 표시
+const MAX_DPR = 2;
 const ITEM_DOT_SCALE = 1.5; // 바닥 아이템 도트 한 개 = 게임 1.5픽셀(사람 도트와 같다)
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -132,7 +133,8 @@ export class Renderer {
   }
 
   resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    // 화면 배율은 2배까지만: 3배 폰에서도 도트 그림은 그대로 또렷하고, 칠할 픽셀은 절반 가까이 준다
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     this.cssW = window.innerWidth;
     this.cssH = window.innerHeight;
     this.dpr = dpr;
@@ -282,27 +284,16 @@ export class Renderer {
   drawDarkness(game, pp, k) {
     const darkness = darknessFor(game);
     if (darkness <= 0.01) return;
-    const W = this.canvas.width;
-    const H = this.canvas.height;
-    if (!this.dark || this.dark.width !== W || this.dark.height !== H) {
-      this.dark = Object.assign(document.createElement('canvas'), { width: W, height: H });
-    }
-    const d = this.dark.getContext('2d');
-    d.globalCompositeOperation = 'source-over';
-    d.clearRect(0, 0, W, H);
-    d.fillStyle = `rgba(8, 12, 34, ${darkness})`;
-    d.fillRect(0, 0, W, H);
-    d.globalCompositeOperation = 'destination-out';
+    // 어둠을 한 번에 칠한다: 캐릭터 둘레는 투명하고 바깥으로 갈수록 짙어지는 원형 빛깔(따로 캔버스를 지웠다 칠했다 하지 않음)
     const cx = (pp.x * TILE + 16 - this.camX) * k;
     const cy = (pp.y * TILE + 8 - this.camY) * k;
     const radius = 120 * k;
-    const grad = d.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius);
-    grad.addColorStop(0, 'rgba(0,0,0,1)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    d.fillStyle = grad;
-    d.fillRect(0, 0, W, H);
+    const grad = this.ctx.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius);
+    grad.addColorStop(0, 'rgba(8, 12, 34, 0)');
+    grad.addColorStop(1, `rgba(8, 12, 34, ${darkness})`);
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.drawImage(this.dark, 0, 0);
+    this.ctx.fillStyle = grad;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   /** 물 위로 반짝이는 물결 */
