@@ -6,7 +6,7 @@ import { drawEffect } from './effects.js';
 import { Ambient } from './ambient.js';
 import { treeSprite } from './trees.js';
 import { smoothMap } from './smooth.js';
-import { isClassic, isNinja, dotify } from './artmode.js';
+import { isClassic, isNinja, isPhoto, dotify } from './artmode.js';
 import { ninjaReady, renderNinjaMap, ninjaTree } from './ninja.js';
 import { photoMapReady, renderPhotoMap, photoTree } from './photomap.js';
 import { setMapShot } from './mapshot.js';
@@ -163,16 +163,16 @@ export class Renderer {
     // 캔버스는 아래 상태 막대·오른쪽 상태창에 가려지지 않는 곳만 덮는다(가려질 곳까지 매 프레임 칠하지 않음)
     this.cssW = Math.max(1, window.innerWidth - this.rightInset);
     this.cssH = Math.max(1, window.innerHeight - this.bottomInset);
-    this.dpr = dpr;
-    this.canvas.style.width = `${this.cssW}px`;
-    this.canvas.style.height = `${this.cssH}px`;
-    this.canvas.width = Math.round(this.cssW * dpr);
-    this.canvas.height = Math.round(this.cssH * dpr);
-    // 원작풍은 더 멀리서 내려다본다(한 화면에 더 많은 칸). 확대 배율은 창 전체 크기로 정한다
     // 원작처럼 넓게: 짧은 변에 12~17칸(폰 세로 화면은 12칸쯤), 옛 원작풍 도트는 더 멀리서
     const short = Math.min(window.innerWidth, window.innerHeight);
     const tiles = isClassic() && !isNinja() ? CLASSIC_VIEW_TILES : Math.max(12, Math.min(VIEW_TILES, Math.round(short / 32)));
     this.scale = short / (tiles * TILE);
+    // 원작풍 도트: 한 칸을 32픽셀 그대로 그린 뒤 화면에 맞게 깍두기로 늘린다(CSS pixelated)
+    this.dpr = isClassic() ? Math.min(dpr, 1 / this.scale) : dpr;
+    this.canvas.style.width = `${this.cssW}px`;
+    this.canvas.style.height = `${this.cssH}px`;
+    this.canvas.width = Math.round(this.cssW * this.dpr);
+    this.canvas.height = Math.round(this.cssH * this.dpr);
   }
 
   /** 상태 막대·상태창이 덮는 크기가 바뀌면 캔버스 크기를 맞춘다 */
@@ -244,7 +244,8 @@ export class Renderer {
       ctx.fillStyle = '#0b0d14';
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
-    ctx.imageSmoothingEnabled = !isClassic();
+    // 큰 손그림을 작게 줄일 때는 부드럽게(깍두기 느낌은 화면을 늘릴 때 난다)
+    ctx.imageSmoothingEnabled = !isClassic() || isPhoto();
     ctx.imageSmoothingQuality = 'high';
     ctx.setTransform(k, 0, 0, k, -this.camX * k, -this.camY * k);
     this.drawMap(ctx, viewW, viewH, mapW, mapH);

@@ -1,4 +1,4 @@
-import { buildVillage, buildField, buildCave, buildDen, buildRoom, buildCastle } from '../world/mapgen.js';
+import { buildVillage, buildField, buildHunt, buildCave, buildDen, buildRoom, buildCastle } from '../world/mapgen.js';
 
 // 포탈: (x, y, w, h) 영역에 들어서면 to 맵의 (tx, ty)로 이동
 
@@ -307,8 +307,8 @@ export const MAP_DEFS = {
   },
   field1: {
     name: '토끼 들판',
-    w: 44, h: 32, seed: 11, density: 0.07, obstacles: ['T', 'O'],
-    build: buildField,
+    w: 44, h: 32, seed: 11,
+    build: buildHunt,
     portals: [
       { x: 0, y: 14, w: 1, h: 2, to: 'village', tx: 37, ty: 14 },
       { x: 43, y: 16, w: 1, h: 2, to: 'wolfHill', tx: 2, ty: 16 },

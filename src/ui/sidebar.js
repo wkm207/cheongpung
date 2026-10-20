@@ -48,6 +48,10 @@ export class Sidebar {
     this.active = on && !!game;
     this.el.hidden = !this.active;
     document.body.classList.toggle('docked', this.active);
+    // 원작처럼 체력·마력 구슬이 있는 상태칸은 오른쪽 줄 맨 아래로(좁은 화면에서는 아래 조작판으로 돌려놓는다)
+    const status = $('.status-panel');
+    if (this.active && status.parentElement !== this.el) this.el.append(status);
+    else if (!this.active && status.parentElement === this.el) $('#console').prepend(status);
     if (this.active && !this.panels.kind) this.open('character');
   }
 

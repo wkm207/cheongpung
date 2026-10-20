@@ -88,6 +88,22 @@ export function buildField({ w, h, seed, density, ground = '.', obstacles = ['T'
   return fillUnreachable(g, w >> 1, h >> 1, 'T');
 }
 
+/** 원작 사냥터처럼: 넓은 흙마당을 물길이 둘러싸고, 출구 쪽만 흙다리로 이어진다. 돌·덤불은 드문드문 */
+export function buildHunt({ w, h, seed, portals, ground = 'u', rim = 2, rocks = 0.012 }) {
+  const rng = mulberry32(seed);
+  const g = grid(w, h, ground);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const edge = x <= rim || y <= rim || x >= w - 1 - rim || y >= h - 1 - rim;
+      if (edge) g[y][x] = '~';
+      else if (rng() < rocks) g[y][x] = 'O';
+    }
+  }
+  border(g, '~');
+  carvePortals(g, portals, ground);
+  return fillUnreachable(g, w >> 1, h >> 1, '~');
+}
+
 export function buildCave({ w, h, seed, fill = 0.45, portals, floor = 'c', wall = 'X' }) {
   const rng = mulberry32(seed);
   let g = grid(w, h, wall);
