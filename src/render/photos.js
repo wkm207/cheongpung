@@ -128,7 +128,7 @@ export function photoPortrait(img) {
 }
 
 /** 게임 화면에 그리는 실사 사람 키(게임 좌표, 32 = 한 칸) */
-export const PHOTO_H = 58;
+export const PHOTO_H = 44; // 원작처럼 한 칸 반쯤(화면을 넓게 보고 사람은 작게)
 
 /**
  * 발이 (cx, footY)에 닿게 그린다. flip: 좌우 뒤집기, tilt: 기울기(라디안)

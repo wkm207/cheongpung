@@ -120,8 +120,8 @@ function scaledAt(ctx, cx, cy, k, draw) {
 const SMALL_MOB = new Set(['squirrel', 'rabbit', 'rat', 'bat']);
 function mobPhotoBox(type) {
   const look = MONSTER_LOOK[type];
-  if (look.scale) return 46 * look.scale;
-  return SMALL_MOB.has(look.art) ? 34 : 56;
+  if (look.scale) return 37 * look.scale;
+  return SMALL_MOB.has(look.art) ? 28 : 45;
 }
 
 // 손그림 몬스터 중 오른쪽을 보는 그림(나머지는 왼쪽), 앞을 보고 서 있는 그림(걸을 때 발을 번갈아 든다)
@@ -131,7 +131,7 @@ const MOB_FRONT = new Set(['dueok', 'pigKing', 'goblin', 'bat', 'redOgre', 'wate
   'skeletonGeneral', 'eggGhost', 'maidenGhost', 'bachelorGhost', 'grudgeLord']);
 
 // 실사 말 키(게임 좌표)
-const HORSE_H = 56;
+const HORSE_H = 44;
 // 말 그림에서 안장 윗면 높이(위에서부터 비율)
 const SADDLE_AT = 0.4;
 
@@ -169,9 +169,9 @@ export class Renderer {
     this.canvas.width = Math.round(this.cssW * dpr);
     this.canvas.height = Math.round(this.cssH * dpr);
     // 원작풍은 더 멀리서 내려다본다(한 화면에 더 많은 칸). 확대 배율은 창 전체 크기로 정한다
-    // 새 도트 모드는 원작처럼 가깝게: 짧은 변에 10~15칸(폰 세로 화면은 10~11칸), 옛 원작풍 도트는 멀리서
+    // 원작처럼 넓게: 짧은 변에 12~17칸(폰 세로 화면은 12칸쯤), 옛 원작풍 도트는 더 멀리서
     const short = Math.min(window.innerWidth, window.innerHeight);
-    const tiles = isClassic() && !isNinja() ? CLASSIC_VIEW_TILES : Math.max(10, Math.min(VIEW_TILES, Math.round(short / 34)));
+    const tiles = isClassic() && !isNinja() ? CLASSIC_VIEW_TILES : Math.max(12, Math.min(VIEW_TILES, Math.round(short / 32)));
     this.scale = short / (tiles * TILE);
   }
 

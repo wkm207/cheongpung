@@ -877,81 +877,107 @@ body.classic #portrait { image-rendering: pixelated; }
 @media (max-width: 700px) { .orb { width: 40px; height: 40px; } .orb-num { font-size: 9px; } .orb-lbl { display: none; } }
 .where-hint { font-size: 11px; color: #7a5a2a; margin: 0 0 3px 16px; line-height: 1.35; }
 
-/* ── 원작풍 화면 틀(새 도트 모드): 주홍 칠 틀과 금빛 모서리 장식, 한지빛 오른쪽 판, 보랏빛 대화창 ── */
+/* ── 원작풍 화면 틀: 주황 나뭇결에 새긴 무늬 틀, 아치 모양 한지 상태판, 하늘·분홍 줄무늬 대화창 ── */
 body.classic {
   --font: 'Galmuri11', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Gulim', sans-serif;
   -webkit-font-smoothing: none;
-  --frame: #a8361a;
-  --frame-dark: #5e1608;
-  --frame-hi: #e0704a;
-  --parch: #dcbc8a;
-  --parch-2: #c9a06a;
+  --frame: #c0702c;
+  --frame-dark: #6a3410;
+  --frame-hi: #f4b060;
+  --carve: #4a2008;
+  --parch: #e8d2a0;
+  --parch-2: #cfae74;
   --parch-ink: #3a2410;
+  /* 나뭇결: 가는 세로결 + 옹이 무늬 + 위아래 그늘 */
+  --wood:
+    repeating-linear-gradient(90deg, rgba(90, 38, 8, 0.16) 0 1px, transparent 1px 5px, rgba(255, 210, 140, 0.08) 5px 6px, transparent 6px 11px),
+    radial-gradient(ellipse 18px 7px at 30% 40%, rgba(90, 38, 8, 0.25), transparent 70%),
+    radial-gradient(ellipse 22px 8px at 75% 65%, rgba(90, 38, 8, 0.2), transparent 70%),
+    linear-gradient(#d88a3c, #b4621f 55%, #8a4614);
 }
 body.classic #console {
-  background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 7px),
-    linear-gradient(var(--frame), var(--frame-dark));
-  border-top: 3px solid #e2b25a;
-  box-shadow: inset 0 1px 0 var(--frame-hi), inset 0 -2px 0 #2a0804, 0 -3px 10px rgba(0, 0, 0, 0.55);
+  background: var(--wood);
+  border-top: 3px solid var(--frame-hi);
+  box-shadow: inset 0 1px 0 #ffd090, inset 0 -2px 0 var(--carve), 0 -3px 10px rgba(0, 0, 0, 0.55);
 }
+/* 칸마다 파인 홈(새김) */
 body.classic #console > section {
-  background: rgba(40, 8, 2, 0.35);
-  border: 1px solid #2a0804;
-  box-shadow: inset 0 0 0 1px rgba(255, 190, 120, 0.25);
+  background: rgba(60, 24, 4, 0.28);
+  border: 1px solid var(--carve);
+  box-shadow: inset 1px 1px 0 rgba(40, 14, 0, 0.6), 1px 1px 0 rgba(255, 210, 140, 0.45);
 }
-/* 대화창: 원작처럼 보랏빛 바탕에 흰 글씨 */
-body.classic .chat-panel { background: linear-gradient(rgba(84, 88, 168, 0.92), rgba(58, 60, 128, 0.92)) !important; border-color: #c8c8f0 !important; }
-body.classic #log { color: #f4f4ff; text-shadow: 1px 1px 0 #1a1a40; }
-body.classic #chat-form { background: rgba(30, 30, 80, 0.6); border-top-color: #8a8ad0; }
-/* 지역 이름판: 주홍 판에 금 글씨 */
+/* 대화창: 원작처럼 줄마다 하늘빛·분홍빛이 번갈아, 흰 글씨에 검은 테 */
+body.classic .chat-panel { background: #3a3a78 !important; border-color: #e8c890 !important; }
+body.classic #log { padding: 0; text-shadow: -1px 0 0 #101030, 1px 0 0 #101030, 0 -1px 0 #101030, 0 1px 0 #101030; }
+body.classic #log > div { padding: 1px 7px; color: #fff !important; }
+body.classic #log > div:nth-child(odd) { background: #7a86c8; }
+body.classic #log > div:nth-child(even) { background: #b886b8; }
+body.classic #chat-form { background: #2a2a58; border-top-color: #e8c890; }
+/* 지역 이름판: 나무판에 새긴 글씨 */
 body.classic .zone-strip {
-  background: linear-gradient(#b8401e, #6a1a0a);
-  border: 2px solid #e2b25a;
-  box-shadow: inset 0 0 0 1px #3a0a02, 0 2px 6px rgba(0, 0, 0, 0.6);
-  color: #ffe9b8;
+  background: var(--wood);
+  border: 2px solid var(--carve);
+  box-shadow: inset 0 0 0 1px var(--frame-hi), 0 2px 6px rgba(0, 0, 0, 0.6);
+  color: #fff4d8;
 }
-body.classic .zone-strip b { color: #ffd77a; text-shadow: 1px 1px 0 #3a0a02; }
-/* 게임 화면 둘레 주홍 틀 + 네 모서리 금빛 구름 장식 */
+body.classic .zone-strip b { color: #fff; text-shadow: 1px 1px 0 var(--carve), -1px 0 0 var(--carve); }
+/* 게임 화면 둘레: 두꺼운 주황 나무 틀, 안쪽에 새긴 두 줄 홈과 덩굴 무늬 */
 body.classic.playing #game-frame {
-  border: 7px solid var(--frame);
+  border: 11px solid transparent;
   border-image: none;
-  box-shadow: inset 0 0 0 2px #e2b25a, inset 0 0 0 3px #2a0804, 0 0 0 1px #2a0804, inset 0 0 22px rgba(40, 8, 0, 0.45);
+  background:
+    linear-gradient(transparent, transparent) padding-box,
+    var(--wood) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) border-box, linear-gradient(#000 0 0) padding-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: none;
+  outline: 1px solid var(--carve);
 }
 body.classic.playing #game-frame::before,
 body.classic.playing #game-frame::after {
   content: '';
   position: absolute;
-  top: -7px;
-  width: 34px;
-  height: 34px;
-  background:
-    radial-gradient(circle at 30% 30%, #ffe08a 0 5px, transparent 6px),
-    radial-gradient(circle at 62% 26%, #e2b25a 0 6px, transparent 7px),
-    radial-gradient(circle at 26% 64%, #e2b25a 0 6px, transparent 7px),
-    radial-gradient(circle at 30% 30%, #8a4a10 0 11px, transparent 12px);
-  filter: drop-shadow(1px 1px 0 #2a0804);
+  inset: -8px;
+  pointer-events: none;
+  border: 2px solid rgba(74, 32, 8, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(255, 200, 120, 0.5);
+  background: none;
+  filter: none;
+  width: auto;
+  height: auto;
+  transform: none;
 }
-body.classic.playing #game-frame::before { left: -7px; }
-body.classic.playing #game-frame::after { right: -7px; transform: scaleX(-1); }
-/* 오른쪽 판: 한지빛 무늬목 판 */
+body.classic.playing #game-frame::after {
+  inset: -3px;
+  border: 1px dashed rgba(74, 32, 8, 0.55);
+  box-shadow: none;
+}
+/* 오른쪽 판: 나무 틀 안의 한지 */
 body.classic #sidebar {
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 240, 200, 0.35), transparent 60%),
-    repeating-linear-gradient(0deg, rgba(120, 70, 20, 0.06) 0 2px, transparent 2px 6px),
+    radial-gradient(ellipse at 30% 20%, rgba(255, 244, 210, 0.45), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(120, 70, 20, 0.05) 0 2px, transparent 2px 6px),
     linear-gradient(90deg, var(--parch-2), var(--parch) 40%, var(--parch-2));
-  border-left: 7px solid var(--frame);
-  box-shadow: inset 2px 0 0 #e2b25a, inset 3px 0 0 #2a0804, inset 0 0 0 1px #7a4a1a, -3px 0 10px rgba(0, 0, 0, 0.5);
+  border-left: 11px solid var(--frame);
+  border-image: var(--wood) 1;
+  box-shadow: inset 2px 0 0 var(--carve), -3px 0 10px rgba(0, 0, 0, 0.5);
 }
+/* 상태판: 위가 둥근 아치 모양 한지 판(원작 상태창처럼) */
 body.classic .side-card {
-  background: linear-gradient(#ead2a4, #d8b47e);
-  border: 2px solid #7a4a1a;
-  box-shadow: inset 0 0 0 1px #f4dcb0, inset 0 0 10px rgba(120, 60, 10, 0.25);
-  border-radius: 10px 10px 4px 4px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 250, 230, 0.6), transparent 55%),
+    linear-gradient(#f0dcb0, #dcbc84);
+  border: 3px solid #8a5a24;
+  outline: 2px solid var(--carve);
+  outline-offset: 0;
+  box-shadow: inset 0 0 0 2px #f8e8c0, inset 0 0 14px rgba(120, 60, 10, 0.3);
+  border-radius: 46% 46% 6px 6px / 64px 64px 6px 6px;
+  padding-top: 16px;
   color: var(--parch-ink);
 }
-body.classic .side-tabs button { background: linear-gradient(#8a3a1a, #5e1608); color: #ffe0b0; border-color: #2a0804; }
-body.classic .side-tabs button.on { background: linear-gradient(#f0d8a8, #d8b47e); color: var(--parch-ink); }
+body.classic .side-tabs button { background: var(--wood); color: #fff4d8; border-color: var(--carve); text-shadow: 1px 1px 0 var(--carve); }
+body.classic .side-tabs button.on { background: linear-gradient(#f4e2b8, #dcbc84); color: var(--parch-ink); text-shadow: none; }
 
 /* 실사 생김새 고르기 */
 .look-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; margin: 6px 0; }

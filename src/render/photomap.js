@@ -303,6 +303,6 @@ export function photoTree(kind, variant) {
   const name = kind === 'green' && variant === 3 ? 'blossom' : TREE_OF[kind] ?? 'tree';
   const im = obj[name];
   if (!im) return null;
-  const lh = 78 + (variant % 3) * 6;
+  const lh = 64 + (variant % 3) * 5;
   return { img: im, lw: (im.width * lh) / im.height, lh };
 }
