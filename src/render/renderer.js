@@ -132,6 +132,8 @@ const MOB_FRONT = new Set(['dueok', 'pigKing', 'goblin', 'bat', 'redOgre', 'wate
 
 // 실사 말 키(게임 좌표)
 const HORSE_H = 44;
+// 앞모습 말 키(게임 좌표)
+const HORSE_FRONT_H = 46;
 // 말 그림에서 안장 윗면 높이(위에서부터 비율)
 const SADDLE_AT = 0.4;
 
@@ -167,8 +169,7 @@ export class Renderer {
     const short = Math.min(window.innerWidth, window.innerHeight);
     const tiles = isClassic() && !isNinja() ? CLASSIC_VIEW_TILES : Math.max(12, Math.min(VIEW_TILES, Math.round(short / 32)));
     this.scale = short / (tiles * TILE);
-    // 원작풍 도트: 한 칸을 32픽셀 그대로 그린 뒤 화면에 맞게 깍두기로 늘린다(CSS pixelated)
-    this.dpr = isClassic() ? Math.min(dpr, 1 / this.scale) : dpr;
+    this.dpr = dpr;
     this.canvas.style.width = `${this.cssW}px`;
     this.canvas.style.height = `${this.cssH}px`;
     this.canvas.width = Math.round(this.cssW * this.dpr);
@@ -443,8 +444,8 @@ export class Renderer {
     if (pose === 'cast') this.drawCastCircle(ctx, x + 16, y + 28, game.now);
     const gallop = pe.moving ? game.now : 0;
     const horseK = isNinja() ? PERSON_HORSE_SCALE : 1;
-    // 실사 말 그림이 있으면 그것(옆모습, 오른쪽으로 가면 뒤집기)
-    const horsePic = riding && isNinja() && npcPhoto('horse');
+    // 실사 말 그림이 있으면 그것(옆모습, 오른쪽으로 가면 뒤집기). 위·아래로 갈 때 앞모습 말은 drawPhotoPlayer 가 그린다
+    const horsePic = riding && isNinja() && !this.rideVertical(game, pe) && npcPhoto('horse');
     if (horsePic) {
       const bounce = pe.moving ? Math.abs(Math.sin(game.now / 90)) * 1.5 : 0;
       drawPhoto(ctx, horsePic, x + 16, y + 33 - bounce * 0.5, { h: HORSE_H, flip: faceRight });
@@ -488,6 +489,11 @@ export class Renderer {
     if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, top - 14);
   }
 
+  /** 말을 타고 위·아래로 가는 중이고 앞모습 말 그림이 있으면 그 그림 */
+  rideVertical(game, pe) {
+    return game.riding && (pe.dir === 'up' || pe.dir === 'down') ? npcPhoto('horse_front') : null;
+  }
+
   /** 고른 생김새의 실사 그림(없거나 아직 못 불러왔으면 null) */
   playerPhoto(game) {
     const p = game.player;
@@ -499,8 +505,9 @@ export class Renderer {
    * 마법을 쓰면 떠오르듯 올라가고, 쓰러지면 눕고, 구르면 한 바퀴, 말 위에서는 허리 위만
    */
   drawPhotoPlayer(ctx, game, pe, x, y, pose, rollT, riding, rideView, gallop, photoFront) {
-    // 말 위에서는 말 그림(옆모습)에 맞춰 늘 옆을 본다
-    const dir = riding ? this.rideFace ?? 'right' : pe.dir;
+    // 말 위: 옆으로 갈 때는 옆모습 말에 맞춰 옆을, 위·아래로 갈 때는 앞모습 말에 맞춰 앞·뒤를 본다
+    const frontHorse = this.rideVertical(game, pe);
+    const dir = riding && !frontHorse ? this.rideFace ?? 'right' : pe.dir;
     // 방향별 그림(앞·뒤·옆)이 있으면 그것, 없으면 앞모습을 좌우로 뒤집는다
     const p = game.player;
     const view = photoView(p.cls, p.gender, p.look, dir) ?? { img: photoFront, flip: false, front: true };
@@ -552,6 +559,10 @@ export class Renderer {
       if (rideView !== 'side') scaledAt(ctx, x + 16, y + 31, PERSON_HORSE_SCALE, () => this.drawHorseFacing(ctx, x, y, rideView, gallop, 'front'));
       return;
     }
+    if (frontHorse) {
+      this.drawRideVertical(ctx, frontHorse, photo, ph, flip, pe.dir === 'up', x, y, bounce);
+      return;
+    }
     const horseTop = y + 33 - bounce * 0.5 - HORSE_H;
     const saddle = horseTop + HORSE_H * SADDLE_AT;
     drawPhoto(ctx, photo, cx + (flip ? 2 : -2), saddle + PHOTO_H * 0.42 - bounce, { flip, h: ph });
@@ -562,6 +573,46 @@ export class Renderer {
     ctx.clip();
     drawPhoto(ctx, horsePic, x + 16, y + 33 - bounce * 0.5, { h: HORSE_H, flip: this.rideFace === 'right' });
     ctx.restore();
+  }
+
+  /**
+   * 말 타고 위·아래로: 아래(앞모습)는 사람을 말 머리 뒤에 앉히고 말을 위에 그린다.
+   * 위(뒷모습)는 어둡게 한 말에 꼬리를 달고 사람 뒷모습을 위에 그린다. 사람은 안장 아래(다리)를 잘라 낸다
+   */
+  drawRideVertical(ctx, horse, photo, ph, flip, back, x, y, bounce) {
+    const foot = y + 33 - bounce * 0.5;
+    const top = foot - HORSE_FRONT_H;
+    const saddle = top + HORSE_FRONT_H * 0.5;
+    const rider = () => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - 60, top - 80, 152, saddle + 3 - (top - 80));
+      ctx.clip();
+      // 사람 얼굴이 말 머리 위로 오게(말 머리가 가슴을 가린다)
+      drawPhoto(ctx, photo, x + 16, saddle + PHOTO_H * 0.14 - bounce, { flip, h: ph });
+      ctx.restore();
+    };
+    if (!back) {
+      rider();
+      drawPhoto(ctx, horse, x + 16, foot, { h: HORSE_FRONT_H });
+      return;
+    }
+    ctx.filter = 'brightness(0.72)';
+    drawPhoto(ctx, horse, x + 16, foot, { h: HORSE_FRONT_H });
+    ctx.filter = 'none';
+    // 꼬리
+    ctx.fillStyle = '#2a1810';
+    ctx.strokeStyle = '#140a06';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 13, saddle + 2);
+    ctx.quadraticCurveTo(x + 11, saddle + 14, x + 14, foot - 6);
+    ctx.lineTo(x + 18, foot - 6);
+    ctx.quadraticCurveTo(x + 21, saddle + 14, x + 19, saddle + 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    rider();
   }
 
   /** 큰 머리 도트 사람으로 플레이어 그리기: 걷기·휘두르기·마법 자세·쓰러짐·구르기·말 타기 */

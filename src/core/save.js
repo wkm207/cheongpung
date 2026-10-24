@@ -65,8 +65,8 @@ export function validatePlayer(raw) {
   const alloc = Object.fromEntries(['str', 'dex', 'int', 'con'].map((k) => [k, isInt(raw.alloc?.[k]) && raw.alloc[k] >= 0 ? raw.alloc[k] : 0]));
   const spent = Object.values(alloc).reduce((x, y) => x + y, 0);
   const budget = (raw.level - 1) * 3;
-  // 예전 저장(능력치 분배 이전)은 그동안 받았어야 할 점수를 한꺼번에 준다
-  const statPoints = isInt(raw.statPoints) && raw.statPoints >= 0 ? Math.min(raw.statPoints, Math.max(0, budget - spent)) : Math.max(0, budget - spent);
+  // 남은 점수는 늘 (레벨-1)×3 에서 찍은 만큼 뺀 값: 예전 저장이나 운영자 레벨 변경으로 못 받은 점수도 채워 준다
+  const statPoints = Math.max(0, budget - spent);
   const fairAlloc = spent <= budget ? alloc : { str: 0, dex: 0, int: 0, con: 0 };
   const bonusHp = isInt(raw.bonusHp) && raw.bonusHp >= 0 ? raw.bonusHp : 0;
   const bonusMp = isInt(raw.bonusMp) && raw.bonusMp >= 0 ? raw.bonusMp : 0;

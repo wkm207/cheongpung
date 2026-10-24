@@ -361,6 +361,35 @@ test('말 증서가 있으면 말을 타고 더 빨리 달린다, 실내에선 �
   assert.ok(!game.riding);
 });
 
+test('운영자가 레벨을 올려도 레벨마다 능력치 3점을 받고, 예전 저장도 못 받은 점수를 채운다', () => {
+  const game = new Game(createPlayer('용사', 'warrior'));
+  game.gmSetLevel(99);
+  assert.equal(game.player.statPoints, 98 * 3);
+  game.allocate('str', 10);
+  assert.equal(game.player.statPoints, 98 * 3 - 10);
+  game.gmSetLevel(3);
+  assert.equal(game.player.statPoints, 6);
+  assert.equal(game.player.alloc.str, 0);
+  const loaded = validatePlayer({ ...game.player, level: 50, statPoints: 0, alloc: { str: 5, dex: 0, int: 0, con: 0 } });
+  assert.equal(loaded.statPoints, 49 * 3 - 5);
+});
+
+test('말 위에서는 마법·기술도 구르기도 못 쓴다', () => {
+  const game = new Game(createPlayer('용사', 'mage'));
+  game.teleport('field1');
+  game.giveItem('horseTicket', 1);
+  game.toggleRide();
+  assert.ok(game.riding);
+  const mp = game.player.mp;
+  game.castSlot(0);
+  assert.equal(game.player.mp, mp);
+  assert.equal(game.roll(), false);
+  assert.ok(!(game.rollStart > 0));
+  game.toggleRide();
+  game.castSlot(0);
+  assert.ok(game.player.mp < mp);
+});
+
 test('뱃사공: 레벨·뱃삯이 되면 먼 지역으로 가고, 지역 출구는 청풍성으로 이어진다', () => {
   const game = new Game(createPlayer('용사', 'warrior'));
   const route = { to: 'dragonPalace', level: 65, cost: 12000 };

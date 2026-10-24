@@ -400,6 +400,10 @@ export class Game {
 
   castSkillById(id) {
     if (this.dead) return;
+    if (this.riding) {
+      this.log('말 위에서는 마법·기술을 쓸 수 없습니다. 말에서 내리세요(R).', '#bbb');
+      return;
+    }
     if (this.pe.moving) this.queued = { type: 'skill', id };
     else castSkill(this, id);
   }
@@ -635,6 +639,10 @@ export class Game {
   /** 구르기: 바라보는(누르는) 쪽으로 두 칸 재빨리 굴러 잠깐 무적이 된다 */
   roll() {
     if (this.dead || this.now < this.rollReadyAt) return false;
+    if (this.riding) {
+      this.log('말 위에서는 구를 수 없습니다.', '#bbb');
+      return false;
+    }
     const pe = this.pe;
     if (pe.moving) {
       this.queued = { type: 'roll' };
@@ -1167,6 +1175,12 @@ export class Game {
   gmSetLevel(level) {
     const before = this.player.level;
     this.player = withLevel(this.player, level);
+    // 레벨업과 같게 능력치 점수도 맞춘다(레벨마다 3점, 찍은 점수가 더 많으면 초기화)
+    const budget = (this.player.level - 1) * STAT_POINTS_PER_LEVEL;
+    const spent = Object.values(this.player.alloc ?? {}).reduce((a, b) => a + b, 0);
+    this.player = spent <= budget
+      ? { ...this.player, statPoints: budget - spent }
+      : { ...this.player, statPoints: budget, alloc: { str: 0, dex: 0, int: 0, con: 0 } };
     if (this.player.level > before) this.learnSkills(before, this.player.level);
     this.healFull();
     this.emit('levelup');

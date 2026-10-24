@@ -210,12 +210,20 @@ export function spellsView(game, state) {
     </div>`;
   }).join('');
   const help = picked === null
-    ? '옮길 마법을 누르세요. (키보드: 알파벳 두 번, 예) <b>c</b> 다음 <b>a</b> → c의 마법이 a로)'
-    : `<b>${SPELL_LETTERS[picked]}</b> 칸을 어디로 옮길까요? 아래 알파벳을 누르세요. (다시 누르면 취소)`;
+    ? `<div class="spell-help"><b>마법 칸 바꾸는 법</b>
+        <ol>
+          <li>옮길 마법 <b>줄을 한 번</b> 누릅니다(노랗게 표시됨). ※ 오른쪽 <b>사용</b> 버튼은 바로 쓰기라서 누르지 마세요.</li>
+          <li>넣고 싶은 칸의 <b>줄</b>(또는 위에 나오는 알파벳 버튼)을 누르면 <b>두 마법의 자리가 서로 바뀝니다.</b></li>
+          <li>취소하려면 노란 줄을 한 번 더 누르세요.</li>
+        </ol>
+        <small>· <b>a~j</b> 칸 = 숫자 키 <b>1~9, 0</b>과 화면 아래 단축키 칸. k 칸부터는 단축키가 없어 이 창의 <b>사용</b>으로 씁니다.<br>
+        · 키보드: 알파벳 두 번(예: <b>c</b> 다음 <b>a</b> → c와 a 마법이 자리를 바꿈)<br>
+        · 화면 아래 단축키 칸끼리는 아이콘을 <b>끌어다 놓아도</b> 바뀝니다.</small></div>`
+    : `<div class="spell-help on"><b>${SPELL_LETTERS[picked]} 칸 · ${esc(josa(SKILLS[p.skillSlots[picked]]?.name ?? '빈 칸', '을/를'))}</b> 어느 칸과 바꿀까요? 바꿀 칸의 줄이나 알파벳을 누르세요. (같은 줄을 다시 누르면 취소)</div>`;
   const letters = picked === null ? '' : `<div class="letter-pick">${[...SPELL_LETTERS].map((l, i) => `<button class="${i === picked ? 'on' : ''}" data-act="spellMove" data-i="${i}">${l}</button>`).join('')}</div>`;
   return `${header('마법', null)}
     <div class="body">
-      <p class="hint">a~j 칸은 숫자 키 <b>1,2,…,9,0</b>과 아래 단축키 칸에 그대로 연결됩니다. ${help}</p>
+      ${help}
       ${letters}
       ${rows}
     </div>`;
@@ -232,8 +240,6 @@ export function characterView(game) {
     ['공격', s.atk], ['방어', s.def], ['술력', s.mag], ['치명타', formatStat('crit', s.crit)],
     ...[['mcrit', '마법치명'], ['dmgPct', '피해증가'], ['pen', '방어무시'], ['cdr', '쿨타임 감소']]
       .filter(([k]) => s[k] > 0).map(([k, label]) => [label, formatStat(k, s[k])]),
-    ...[['mcrit', '마법치명'], ['dmgPct', '피해증가'], ['pen', '방어무시'], ['cdr', '쿨타임 감소']]
-      .filter(([k]) => s[k] > 0).map(([k, label]) => [label, formatStat(k, s[k])]),
     ['경험치', `${p.exp.toLocaleString()} / ${need}`], ['금전', `${p.gold.toLocaleString()}전`],
     ['배운 기술', `${p.learned.length} / ${CLASSES[p.cls].skills.length}`], ['플레이 시간', formatPlayTime(game.playMs)],
   ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
@@ -244,7 +250,14 @@ export function characterView(game) {
   }).join('');
   const a = p.alloc ?? {};
   const pts = p.statPoints ?? 0;
-  const statRow = (key, label, effect) => `<div class="list-row alloc-row"><b class="grow">${label} <span class="good">${a[key] ?? 0}</span> <small class="muted">${effect}</small></b>
+  // 찍은 점수와 그만큼 오른 능력치(합계), 1점당 효과
+  const gain = {
+    str: (n) => `공격 +${n * 2}`,
+    dex: (n) => `치명 +${(n * 0.4).toFixed(1)}% · 방어 +${n}`,
+    int: (n) => `술력 +${n * 2} · 마력 +${n * 4}`,
+    con: (n) => `체력 +${n * 14} · 방어 +${Math.floor(n * 0.5)}`,
+  };
+  const statRow = (key, label, effect) => `<div class="list-row alloc-row"><b class="grow">${label} <span class="good">${a[key] ?? 0}점</span> ${a[key] ? `<span class="good">(${gain[key](a[key])})</span>` : ''} <small class="muted">1점당 ${effect}</small></b>
     <button data-act="alloc" data-stat="${key}" data-n="1" ${pts ? '' : 'disabled'}>+1</button><button data-act="alloc" data-stat="${key}" data-n="5" ${pts >= 5 ? '' : 'disabled'}>+5</button></div>`;
   const used = Object.values(a).reduce((x, y) => x + y, 0);
   return `${header('정보', 'character')}

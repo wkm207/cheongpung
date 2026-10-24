@@ -519,6 +519,11 @@ body.control-joystick #dpad { display: none; }
 .letter { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; font: 800 13px/1 var(--font); color: #fff3d6; background: linear-gradient(#6b4a2b, #3d2819); border: 1px solid var(--gold-dim); border-radius: 3px; }
 .key-hint { min-width: 28px; font-size: 11px; color: var(--ink-soft); }
 .spell-row.empty { opacity: 0.6; }
+.spell-help { margin: 4px 0 8px; padding: 7px 9px; font-size: 12.5px; line-height: 1.5; background: #fff6dc; border: 1px solid #c9a86a; border-radius: 4px; }
+.spell-help ol { margin: 4px 0 4px 18px; padding: 0; }
+.spell-help small { color: #6b5640; }
+.spell-help.on { background: #ffe9a0; border-color: #d89a10; }
+.spell-row.sel { outline: 3px solid #e0a020; outline-offset: -3px; background: #fff1c0; }
 .letter-pick { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 8px; }
 .letter-pick button { min-width: 34px; padding: 6px 0; font-weight: 800; }
 .letter-pick button.on { outline: 2px solid var(--red); }
@@ -994,6 +999,15 @@ body.classic.docked #sidebar .status-panel { background: var(--wood); border-col
 body.docked #sidebar .status-panel .who b { color: #fff; text-shadow: 1px 1px 0 #2a1406; }
 body.docked #sidebar .status-panel .gold { color: #fff0c8; text-shadow: 1px 1px 0 #2a1406; }
 body.docked #sidebar .orb { width: 58px; height: 58px; }
+
+/* 원작풍 나무 틀(11px) 안쪽으로: 퀘스트 알림·지역판·미니맵이 틀에 가리지 않게 */
+body.classic.playing #topbar {
+  top: calc(var(--safe-t) + 15px);
+  left: calc(var(--safe-l) + 16px);
+  right: calc(var(--safe-r) + 16px);
+  z-index: 2;
+}
+body.classic.playing.docked #topbar { right: calc(var(--side-w) + 16px); }
 
 /* 실사 생김새 고르기 */
 .look-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; margin: 6px 0; }
