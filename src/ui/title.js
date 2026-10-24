@@ -208,16 +208,20 @@ export class Title {
     this.render();
   }
 
-  drawPreviews() {
+  drawPreviews(tries = 0) {
     const saves = this.view === 'main' ? this.listSaves() : [];
+    let waiting = false;
     for (const canvas of this.root.querySelectorAll('[data-preview]')) {
       const ctx = canvas.getContext('2d');
       const save = canvas.dataset.side ? this.sides?.[canvas.dataset.side] : canvas.dataset.slot !== undefined ? saves[Number(canvas.dataset.slot)] : null;
       const img = portraitSprite(canvas.dataset.preview, save?.equip ?? {}, save?.gender ?? this.gender, save ? save.look : this.look);
+      // 손그림이 아직 안 왔으면(옛 도트로 대신 그림) 잠시 뒤 다시 그린다
+      if (img.tag === undefined) waiting = true;
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
     }
+    if (waiting && tries < 20) setTimeout(() => !this.root.hidden && this.drawPreviews(tries + 1), 300);
     this.updateStartButton();
   }
 

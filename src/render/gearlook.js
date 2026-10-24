@@ -1,8 +1,9 @@
 // 장비가 보이는 플레이어 그림: 무기를 지운 맨손 그림(assets/people/*_bare.png) 뒤에 끼고 있는 무기를,
-// 머리에는 쓰개를 그려 한 장으로 합친다. 무기는 몸 뒤에 그려서 주먹이 손잡이를 쥔 것처럼 보인다.
+// 옷은 갑옷 색으로 칠하고 방패를 들리고(gearbody.js), 머리에는 쓰개를 그려 한 장으로 합친다. 무기는 몸 뒤에 그려서 주먹이 손잡이를 쥔 것처럼 보인다.
 // 무기·쓰개 모양은 종류(칼·비수·지팡이·부채, 두건·삿갓·갓·투구·관)와 레벨·승급·색(tint)으로 정한다.
 import { ITEMS } from '../data/items.js';
 import { GEAR_ANCHORS } from '../data/gearanchors.js';
+import { dressBody, drawShield } from './gearbody.js';
 
 const PAD = 44; // 무기·쓰개가 그림 밖으로 나가도 잘리지 않게 위·옆으로 늘리는 여백
 const MAX_CACHE = 48;
@@ -33,7 +34,9 @@ export function gearLook(img, equip) {
   if (!bare) return img;
   const weapon = ITEMS[equip?.weapon]?.type === 'weapon' ? equip.weapon : null;
   const helmet = ITEMS[equip?.helmet]?.type === 'helmet' ? equip.helmet : null;
-  const ck = `${key}|${weapon}|${helmet}`;
+  const armor = ITEMS[equip?.armor]?.type === 'armor' ? equip.armor : null;
+  const shield = ITEMS[equip?.shield]?.type === 'shield' ? equip.shield : null;
+  const ck = `${key}|${weapon}|${helmet}|${armor}|${shield}`;
   if (looks.has(ck)) return looks.get(ck);
   const c = document.createElement('canvas');
   c.width = bare.width + PAD * 2;
@@ -42,8 +45,10 @@ export function gearLook(img, equip) {
   ctx.translate(PAD, PAD);
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
+  const view = key.endsWith('_side') ? 'side' : key.endsWith('_up') ? 'up' : 'front';
   if (weapon && !anchor.over) drawWeapon(ctx, weapon, anchor);
-  ctx.drawImage(bare, 0, 0);
+  ctx.drawImage(armor ? dressBody(bare, armor, anchor.head) : bare, 0, 0);
+  if (shield) drawShield(ctx, shield, anchor, view);
   if (weapon && anchor.over) drawWeapon(ctx, weapon, anchor);
   if (helmet) drawHat(ctx, helmet, anchor.head, key.endsWith('_side'), key.endsWith('_up'));
   c.hScale = c.height / bare.height;

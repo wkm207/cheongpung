@@ -131,25 +131,32 @@ const MOB_FRONT = new Set(['dueok', 'pigKing', 'goblin', 'bat', 'redOgre', 'wate
   'skeletonGeneral', 'eggGhost', 'maidenGhost', 'bachelorGhost', 'grudgeLord']);
 
 // 실사 말 키(게임 좌표)
-const HORSE_H = 44;
-// 사람 그림의 바지·치마 색(무릎 아래 가운데를 한 번 재서 기억) — 말 위에서 굽힌 다리 색
+const HORSE_H = 54; // 사람(44)보다 커야 말 위에 탄 것처럼 보인다
+// 사람 그림의 바지·치마 색(허리 아래에서 가장 많이 나오는 색, 살색·테두리는 빼고) — 말 위에서 굽힌 다리 색
 const legColors = new Map();
 function legColor(img) {
   if (legColors.has(img)) return legColors.get(img);
   let color = '#5a4a6a';
   try {
+    const W = 24;
+    const H = 16;
     const c = document.createElement('canvas');
-    c.width = 9;
-    c.height = 9;
+    c.width = W;
+    c.height = H;
     const g = c.getContext('2d');
-    g.drawImage(img, img.width * 0.4, img.height * 0.82, img.width * 0.2, img.height * 0.08, 0, 0, 9, 9);
-    const d = g.getImageData(0, 0, 9, 9).data;
-    let r = 0, gg = 0, b = 0, n = 0;
+    g.drawImage(img, img.width * 0.25, img.height * 0.7, img.width * 0.5, img.height * 0.25, 0, 0, W, H);
+    const d = g.getImageData(0, 0, W, H).data;
+    const buckets = new Map();
     for (let i = 0; i < d.length; i += 4) {
-      if (d[i + 3] < 200) continue;
-      r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++;
+      const [r, gg, b, a] = [d[i], d[i + 1], d[i + 2], d[i + 3]];
+      if (a < 200 || r + gg + b < 90) continue;
+      if (r > 180 && gg > 120 && r > gg && gg > b) continue; // 살색
+      const key = `${r >> 5},${gg >> 5},${b >> 5}`;
+      const e = buckets.get(key) ?? [0, 0, 0, 0];
+      buckets.set(key, [e[0] + r, e[1] + gg, e[2] + b, e[3] + 1]);
     }
-    if (n) color = `rgb(${Math.round(r / n)},${Math.round(gg / n)},${Math.round(b / n)})`;
+    const best = [...buckets.values()].sort((x, y) => y[3] - x[3])[0];
+    if (best) color = `rgb(${Math.round(best[0] / best[3])},${Math.round(best[1] / best[3])},${Math.round(best[2] / best[3])})`;
   } catch {
     // 색을 못 재면 기본색
   }
@@ -157,7 +164,7 @@ function legColor(img) {
   return color;
 }
 // 앞모습 말 키(게임 좌표)
-const HORSE_FRONT_H = 46;
+const HORSE_FRONT_H = 54;
 // 말 그림에서 안장 윗면 높이(위에서부터 비율)
 const SADDLE_AT = 0.4;
 
@@ -507,7 +514,7 @@ export class Renderer {
     }
     const name = `Lv${game.player.level} ${game.player.tier ? `${game.titleWithClass()} ` : ''}${game.player.name}`;
     const photo = isNinja() && this.playerPhoto(game);
-    const top = y - (photo ? PHOTO_H - 27 + (riding && npcPhoto('horse') ? 13 : 0) : isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
+    const top = y - (photo ? PHOTO_H - 27 + (riding && npcPhoto('horse') ? 19 : 0) : isNinja() ? PERSON_LABEL + (riding ? RIDER_LIFT : 0) : riding ? 22 : 18);
     this.drawVitals(ctx, game, x + 16, top - 1);
     label(ctx, name, x + 16, top - 6, game.player.gm.god ? '#ffd166' : '#ffffff');
     if (game.speech && game.speech.until > game.now) bubble(ctx, game.speech.text, x + 16, top - 14);
@@ -609,7 +616,7 @@ export class Renderer {
   }
 
   drawRiderLeg(ctx, hx, hy, f, color) {
-    const pts = [[hx - f * 1, hy + 1], [hx + f * 5, hy + 7], [hx + f * 3, hy + 14]];
+    const pts = [[hx - f * 1, hy + 1], [hx + f * 6, hy + 8], [hx + f * 4, hy + 16]];
     const path = () => {
       ctx.beginPath();
       ctx.moveTo(...pts[0]);
