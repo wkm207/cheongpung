@@ -68,40 +68,24 @@ export function fillUnreachable(g, sx, sy, wallCh) {
   return g;
 }
 
-export function buildField({ w, h, seed, density, ground = '.', obstacles = ['T'], portals }) {
+/**
+ * 원작 사냥터처럼: 넓은 마당을 물길(rimTile)이 둘러싸고, 출구 쪽만 다리로 이어진다.
+ * 마당 안에는 그 지역 물건(obstacles)을 원래 숲보다 훨씬 드문드문(density 의 0.35배, 없으면 바위 1.2%)
+ */
+export function buildHunt({ w, h, seed, portals, ground = 'u', rim = 2, rimTile = '~', density = 0, obstacles = ['O'] }) {
   const rng = mulberry32(seed);
   const g = grid(w, h, ground);
-  for (let y = 1; y < h - 1; y++) {
-    for (let x = 1; x < w - 1; x++) {
-      const r = rng();
-      if (r < density) g[y][x] = obstacles[Math.floor(rng() * obstacles.length)];
-      else if (r < density + 0.05 && ground === '.') g[y][x] = ','; // 꽃은 일반 풀밭에만
-    }
-  }
-  // 작은 연못 몇 개
-  const ponds = randInt(rng, 0, 2);
-  for (let i = 0; i < ponds; i++) {
-    fillRect(g, randInt(rng, 3, w - 9), randInt(rng, 3, h - 7), randInt(rng, 3, 5), randInt(rng, 2, 3), '~');
-  }
-  border(g, 'T');
-  carvePortals(g, portals, ground);
-  return fillUnreachable(g, w >> 1, h >> 1, 'T');
-}
-
-/** 원작 사냥터처럼: 넓은 흙마당을 물길이 둘러싸고, 출구 쪽만 흙다리로 이어진다. 돌·덤불은 드문드문 */
-export function buildHunt({ w, h, seed, portals, ground = 'u', rim = 2, rocks = 0.012 }) {
-  const rng = mulberry32(seed);
-  const g = grid(w, h, ground);
+  const sparse = density ? density * 0.35 : 0.012;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const edge = x <= rim || y <= rim || x >= w - 1 - rim || y >= h - 1 - rim;
-      if (edge) g[y][x] = '~';
-      else if (rng() < rocks) g[y][x] = 'O';
+      if (edge) g[y][x] = rimTile;
+      else if (rng() < sparse) g[y][x] = obstacles[Math.floor(rng() * obstacles.length)];
     }
   }
-  border(g, '~');
+  border(g, rimTile);
   carvePortals(g, portals, ground);
-  return fillUnreachable(g, w >> 1, h >> 1, '~');
+  return fillUnreachable(g, w >> 1, h >> 1, rimTile);
 }
 
 export function buildCave({ w, h, seed, fill = 0.45, portals, floor = 'c', wall = 'X' }) {

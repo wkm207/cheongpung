@@ -1,4 +1,4 @@
-import { buildVillage, buildField, buildHunt, buildCave, buildDen, buildRoom, buildCastle } from '../world/mapgen.js';
+import { buildVillage, buildHunt, buildCave, buildDen, buildRoom, buildCastle } from '../world/mapgen.js';
 
 // 포탈: (x, y, w, h) 영역에 들어서면 to 맵의 (tx, ty)로 이동
 
@@ -283,25 +283,25 @@ export const MAP_DEFS = {
   },
   dragonPalace: {
     name: '용궁', w: 48, h: 40, seed: 171, density: 0.1, ground: 'b', obstacles: ['C', 'C', 'O'],
-    build: buildField,
+    build: buildHunt,
     portals: [{ x: 23, y: 39, w: 2, h: 1, to: 'castle', tx: 24, ty: 21 }],
     spawns: [['fishSoldier', 10], ['turtleGeneral', 7], ['seaDragon', 1]],
   },
   northFortress: {
     name: '북방 산성', w: 48, h: 40, seed: 181, density: 0.08, ground: '*', obstacles: ['Q', 'T', 'O'],
-    build: buildField,
+    build: buildHunt,
     portals: [{ x: 23, y: 39, w: 2, h: 1, to: 'castle', tx: 24, ty: 21 }],
     spawns: [['yeti', 9], ['iceSpirit', 8], ['iceDragon', 1]],
   },
   eastIsland: {
     name: '동쪽 섬나라', w: 48, h: 40, seed: 191, density: 0.14, ground: ';', obstacles: ['Z', 'Z', 'T', '~'],
-    build: buildField,
+    build: buildHunt,
     portals: [{ x: 23, y: 39, w: 2, h: 1, to: 'castle', tx: 24, ty: 21 }],
     spawns: [['waterImp', 10], ['redOgre', 8], ['eightSerpent', 1]],
   },
   fireIsland: {
-    name: '불의 섬', w: 48, h: 40, seed: 201, density: 0.1, ground: 'a', obstacles: ['L', 'L', 'O'],
-    build: buildField,
+    name: '불의 섬', w: 48, h: 40, seed: 201, density: 0.1, ground: 'a', rimTile: 'L', obstacles: ['L', 'L', 'O'],
+    build: buildHunt,
     portals: [{ x: 23, y: 39, w: 2, h: 1, to: 'castle', tx: 24, ty: 21 }],
     spawns: [['fireLizard', 10], ['flameSpirit', 8], ['firebird', 1]],
   },
@@ -317,8 +317,8 @@ export const MAP_DEFS = {
   },
   forest: {
     name: '여우 숲',
-    w: 40, h: 40, seed: 23, density: 0.16, obstacles: ['T'],
-    build: buildField,
+    w: 40, h: 40, seed: 23, density: 0.16, ground: '.', obstacles: ['T'],
+    build: buildHunt,
     portals: [
       { x: 19, y: 39, w: 2, h: 1, to: 'village', tx: 19, ty: 2 },
       { x: 19, y: 0, w: 2, h: 1, to: 'goblinCave', tx: 23, ty: 37 },
@@ -328,7 +328,7 @@ export const MAP_DEFS = {
   wolfHill: {
     name: '늑대 언덕',
     w: 44, h: 34, seed: 37, density: 0.09, ground: ':', obstacles: ['O', 'O', 'T'],
-    build: buildField,
+    build: buildHunt,
     portals: [
       { x: 0, y: 16, w: 1, h: 2, to: 'field1', tx: 41, ty: 16 },
       { x: 43, y: 16, w: 1, h: 2, to: 'deepMountain', tx: 2, ty: 16 },
@@ -339,7 +339,7 @@ export const MAP_DEFS = {
   deepMountain: {
     name: '깊은 산',
     w: 46, h: 36, seed: 61, density: 0.15, ground: ';', obstacles: ['T', 'T', 'O'],
-    build: buildField,
+    build: buildHunt,
     portals: [
       { x: 0, y: 16, w: 1, h: 2, to: 'wolfHill', tx: 41, ty: 16 },
       { x: 22, y: 0, w: 2, h: 1, to: 'imugiSwamp', tx: 15, ty: 23 },
@@ -349,7 +349,7 @@ export const MAP_DEFS = {
   imugiSwamp: {
     name: '이무기 늪',
     w: 32, h: 26, seed: 83, density: 0.1, ground: ';', obstacles: ['~', '~', 'T'],
-    build: buildField,
+    build: buildHunt,
     portals: [
       { x: 15, y: 25, w: 2, h: 1, to: 'deepMountain', tx: 22, ty: 2 },
       { x: 31, y: 12, w: 1, h: 2, to: 'snowPass', tx: 2, ty: 18 },
@@ -359,7 +359,7 @@ export const MAP_DEFS = {
   snowPass: {
     name: '설원 고개',
     w: 46, h: 38, seed: 97, density: 0.1, ground: '*', obstacles: ['T', 'O', 'T'],
-    build: buildField,
+    build: buildHunt,
     portals: [
       { x: 0, y: 18, w: 1, h: 2, to: 'imugiSwamp', tx: 29, ty: 12 },
       { x: 22, y: 0, w: 2, h: 1, to: 'dragonCave', tx: 25, ty: 37 },
