@@ -132,6 +132,30 @@ const MOB_FRONT = new Set(['dueok', 'pigKing', 'goblin', 'bat', 'redOgre', 'wate
 
 // 실사 말 키(게임 좌표)
 const HORSE_H = 44;
+// 사람 그림의 바지·치마 색(무릎 아래 가운데를 한 번 재서 기억) — 말 위에서 굽힌 다리 색
+const legColors = new Map();
+function legColor(img) {
+  if (legColors.has(img)) return legColors.get(img);
+  let color = '#5a4a6a';
+  try {
+    const c = document.createElement('canvas');
+    c.width = 9;
+    c.height = 9;
+    const g = c.getContext('2d');
+    g.drawImage(img, img.width * 0.4, img.height * 0.82, img.width * 0.2, img.height * 0.08, 0, 0, 9, 9);
+    const d = g.getImageData(0, 0, 9, 9).data;
+    let r = 0, gg = 0, b = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 200) continue;
+      r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++;
+    }
+    if (n) color = `rgb(${Math.round(r / n)},${Math.round(gg / n)},${Math.round(b / n)})`;
+  } catch {
+    // 색을 못 재면 기본색
+  }
+  legColors.set(img, color);
+  return color;
+}
 // 앞모습 말 키(게임 좌표)
 const HORSE_FRONT_H = 46;
 // 말 그림에서 안장 윗면 높이(위에서부터 비율)
@@ -565,13 +589,49 @@ export class Renderer {
     }
     const horseTop = y + 33 - bounce * 0.5 - HORSE_H;
     const saddle = horseTop + HORSE_H * SADDLE_AT;
-    drawPhoto(ctx, photo, cx + (flip ? 2 : -2), saddle + PHOTO_H * 0.42 - bounce, { flip, h: ph });
-    // 안장 아래 말 몸통을 위에 덧그려 사람 다리를 가린다
+    const riderX = cx + (flip ? 2 : -2);
+    // 사람은 안장 위(엉덩이까지)만 그린다: 서 있는 다리가 말 배 밑으로 비치지 않게
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - 60, saddle - 90, 152, 92);
+    ctx.clip();
+    drawPhoto(ctx, photo, riderX, saddle + PHOTO_H * 0.42 - bounce, { flip, h: ph });
+    ctx.restore();
+    // 안장 아래 말 몸통을 위에 덧그린다
     ctx.save();
     ctx.beginPath();
     ctx.rect(x - 60, saddle + 2, 152, HORSE_H);
     ctx.clip();
     drawPhoto(ctx, horsePic, x + 16, y + 33 - bounce * 0.5, { h: HORSE_H, flip: this.rideFace === 'right' });
+    ctx.restore();
+    // 말 옆구리를 따라 굽혀 내린 다리(무릎은 앞으로, 발은 등자에)
+    this.drawRiderLeg(ctx, riderX, saddle - bounce, this.rideFace === 'right' ? 1 : -1, legColor(view.img));
+  }
+
+  drawRiderLeg(ctx, hx, hy, f, color) {
+    const pts = [[hx - f * 1, hy + 1], [hx + f * 5, hy + 7], [hx + f * 3, hy + 14]];
+    const path = () => {
+      ctx.beginPath();
+      ctx.moveTo(...pts[0]);
+      ctx.lineTo(...pts[1]);
+      ctx.lineTo(...pts[2]);
+    };
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1c120c';
+    ctx.lineWidth = 5.5;
+    path();
+    ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3.8;
+    path();
+    ctx.stroke();
+    // 신발
+    ctx.fillStyle = '#1c120c';
+    ctx.beginPath();
+    ctx.ellipse(pts[2][0] + f * 1.5, pts[2][1] + 1, 3.2, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 

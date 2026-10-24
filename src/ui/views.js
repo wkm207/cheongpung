@@ -191,41 +191,31 @@ function skillRow(game, id) {
 export function spellsView(game, state) {
   const p = game.player;
   const picked = state.pickedLetter ?? null;
+  // 바람의나라처럼: 배운 마법이 a, b, c… 칸에 차례로 들어 있고, a=1번 키 … j=0번 키
   const rows = p.skillSlots.map((id, i) => {
+    if (!id) return '';
     const letter = SPELL_LETTERS[i];
     const key = hotkeyLabel(i);
     const sel = picked === i ? ' sel' : '';
-    if (!id) {
-      return `<div class="list-row clickable spell-row empty${sel}" data-act="spellPick" data-i="${i}">
-        <span class="letter">${letter}</span><span class="key-hint">${key ? `${key}번` : ''}</span><span class="grow muted">비어 있음</span></div>`;
-    }
     const sk = SKILLS[id];
     const remain = Math.max(0, (game.cooldowns[id] ?? 0) - game.now);
     return `<div class="list-row clickable spell-row${sel}" data-act="spellPick" data-i="${i}">
-      <span class="letter">${letter}</span><span class="key-hint">${key ? `${key}번` : ''}</span>
+      <span class="letter">${letter}</span><span class="key-hint">${key ? `${key}번 키` : '키 없음'}</span>
       <span class="tag">${sk.icon}</span>
       <span class="grow"><span class="line1"><b>${esc(sk.name)}</b> <small class="muted">${KIND_LABELS[sk.kind]} · 마력 ${sk.mp} · ${sk.cd / 1000}초${remain ? ` · <span class="warn">${(remain / 1000).toFixed(1)}초 남음</span>` : ''}</small></span>
         <span class="line2">${esc(sk.desc)}</span></span>
-      <button data-act="castNow" data-id="${id}">사용</button>
+      ${key ? '' : `<button data-act="castNow" data-id="${id}">사용</button>`}
     </div>`;
   }).join('');
   const help = picked === null
-    ? `<div class="spell-help"><b>마법 칸 바꾸는 법</b>
-        <ol>
-          <li>옮길 마법 <b>줄을 한 번</b> 누릅니다(노랗게 표시됨). ※ 오른쪽 <b>사용</b> 버튼은 바로 쓰기라서 누르지 마세요.</li>
-          <li>넣고 싶은 칸의 <b>줄</b>(또는 위에 나오는 알파벳 버튼)을 누르면 <b>두 마법의 자리가 서로 바뀝니다.</b></li>
-          <li>취소하려면 노란 줄을 한 번 더 누르세요.</li>
-        </ol>
-        <small>· <b>a~j</b> 칸 = 숫자 키 <b>1~9, 0</b>과 화면 아래 단축키 칸. k 칸부터는 단축키가 없어 이 창의 <b>사용</b>으로 씁니다.<br>
-        · 키보드: 알파벳 두 번(예: <b>c</b> 다음 <b>a</b> → c와 a 마법이 자리를 바꿈)<br>
-        · 화면 아래 단축키 칸끼리는 아이콘을 <b>끌어다 놓아도</b> 바뀝니다.</small></div>`
-    : `<div class="spell-help on"><b>${SPELL_LETTERS[picked]} 칸 · ${esc(josa(SKILLS[p.skillSlots[picked]]?.name ?? '빈 칸', '을/를'))}</b> 어느 칸과 바꿀까요? 바꿀 칸의 줄이나 알파벳을 누르세요. (같은 줄을 다시 누르면 취소)</div>`;
-  const letters = picked === null ? '' : `<div class="letter-pick">${[...SPELL_LETTERS].map((l, i) => `<button class="${i === picked ? 'on' : ''}" data-act="spellMove" data-i="${i}">${l}</button>`).join('')}</div>`;
+    ? `<div class="spell-help"><b>a = 1번 키, b = 2번 키, c = 3번 키 … j = 0번 키</b><br>
+        자리를 바꾸려면 <b>마법을 하나 누르고</b>, 바꿀 자리의 <b>다른 마법을 누르세요.</b> 두 마법의 자리가 서로 바뀝니다.
+        <small><br>예) <b>c</b> 마법을 누르고 <b>a</b> 마법을 누르면 → c 마법이 1번 키로. 키보드로는 알파벳 두 번(c 다음 a).</small></div>`
+    : `<div class="spell-help on"><b>${SPELL_LETTERS[picked]} · ${esc(SKILLS[p.skillSlots[picked]]?.name ?? '')}</b> 선택됨 → 자리를 바꿀 마법을 누르세요. (같은 마법을 다시 누르면 취소)</div>`;
   return `${header('마법', null)}
     <div class="body">
       ${help}
-      ${letters}
-      ${rows}
+      ${rows || '<p class="muted">아직 배운 마법이 없습니다.</p>'}
     </div>`;
 }
 

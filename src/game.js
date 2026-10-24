@@ -402,6 +402,7 @@ export class Game {
     if (this.dead) return;
     if (this.riding) {
       this.log('말 위에서는 마법·기술을 쓸 수 없습니다. 말에서 내리세요(R).', '#bbb');
+      this.say('말에서 내려야 마법을 써요 (R)');
       return;
     }
     if (this.pe.moving) this.queued = { type: 'skill', id };
@@ -641,6 +642,7 @@ export class Game {
     if (this.dead || this.now < this.rollReadyAt) return false;
     if (this.riding) {
       this.log('말 위에서는 구를 수 없습니다.', '#bbb');
+      this.say('말 위에선 못 굴러요');
       return false;
     }
     const pe = this.pe;

@@ -396,6 +396,8 @@ if (matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(an
   document.body.classList.add('desktop');
 }
 
+// 게임 화면을 누르면 대화창에서 빠져나와 숫자 키(마법)·방향키가 다시 게임으로 간다
+$('#game').addEventListener('pointerdown', () => chatInput.blur());
 $('#chat-form').addEventListener('submit', (e) => {
   e.preventDefault();
   submitChat(chatInput.value);

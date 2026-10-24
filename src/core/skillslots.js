@@ -49,7 +49,8 @@ export function sanitizeSlots(raw, learned) {
     seen.add(id);
     return id;
   });
-  // 배웠는데 칸이 없는 마법은 빈 칸에 차례로 넣는다
+  // 배웠는데 칸이 없는 마법은 빈 칸에 차례로 넣고, 사이사이 빈 칸은 당겨 a, b, c… 에 빈틈없이
   for (const id of learned) slots = slotNewSkill(slots, id);
-  return slots;
+  const filled = slots.filter(Boolean);
+  return Array.from({ length: SKILL_SLOTS }, (_, i) => filled[i] ?? null);
 }
