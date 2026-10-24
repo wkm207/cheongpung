@@ -1,7 +1,8 @@
 const KEY_DIRS = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
 };
-export const KEY_PANELS = { KeyI: 'inventory', KeyK: 'skills', KeyC: 'character', KeyL: 'quests', KeyM: 'menu', KeyG: 'gm', Backquote: 'gm' };
+// 상태창은 원작처럼 S(예전 C 도 그대로 열림). 창 제목에 보이는 키는 뒤에 오는 S
+export const KEY_PANELS = { KeyI: 'inventory', KeyK: 'skills', KeyC: 'character', KeyS: 'character', KeyL: 'quests', KeyM: 'menu', KeyG: 'gm', Backquote: 'gm' };
 const SLOT_KEYS = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
 const NUMPAD_KEYS = ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6', 'Numpad7', 'Numpad8', 'Numpad9', 'Numpad0'];
 const SPELL_WINDOW_KEYS = ['Equal', 'NumpadAdd'];
